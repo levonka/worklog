@@ -1,14 +1,13 @@
 import { mkdirSync, watch as fsWatch } from 'node:fs';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import path from 'node:path';
-import { LOCK_DIR_NAMES } from './fs-utils.ts';
+import { LOCK_DIR_NAMES, TMP_MARKER } from './fs-utils.ts';
 
 const OK = 200;
 const DEBOUNCE_MS = 150;
 const MAX_WAIT_MS = 1_000;
 const PING_MS = 25_000;
 const REWATCH_MS = 1_000;
-const TMP_MARKER = '.tmp-';
 const CHANGE_FRAME = 'event: change\ndata: {}\n\n';
 const PING_FRAME = ': ping\n\n';
 

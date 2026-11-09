@@ -2,12 +2,7 @@
 set -eu
 
 ROOT=${0:A:h:h}
-NODE=${WORKLOG_NODE:-$(sed -n 's/^WORKLOG_NODE=//p' "${WORKLOG_ENV_FILE:-$HOME/.config/worklog/env}" 2>/dev/null | tail -1)}
-# the same reading as server/env-file.ts: no \r, one pair of quotes, ~/ is home
-NODE=${NODE%$'\r'}
-[[ $NODE == \"*\" || $NODE == \'*\' ]] && NODE=${${NODE#?}%?}
-NODE=${NODE/#\~\//$HOME/}
-NODE=${NODE:-$(command -v node || true)}
+source "$ROOT/scripts/node-path.sh"
 PORT=${WORKLOG_PORT:-4317}
 APP_URL=http://localhost:$PORT
 HEALTH_URL=$APP_URL/api/health

@@ -1,4 +1,5 @@
 import { execFile } from 'node:child_process';
+import { quietGitEnv } from './git-env.ts';
 import { promisify } from 'node:util';
 import { directionBranch } from '../shared/model.ts';
 import type { Store } from './store.ts';
@@ -13,9 +14,7 @@ const TIMEOUT_MS = 30_000;
 export type LsRemote = (codeRoot: string, patterns: readonly string[]) => Promise<string>;
 
 export const gitLsRemote: LsRemote = async (codeRoot, patterns) => {
-  // never wait for a password or a host key question: the server has no terminal
-  const env = { ...process.env, GIT_TERMINAL_PROMPT: '0', GIT_SSH_COMMAND: 'ssh -o BatchMode=yes' };
-  return (await run('git', ['-C', codeRoot, 'ls-remote', 'origin', ...patterns], { env, timeout: TIMEOUT_MS })).stdout;
+  return (await run('git', ['-C', codeRoot, 'ls-remote', 'origin', ...patterns], { env: quietGitEnv(), timeout: TIMEOUT_MS })).stdout;
 };
 
 /** branch → the newest MR whose head is the branch's head; GitLab keeps a ref per MR */

@@ -16,11 +16,12 @@ export function resolveAgents(values: { agent?: string; claudeBin?: string; code
   if (values.agent) {
     const chosen = AGENTS.find(agent => agent === values.agent);
     if (chosen === undefined) throw new Error(`Некорректное значение WORKLOG_AGENT: ${values.agent} (${AGENTS.join(', ')})`);
-    return { main: chosen, bins };
+    // a chosen agent without a path runs by name, like claude without settings; doctor asks for the path
+    return { main: chosen, bins: { ...bins, [chosen]: bins[chosen] ?? chosen } };
   }
   return { main: bins.claude !== undefined ? 'claude' : 'codex', bins };
 }
 
-export function installedAgents(setup: AgentSetup): Agent[] {
-  return AGENTS.filter(agent => setup.bins[agent] !== undefined);
+export function installedAgents(bins: AgentSetup['bins']): Agent[] {
+  return AGENTS.filter(agent => bins[agent] !== undefined);
 }

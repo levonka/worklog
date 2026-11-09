@@ -1,13 +1,13 @@
 import { homedir } from 'node:os';
 import path from 'node:path';
 import type { Terminal } from '../shared/model.ts';
-import { SUMMARY_STALE_MS, TERMINALS } from '../shared/model.ts';
+import { EDITORS, TERMINALS } from '../shared/model.ts';
 import type { AgentSetup } from './agents.ts';
 import { resolveAgents } from './agents.ts';
 import type { Editor } from './code-files.ts';
-import { EDITOR_BINS, EDITORS } from './code-files.ts';
+import { EDITOR_BINS } from './code-files.ts';
 import type { SettingName } from './env-file.ts';
-import { envFilePath, readEnvFile } from './env-file.ts';
+import { MAX_SUMMARY_TIMEOUT_MS, envFilePath, readEnvFile, settingProblem } from './env-file.ts';
 import type { JiraFiles } from './jira.ts';
 
 const CONFIG_DIR = path.join(homedir(), '.config', 'worklog');
@@ -16,7 +16,10 @@ const FILE_SETTINGS = readEnvFile(ENV_FILE);
 
 /** the environment first, then ~/.config/worklog/env; empty is unset */
 export function setting(name: SettingName): string | undefined {
-  return process.env[name] || FILE_SETTINGS[name] || undefined;
+  const raw = process.env[name] || FILE_SETTINGS[name] || undefined;
+  const problem = raw === undefined ? null : settingProblem(name, raw);
+  if (problem !== null) throw new Error(`Некорректное значение ${name}: ${raw} (${problem})`);
+  return raw;
 }
 
 export const ROOT_DIR = path.resolve(import.meta.dirname, '..');
@@ -30,7 +33,6 @@ export const CHROME_DIR = path.resolve(setting('WORKLOG_CHROME_DIR') || path.joi
 export const STATIC_DIR = path.join(ROOT_DIR, 'web', 'dist', 'web', 'browser');
 export const CLAUDE_PROJECTS_DIR = path.resolve(setting('WORKLOG_CLAUDE_PROJECTS_DIR') || path.join(homedir(), '.claude', 'projects'));
 const codeRoot = setting('WORKLOG_CODE_ROOT');
-if (codeRoot !== undefined && !path.isAbsolute(codeRoot)) throw new Error(`Некорректное значение WORKLOG_CODE_ROOT: ${codeRoot} (нужен полный путь)`);
 /** the work project; none, opening files, the agent and MR links are off */
 export const CODE_ROOT = codeRoot === undefined ? undefined : path.resolve(codeRoot);
 export const EDITOR: Editor = oneOf('WORKLOG_EDITOR', EDITORS, 'jetbrains');
@@ -43,8 +45,6 @@ export const AGENT_SETUP: AgentSetup = resolveAgents({ agent: setting('WORKLOG_A
 export const CODEX_SESSIONS_DIR = path.resolve(setting('WORKLOG_CODEX_SESSIONS_DIR') || path.join(homedir(), '.codex', 'sessions'));
 /** none: Claude takes sonnet, Codex its own default */
 export const SUMMARY_MODEL = setting('WORKLOG_SUMMARY_MODEL');
-// a longer run would look stale to the screen and a second one could start beside it
-const MAX_SUMMARY_TIMEOUT_MS = SUMMARY_STALE_MS - 60_000;
 export const SUMMARY_TIMEOUT_MS = intFromEnv('WORKLOG_SUMMARY_TIMEOUT_MS', setting('WORKLOG_SUMMARY_TIMEOUT_MS'), MAX_SUMMARY_TIMEOUT_MS, MAX_SUMMARY_TIMEOUT_MS);
 
 export const PROFILE_PATH = path.resolve(setting('WORKLOG_PROFILE') || path.join(CONFIG_DIR, 'profile.json'));
@@ -60,11 +60,9 @@ export const JIRA_FILES: JiraFiles = {
 export const JIRA_POLL_MS = intFromEnv('WORKLOG_JIRA_POLL_MS', setting('WORKLOG_JIRA_POLL_MS'), 300_000);
 
 function oneOf<T extends string>(name: SettingName, values: readonly T[], fallback: T): T {
+  // setting() has already refused a value outside the list
   const raw = setting(name);
-  if (raw === undefined) return fallback;
-  const found = values.find(value => value === raw);
-  if (found === undefined) throw new Error(`Некорректное значение ${name}: ${raw} (${values.join(', ')})`);
-  return found;
+  return values.find(value => value === raw) ?? fallback;
 }
 
 export function intFromEnv(name: string, raw: string | undefined, fallback: number, max: number = Number.MAX_SAFE_INTEGER): number {

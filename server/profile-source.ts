@@ -3,10 +3,11 @@ import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { promisify } from 'node:util';
-import { ProfileError, parseProfile } from '../shared/model.ts';
 import type { Profile, ProfileGitlab } from '../shared/model.ts';
 import { setEnvValue } from './env-file.ts';
-import { writeTextAtomic } from './fs-utils.ts';
+import { profileFromText } from './profile.ts';
+import { quietGitEnv } from './git-env.ts';
+import { errorMessage, writeTextAtomic } from './fs-utils.ts';
 import { isRecord } from './guards.ts';
 
 const run = promisify(execFile);
@@ -63,7 +64,7 @@ function originPort(origin: string | null, host: string): number | undefined {
 /** one file of a branch without checking out the repository */
 export async function gitShowFile(repoUrl: string, ref: string, file: string): Promise<string> {
   const dir = await mkdtemp(path.join(tmpdir(), 'worklog-profile-'));
-  const env = { ...process.env, GIT_TERMINAL_PROMPT: '0', GIT_SSH_COMMAND: 'ssh -o BatchMode=yes -o ConnectTimeout=10' };
+  const env = quietGitEnv();
   try {
     await run('git', ['clone', '--quiet', '--depth', '1', '--filter=blob:none', '--no-checkout', '--branch', ref, repoUrl, dir], { env, timeout: GIT_TIMEOUT_MS });
     const { stdout } = await run('git', ['-C', dir, 'show', `HEAD:${file}`], { env, timeout: GIT_TIMEOUT_MS, maxBuffer: MAX_PROFILE_BYTES });
@@ -80,7 +81,7 @@ function gitMessage(error: unknown): string {
   const stderr = isRecord(error) && typeof error.stderr === 'string' ? error.stderr : '';
   const lines = stderr.split('\n').map(line => line.trim()).filter(line => line !== '');
   const cause = lines.find(line => /^(ssh|fatal|error|remote):/.test(line)) ?? lines.at(-1);
-  return (cause ?? (error instanceof Error ? error.message : String(error))).replace(/\.+$/, '');
+  return (cause ?? (errorMessage(error))).replace(/\.+$/, '');
 }
 
 async function remoteOrigin(codeRoot: string): Promise<string | null> {
@@ -106,19 +107,7 @@ async function sourceText(source: string, opts: FetchProfileOptions): Promise<st
 /** checks the profile, then replaces the local copy and records where it came from; a bad one changes nothing */
 export async function fetchProfile(source: string, opts: FetchProfileOptions): Promise<Profile> {
   const text = await sourceText(source, opts);
-  let raw: unknown;
-  try {
-    raw = JSON.parse(text);
-  } catch (error) {
-    throw new Error(`Профиль из ${source}: не JSON (${error instanceof Error ? error.message : String(error)})`);
-  }
-  let profile: Profile;
-  try {
-    profile = parseProfile(raw);
-  } catch (error) {
-    if (error instanceof ProfileError) throw new Error(`Профиль из ${source}: ${error.message}`);
-    throw error;
-  }
+  const profile = profileFromText(text, `из ${source}`);
   await writeTextAtomic(opts.profilePath, text);
   await setEnvValue(opts.envFile, 'WORKLOG_PROFILE_SOURCE', source);
   return profile;

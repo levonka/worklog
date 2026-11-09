@@ -10,12 +10,19 @@ const LOCK_NAME = '.lock';
 const LOCK_BREAKER_NAME = '.lock-breaker';
 
 export const LOCK_DIR_NAMES = [LOCK_NAME, LOCK_BREAKER_NAME] as const;
+/** in the name of a file being written atomically */
+export const TMP_MARKER = '.tmp-';
 
 export class DataError extends Error {}
 
 export interface LockOptions {
   staleMs?: number;
   timeoutMs?: number;
+}
+
+/** the text of anything thrown */
+export function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
 }
 
 export function isErrorCode(error: unknown, code: string): boolean {
@@ -95,7 +102,7 @@ export function writeJsonAtomic(file: string, value: unknown): Promise<void> {
 }
 
 export async function writeTextAtomic(file: string, text: string): Promise<void> {
-  const tmp = `${file}.tmp-${process.pid}-${randomBytes(4).toString('hex')}`;
+  const tmp = `${file}${TMP_MARKER}${process.pid}-${randomBytes(4).toString('hex')}`;
   await mkdir(path.dirname(file), { recursive: true });
   try {
     const handle = await open(tmp, 'w');

@@ -2,7 +2,9 @@ import { readFileSync } from 'node:fs';
 import { chmod, mkdir, readFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import path from 'node:path';
-import { isErrorCode, writeTextAtomic } from './fs-utils.ts';
+import { AGENTS, EDITORS, SUMMARY_STALE_MS, TERMINALS } from '../shared/model.ts';
+import { errorMessage, isErrorCode, writeTextAtomic } from './fs-utils.ts';
+import { oneOf } from './guards.ts';
 
 /** every setting the env file may hold */
 export const SETTINGS = [
@@ -36,8 +38,26 @@ export const SETTINGS = [
 ] as const;
 export type SettingName = (typeof SETTINGS)[number];
 
-export function isSettingName(name: string): name is SettingName {
-  return SETTINGS.some(setting => setting === name);
+export const isSettingName = oneOf(SETTINGS);
+
+// a longer summary run would look stale to the screen and a second one could start beside it
+export const MAX_SUMMARY_TIMEOUT_MS = SUMMARY_STALE_MS - 60_000;
+const CHOICES: Partial<Record<SettingName, readonly string[]>> = { WORKLOG_TERMINAL: TERMINALS, WORKLOG_EDITOR: EDITORS, WORKLOG_AGENT: AGENTS };
+const NUMBERS: Partial<Record<SettingName, number>> = {
+  WORKLOG_PORT: 65535,
+  WORKLOG_IDLE_MS: Number.MAX_SAFE_INTEGER,
+  WORKLOG_SUMMARY_TIMEOUT_MS: MAX_SUMMARY_TIMEOUT_MS,
+  WORKLOG_JIRA_POLL_MS: Number.MAX_SAFE_INTEGER,
+};
+
+/** why the value does not fit the setting, or null; both reading the settings and `config set` ask here */
+export function settingProblem(name: SettingName, value: string): string | null {
+  const choices = CHOICES[name];
+  if (choices !== undefined) return choices.includes(value) ? null : choices.join(', ');
+  const max = NUMBERS[name];
+  if (max !== undefined) return /^\d+$/.test(value) && Number(value) <= max ? null : max === Number.MAX_SAFE_INTEGER ? 'нужно целое число' : `нужно целое число до ${max}`;
+  if (name === 'WORKLOG_CODE_ROOT' && !path.isAbsolute(value)) return 'нужен полный путь';
+  return null;
 }
 
 export function envFilePath(): string {
@@ -71,7 +91,7 @@ export function readEnvFile(file: string): Record<string, string> {
     return parseEnvFile(readFileSync(file, 'utf8'));
   } catch (error) {
     if (isErrorCode(error, 'ENOENT')) return {};
-    throw new Error(`${file}: ${error instanceof Error ? error.message : String(error)}`);
+    throw new Error(`${file}: ${errorMessage(error)}`);
   }
 }
 

@@ -34,7 +34,7 @@ import { matchTabs, readChromeTabs } from '../server/chrome-tabs.ts';
 import { resolveDirection } from '../server/resolve.ts';
 import { isErrorCode } from '../server/fs-utils.ts';
 import { NotFoundError, Store } from '../server/store.ts';
-import { SETUP_USAGES } from './setup.ts';
+import { SETUP_USAGES } from './setup-commands.ts';
 
 export interface CliResult {
   code: number;

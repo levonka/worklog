@@ -2,21 +2,24 @@ import { execFile } from 'node:child_process';
 import { mkdir, realpath, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { promisify } from 'node:util';
-import { isErrorCode } from './fs-utils.ts';
+import { LOCK_DIR_NAMES, TMP_MARKER, isErrorCode } from './fs-utils.ts';
+import { quietGitEnv } from './git-env.ts';
+import { DRAFT_FILE } from './store.ts';
 
 const run = promisify(execFile);
 
 /** own — data/ is the root of its own repository; shared — a code repository tracks its files; none — neither */
-export const DATA_REPO_STATES = ['own', 'none', 'shared'] as const;
+const DATA_REPO_STATES = ['own', 'none', 'shared'] as const;
 export type DataRepoState = (typeof DATA_REPO_STATES)[number];
 
-export const DATA_GITIGNORE = '.lock/\n*.tmp-*\ndaily-draft.json\n';
+/** what the store writes besides the data: its locks, half-written files and the daily draft */
+export const DATA_GITIGNORE = `${[...LOCK_DIR_NAMES.map(name => `${name}/`), `*${TMP_MARKER}*`, DRAFT_FILE].join('\n')}\n`;
 
 // snapshots of data are no one's work, and the machine may have no git identity
 const IDENTITY = ['-c', 'user.name=Worklog', '-c', 'user.email=worklog@localhost'];
 
 async function git(dataDir: string, args: string[]): Promise<string> {
-  const { stdout } = await run('git', ['-C', dataDir, ...args], { env: { ...process.env, GIT_TERMINAL_PROMPT: '0' } });
+  const { stdout } = await run('git', ['-C', dataDir, ...args], { env: quietGitEnv() });
   return stdout;
 }
 

@@ -12,34 +12,29 @@ if (( ${#targets} == 0 )); then
   failed=1
 fi
 
+# links $1 at $2 unless something that is not ours already sits there
+link_to() {
+  local src=$1 link=$2
+  if [[ -L $link && $(readlink "$link") == "$src" ]]; then
+    print "${link:t}: уже установлен в ${link:h}"
+  elif [[ -e $link || -L $link ]]; then
+    print -u2 "${link:t}: пропускаю, в ${link:h} уже есть ${link:t} не из Worklog"
+    failed=1
+  else
+    ln -s "$src" "$link"
+    print "${link:t} → $link"
+  fi
+}
+
 for target in $targets; do
   mkdir -p "$target"
   for dir in "$root"/skills/*(/); do
-    name=${dir:t}
-    link="$target/$name"
-    if [[ -L $link && $(readlink "$link") == "$dir" ]]; then
-      print "$name: уже установлен в $target"
-    elif [[ -e $link || -L $link ]]; then
-      print -u2 "$name: пропускаю, в $target уже есть $name не из Worklog"
-      failed=1
-    else
-      ln -s "$dir" "$link"
-      print "$name → $link"
-    fi
+    link_to "$dir" "$target/${dir:t}"
   done
 done
 
 bin_dir=${WORKLOG_BIN_DIR:-$HOME/.local/bin}
 mkdir -p "$bin_dir"
-cli="$bin_dir/worklog"
-if [[ -L $cli && $(readlink "$cli") == "$root/bin/worklog" ]]; then
-  print "worklog: уже установлен"
-elif [[ -e $cli || -L $cli ]]; then
-  print -u2 "worklog: пропускаю, в $bin_dir уже есть worklog не из этой папки"
-  failed=1
-else
-  ln -s "$root/bin/worklog" "$cli"
-  print "worklog → $cli"
-fi
+link_to "$root/bin/worklog" "$bin_dir/worklog"
 
 exit $failed

@@ -76,11 +76,7 @@
   }
 
   <footer class="as__foot">
-    @if (launchHint(); as hint) {
-      <span class="as__hint">{{ hint }}</span>
-    } @else {
-      <span class="as__hint"></span>
-    }
+    <span class="as__hint">{{ launchHint() }}</span>
     <button type="button" class="as__btn" (click)="close()">Отмена</button>
     <button type="button" class="as__btn as__btn_primary" [disabled]="!canLaunch()" (click)="launch()">Запустить ⌘↩</button>
   </footer>

@@ -2,6 +2,7 @@ import { homedir } from 'node:os';
 import type { Agent, JiraHealth } from '../shared/model.ts';
 import { AGENT_CONTEXT_PARTS, AGENT_TEMPLATES, AGENTS, LINK_KINDS, STATUSES } from '../shared/model.ts';
 import type { AgentConfig } from './agent-launch.ts';
+import { installedAgents } from './agents.ts';
 import { branchPlace, launchAgent } from './agent-launch.ts';
 import type { CodeConfig } from './code-files.ts';
 import { missingFiles, openInEditor } from './code-files.ts';
@@ -227,7 +228,7 @@ export function createApiRoutes(store: Store, history: History, clientCount: () 
     }),
     route('GET', /^\/api\/agent\/launcher$/, async () => {
       if (agent === undefined) throw new HttpError(UNAVAILABLE, 'Запуск агента не настроен');
-      return { status: OK, body: { terminal: agent.terminal, codeRoot: homeShortened(agent.codeRoot), agents: AGENTS.filter(name => agent.bins[name] !== undefined), defaultAgent: agent.defaultAgent } };
+      return { status: OK, body: { terminal: agent.terminal, codeRoot: homeShortened(agent.codeRoot), agents: installedAgents(agent.bins), defaultAgent: agent.defaultAgent } };
     }),
     route('GET', /^\/api\/agent\/branch$/, async ctx => {
       if (agent === undefined) throw new HttpError(UNAVAILABLE, 'Запуск агента не настроен');

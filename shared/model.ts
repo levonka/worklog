@@ -757,10 +757,7 @@ export function jiraTone(status: string, profile: Profile | null): JiraTone {
 /** Jira's own case varies: the name is matched in lower case, then by its start */
 export function stageOfJiraStatus(jiraStatus: string, jira: ProfileJira): Stage | null {
   const name = jiraStatus.trim().toLowerCase();
-  const exact = Object.hasOwn(jira.stages, name) ? jira.stages[name] : undefined;
-  if (exact !== undefined) return exact;
-  const prefix = Object.keys(jira.stagePrefixes ?? {}).find(start => name.startsWith(start));
-  return prefix === undefined ? null : (jira.stagePrefixes?.[prefix] ?? null);
+  return ownValue(jira.stages, name) ?? Object.entries(jira.stagePrefixes ?? {}).find(([start]) => name.startsWith(start))?.[1] ?? null;
 }
 
 function ownJiraStage(ticket: Ticket, jira: ProfileJira): Stage | null {
@@ -1197,12 +1194,16 @@ export function noteMatches(note: Note, query: string, directions: readonly Dire
   return words.every(word => haystack.includes(word));
 }
 
-/** where the agent's session opens */
 /** coding agents Worklog works with: skills, session summaries, handing tasks over */
 export const AGENTS = ['claude', 'codex'] as const;
 export type Agent = (typeof AGENTS)[number];
 export const AGENT_LABELS: Record<Agent, string> = { claude: 'Claude', codex: 'Codex' };
 
+/** where a code file opens on its line */
+export const EDITORS = ['jetbrains', 'vscode', 'cursor'] as const;
+export type Editor = (typeof EDITORS)[number];
+
+/** where the agent's session opens */
 export const TERMINALS = ['warp', 'iterm', 'terminal'] as const;
 export type Terminal = (typeof TERMINALS)[number];
 

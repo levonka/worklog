@@ -9,13 +9,13 @@ test('resolveAgents keeps the old default without settings', () => {
 test('resolveAgents takes the only installed agent as main', () => {
   const setup = resolveAgents({ codexBin: '/opt/bin/codex' });
   assert.deepEqual(setup, { main: 'codex', bins: { codex: '/opt/bin/codex' } });
-  assert.deepEqual(installedAgents(setup), ['codex']);
+  assert.deepEqual(installedAgents(setup.bins), ['codex']);
 });
 
 test('resolveAgents prefers claude when both are installed and none is chosen', () => {
   const setup = resolveAgents({ claudeBin: '/opt/bin/claude', codexBin: '/opt/bin/codex' });
   assert.equal(setup.main, 'claude');
-  assert.deepEqual(installedAgents(setup), ['claude', 'codex']);
+  assert.deepEqual(installedAgents(setup.bins), ['claude', 'codex']);
 });
 
 test('resolveAgents honours WORKLOG_AGENT and refuses an unknown one', () => {

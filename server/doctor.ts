@@ -12,7 +12,7 @@ import { installedAgents } from './agents.ts';
 import { dataRepoState } from './data-git.ts';
 import type { SettingName } from './env-file.ts';
 import { isSettingName, parseEnvFile } from './env-file.ts';
-import { isErrorCode } from './fs-utils.ts';
+import { errorMessage, isErrorCode } from './fs-utils.ts';
 import { isRecord } from './guards.ts';
 import type { JiraErrorKind, JiraFiles, JiraRequest, ReadPassword } from './jira.ts';
 import { JiraError, httpsRequest, jiraConfig, jiraUser, keychainPassword } from './jira.ts';
@@ -103,10 +103,6 @@ async function isExecutable(file: string): Promise<boolean> {
   }
 }
 
-function message(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
-}
-
 export function defaultMachine(rootDir: string, envFile: string): DoctorMachine {
   const home = homedir();
   return {
@@ -174,28 +170,40 @@ export async function runDoctor(machine: DoctorMachine, config: DoctorConfig | s
     return [...checks, ...later.map(id => check(id, 'skip', 'сначала исправь настройки'))];
   }
   const { profile, error: profileError } = await loadProfile(config.profilePath);
-  const p12 = await p12Check(profile?.jira, config.jiraFiles, probes);
-  const token = await tokenCheck(profile?.jira, config.jiraFiles, probes);
-  checks.push(
-    await chromeCheck(machine, config),
-    await agentsCheck(config.agents),
-    await envCheck(machine),
-    await codeRootCheck(config, probes),
-    profileCheck(config, profile, profileError),
-    (await exists(path.join(machine.rootDir, 'web', 'dist', 'web', 'browser', 'index.html')))
-      ? check('web', 'ok', 'фронт собран')
-      : check('web', 'fail', 'фронт не собран', `в ${machine.rootDir}: npm ci && npm ci --prefix web && npm run build`),
-    p12,
-    token,
-    await jiraCheck(profile?.jira, config.jiraFiles, probes, p12, token),
-    await portCheck(config.port, probes),
-    await skillsCheck(machine, config.agents),
-    await codexDataCheck(machine, config),
-    await cliCheck(machine),
-    await terminalCheck(machine, config.terminal),
-    await binCheck('editor', config.editorBin, 'WORKLOG_EDITOR_BIN', EDITOR_BINS[config.editor]),
-    await dataCheck(config.dataDir),
+  // the certificate, token and Jira checks would each read the same keychain items
+  const passwords = new Map<string, Promise<string | null>>();
+  const readOnce: ReadPassword = service => {
+    const known = passwords.get(service);
+    if (known !== undefined) return known;
+    const reading = probes.readPassword(service);
+    passwords.set(service, reading);
+    return reading;
+  };
+  const once: DoctorProbes = { ...probes, readPassword: readOnce };
+  const jiraChecks = (async (): Promise<Check[]> => {
+    const p12 = await p12Check(profile?.jira, config.jiraFiles, once);
+    const token = await tokenCheck(profile?.jira, config.jiraFiles, once);
+    return [p12, token, await jiraCheck(profile?.jira, config.jiraFiles, once, p12, token)];
+  })();
+  const web = exists(path.join(machine.rootDir, 'web', 'dist', 'web', 'browser', 'index.html')).then(built =>
+    built ? check('web', 'ok', 'фронт собран') : check('web', 'fail', 'фронт не собран', `в ${machine.rootDir}: npm ci && npm ci --prefix web && npm run build`),
   );
+  const [chrome, agents, env, codeRoot, webCheck, jira, port, skills, codexData, cli, terminal, editor, data] = await Promise.all([
+    chromeCheck(machine, config),
+    agentsCheck(config.agents),
+    envCheck(machine),
+    codeRootCheck(config, probes),
+    web,
+    jiraChecks,
+    portCheck(config.port, probes),
+    skillsCheck(machine, config.agents),
+    codexDataCheck(machine, config),
+    cliCheck(machine),
+    terminalCheck(machine, config.terminal),
+    editorCheck(config),
+    dataCheck(config.dataDir),
+  ]);
+  checks.push(chrome, agents, env, codeRoot, profileCheck(config, profile, profileError), webCheck, ...jira, port, skills, codexData, cli, terminal, editor, data);
   return checks;
 }
 
@@ -217,24 +225,28 @@ async function chromeCheck(machine: DoctorMachine, config: DoctorConfig): Promis
   return check('chrome', 'ok', config.chromeDir);
 }
 
-async function binCheck(id: 'editor', bin: string, setting: string, name: string): Promise<Check> {
-  if (await isExecutable(bin)) return check(id, 'ok', bin);
-  const detail = path.isAbsolute(bin) ? `${bin} не найден или не запускается` : `нужен полный путь, а записано «${bin}»`;
-  return check(id, 'fail', detail, `worklog config set ${setting} "$(command -v ${name})"`);
+/** why the program cannot run, or null */
+async function binProblem(bin: string, name: string): Promise<string | null> {
+  if (await isExecutable(bin)) return null;
+  return path.isAbsolute(bin) ? `${bin} не найден или не запускается` : `нужен полный путь к ${name}, а записано «${bin}»`;
+}
+
+async function editorCheck(config: DoctorConfig): Promise<Check> {
+  const name = EDITOR_BINS[config.editor];
+  const problem = await binProblem(config.editorBin, name);
+  return problem === null ? check('editor', 'ok', config.editorBin) : check('editor', 'fail', problem, `worklog config set WORKLOG_EDITOR_BIN "$(command -v ${name})"`);
 }
 
 const AGENT_BIN_SETTINGS: Record<Agent, SettingName> = { claude: 'WORKLOG_CLAUDE_BIN', codex: 'WORKLOG_CODEX_BIN' };
 
 /** the main agent first, then the other one if it is set; each needs a full path to a program that runs */
 async function agentsCheck(setup: AgentSetup): Promise<Check> {
-  const order = [setup.main, ...installedAgents(setup).filter(agent => agent !== setup.main)];
+  const order = [setup.main, ...installedAgents(setup.bins).filter(agent => agent !== setup.main)];
   const labels: string[] = [];
   for (const agent of order) {
     const bin = setup.bins[agent];
-    if (bin === undefined || !(await isExecutable(bin))) {
-      const detail = bin === undefined ? `нет пути к ${agent}` : path.isAbsolute(bin) ? `${bin} не найден или не запускается` : `нужен полный путь к ${agent}, а записано «${bin}»`;
-      return check('agents', 'fail', detail, `worklog config set ${AGENT_BIN_SETTINGS[agent]} "$(command -v ${agent})"`);
-    }
+    const problem = bin === undefined ? `нет пути к ${agent}` : await binProblem(bin, agent);
+    if (bin === undefined || problem !== null) return check('agents', 'fail', problem ?? '', `worklog config set ${AGENT_BIN_SETTINGS[agent]} "$(command -v ${agent})"`);
     // fnm puts every shell's PATH into a folder that disappears with the shell
     if (bin.includes('/fnm_multishells/')) {
       return check('agents', 'fail', `путь ${bin} пропадёт вместе с оболочкой`, `worklog config set ${AGENT_BIN_SETTINGS[agent]} "$(realpath "$(command -v ${agent})")"`);
@@ -250,7 +262,7 @@ async function envCheck(machine: DoctorMachine): Promise<Check> {
     text = await readFile(machine.envFile, 'utf8');
   } catch (error) {
     if (isErrorCode(error, 'ENOENT')) return check('env', 'warn', `нет файла настроек ${machine.envFile}`, 'worklog config set WORKLOG_CODE_ROOT <папка проекта>');
-    return check('env', 'fail', `${machine.envFile}: ${message(error)}`);
+    return check('env', 'fail', `${machine.envFile}: ${errorMessage(error)}`);
   }
   const unknown = Object.keys(parseEnvFile(text)).filter(name => !isSettingName(name));
   if (unknown.length > 0) return check('env', 'warn', `неизвестные настройки: ${unknown.join(', ')}`, `исправь или удали эти строки в ${machine.envFile}`);
@@ -289,7 +301,7 @@ async function p12Check(jira: ProfileJira | undefined, files: JiraFiles, probes:
   try {
     tls.createSecureContext({ pfx, passphrase });
   } catch (error) {
-    const legacy = /unsupported/i.test(message(error));
+    const legacy = /unsupported/i.test(errorMessage(error));
     return check('p12', 'fail', legacy ? 'Node не открывает сертификат старого формата (RC2)' : 'сертификат не открывается этим паролем', legacy ? `перепакуй: ${fix}` : fix);
   }
   return check('p12', 'ok', files.p12Path);
@@ -309,7 +321,7 @@ async function jiraCheck(jira: ProfileJira | undefined, files: JiraFiles, probes
     return check('jira', 'ok', `отвечает, пользователь ${await jiraUser(jiraConfig(jira, files), probes.readPassword, probes.jiraRequest)}`);
   } catch (error) {
     if (error instanceof JiraError) return check('jira', 'fail', `Jira: ${error.message}`, JIRA_FIXES[error.kind]);
-    return check('jira', 'fail', `Jira: ${message(error)}`, JIRA_FIXES.other);
+    return check('jira', 'fail', `Jira: ${errorMessage(error)}`, JIRA_FIXES.other);
   }
 }
 
@@ -334,7 +346,7 @@ async function skillsCheck(machine: DoctorMachine, setup: AgentSetup): Promise<C
   const names = entries.filter(entry => entry.isDirectory()).map(entry => entry.name);
   const missing: string[] = [];
   const foreign: string[] = [];
-  for (const agent of installedAgents(setup)) {
+  for (const agent of installedAgents(setup.bins)) {
     const dir = machine.skillsDirs[agent];
     for (const name of names) {
       const target = await linkTarget(path.join(dir, name));
@@ -344,7 +356,7 @@ async function skillsCheck(machine: DoctorMachine, setup: AgentSetup): Promise<C
   }
   if (foreign.length > 0) return check('skills', 'fail', `не из этого клона: ${foreign.join(', ')}`, 'спроси коллегу, что делать с этими скиллами; без его ответа не трогать');
   if (missing.length > 0) return check('skills', 'fail', `не установлены: ${missing.join(', ')}`, `в ${machine.rootDir}: npm run skills`);
-  return check('skills', 'ok', installedAgents(setup).map(agent => machine.skillsDirs[agent]).join(', '));
+  return check('skills', 'ok', installedAgents(setup.bins).map(agent => machine.skillsDirs[agent]).join(', '));
 }
 
 /** Codex keeps the CLI in its sandbox: without the data folder among its writable roots it asks before every record */
@@ -375,7 +387,7 @@ async function dataCheck(dataDir: string): Promise<Check> {
   try {
     await new Store(dataDir).read();
   } catch (error) {
-    return check('data', 'fail', `данные не читаются: ${message(error)}`);
+    return check('data', 'fail', `данные не читаются: ${errorMessage(error)}`);
   }
   const state = await dataRepoState(dataDir);
   if (state === 'own') return check('data', 'ok', dataDir);

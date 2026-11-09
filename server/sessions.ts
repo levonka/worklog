@@ -37,7 +37,7 @@ const HEAD_SHARE = 0.4;
 
 export async function collectSessions(opts: { projectsDir: string; start: string; end: string }): Promise<PreparedSession[]> {
   const files = await transcriptFiles(opts.projectsDir, new Date(opts.start).getTime());
-  const sessions = await Promise.all(files.map(({ project, file }) => readSession(project, file, opts.start, opts.end)));
+  const sessions = await Promise.all(files.map(({ project, file }) => readIfPresent(() => readTranscript(project, file, opts.start, opts.end))));
   return sessions.filter(session => session !== null).sort((a, b) => compareText(a.firstAt, b.firstAt));
 }
 
@@ -70,13 +70,21 @@ export async function mtimeOf(file: string): Promise<number | null> {
   }
 }
 
-async function readSession(project: string, file: string, start: string, end: string): Promise<PreparedSession | null> {
+// Claude Code and Codex remove old transcripts: one may vanish between readdir and reading
+export async function readIfPresent(read: () => Promise<PreparedSession | null>): Promise<PreparedSession | null> {
   try {
-    return await readTranscript(project, file, start, end);
+    return await read();
   } catch (error) {
     if (isErrorCode(error, 'ENOENT')) return null;
     throw error;
   }
+}
+
+/** a session with its period, or null when it is the summary's own run or the person said nothing */
+export function finishSession(meta: Omit<PreparedSession, 'firstAt' | 'lastAt' | 'messages'>, messages: SessionMessage[], marked: boolean): PreparedSession | null {
+  if (marked || !messages.some(m => m.role === 'user')) return null;
+  const times = messages.map(m => m.at).sort();
+  return { ...meta, firstAt: times[0], lastAt: times[times.length - 1], messages };
 }
 
 async function readTranscript(project: string, file: string, start: string, end: string): Promise<PreparedSession | null> {
@@ -104,9 +112,7 @@ async function readTranscript(project: string, file: string, start: string, end:
     messages.push({ at, role, text });
   }
 
-  if (marked || !messages.some(m => m.role === 'user')) return null;
-  const times = messages.map(m => m.at).sort();
-  return { sessionId, project, cwds: [...cwds], branches: [...branches], firstAt: times[0], lastAt: times[times.length - 1], messages };
+  return finishSession({ sessionId, project, cwds: [...cwds], branches: [...branches] }, messages, marked);
 }
 
 export function parseLine(line: string): Record<string, unknown> | null {

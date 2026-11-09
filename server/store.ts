@@ -87,7 +87,7 @@ const TODOS_FILE = 'todos.json';
 const REPEATS_FILE = 'repeats.json';
 const LINKS_FILE = 'links.json';
 const DAILIES_DIR = 'dailies';
-const DRAFT_FILE = 'daily-draft.json';
+export const DRAFT_FILE = 'daily-draft.json';
 const JSON_EXT = '.json';
 const NOTES_DIR = 'notes';
 const NOTE_EXT = '.md';
@@ -1218,6 +1218,7 @@ const isEventSource = oneOf(EVENT_SOURCES);
 const isEventKind = oneOf(EVENT_KINDS);
 const isDailyItemOrigin = oneOf(DAILY_ITEM_ORIGINS);
 const isAgentTemplate = oneOf(AGENT_TEMPLATES);
+const isAgent = oneOf(AGENTS);
 const isTodoList = arrayOf(isTodo);
 const isRepeatList = arrayOf(isRepeatRule);
 const isLinkGroupList = arrayOf(isQuickLinkGroup);
@@ -1355,7 +1356,7 @@ function isAgentRun(v: unknown): v is AgentRun {
   return (
     isRecord(v) &&
     isString(v.id) &&
-    (v.agent === undefined || AGENTS.some(agent => agent === v.agent)) &&
+    (v.agent === undefined || isAgent(v.agent)) &&
     isAgentTemplate(v.template) &&
     isOptionalString(v.directionId) &&
     isOptionalString(v.todoId) &&

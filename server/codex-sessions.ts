@@ -6,7 +6,7 @@ import { compareText } from '../shared/model.ts';
 import { isErrorCode } from './fs-utils.ts';
 import { isRecord } from './guards.ts';
 import type { PreparedSession, SessionMessage } from './sessions.ts';
-import { SUMMARY_MARKER, mtimeOf, parseLine } from './sessions.ts';
+import { SUMMARY_MARKER, finishSession, mtimeOf, parseLine, readIfPresent } from './sessions.ts';
 
 const ROLLOUT = /^rollout-.*\.jsonl$/;
 // context Codex puts into the user's turn by itself
@@ -16,7 +16,7 @@ const BLOCK_TYPES = { user: 'input_text', assistant: 'output_text' } as const;
 /** Codex sessions of the period as the daily summary takes them: what the person said and what the agent answered */
 export async function collectCodexSessions(opts: { sessionsDir: string; start: string; end: string }): Promise<PreparedSession[]> {
   const files = await rolloutFiles(opts.sessionsDir, new Date(opts.start).getTime());
-  const sessions = await Promise.all(files.map(file => readRollout(file, opts.start, opts.end)));
+  const sessions = await Promise.all(files.map(file => readIfPresent(() => parseRollout(file, opts.start, opts.end))));
   return sessions.filter(session => session !== null).sort((a, b) => compareText(a.firstAt, b.firstAt));
 }
 
@@ -31,15 +31,6 @@ async function rolloutFiles(sessionsDir: string, since: number): Promise<string[
   const files = names.filter(name => ROLLOUT.test(path.basename(name))).map(name => path.join(sessionsDir, name));
   const mtimes = await Promise.all(files.map(mtimeOf));
   return files.filter((_, i) => (mtimes[i] ?? -1) >= since);
-}
-
-async function readRollout(file: string, start: string, end: string): Promise<PreparedSession | null> {
-  try {
-    return await parseRollout(file, start, end);
-  } catch (error) {
-    if (isErrorCode(error, 'ENOENT')) return null;
-    throw error;
-  }
 }
 
 async function parseRollout(file: string, start: string, end: string): Promise<PreparedSession | null> {
@@ -68,10 +59,8 @@ async function parseRollout(file: string, start: string, end: string): Promise<P
     if (role === 'user' && text.includes(SUMMARY_MARKER)) marked = true;
     messages.push({ at, role, text });
   }
-  if (marked || !messages.some(m => m.role === 'user')) return null;
-  const times = messages.map(m => m.at).sort();
   const [cwd] = cwds;
-  return { sessionId, project: cwd === undefined ? 'codex' : cwd.replace(/[/.]/g, '-'), cwds: [...cwds], branches: [...branches], firstAt: times[0], lastAt: times[times.length - 1], messages };
+  return finishSession({ sessionId, project: cwd === undefined ? 'codex' : cwd.replace(/[/.]/g, '-'), cwds: [...cwds], branches: [...branches] }, messages, marked);
 }
 
 function messageText(content: unknown, blockType: string): string | null {

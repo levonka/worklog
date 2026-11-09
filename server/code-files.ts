@@ -1,11 +1,11 @@
 import { spawn } from 'node:child_process';
 import path from 'node:path';
-import type { Note, NoteFile } from '../shared/model.ts';
+import type { Editor, Note, NoteFile } from '../shared/model.ts';
 import { isFile } from './fs-utils.ts';
 import { NotFoundError, checkedNoteFile } from './store.ts';
 
-export const EDITORS = ['jetbrains', 'vscode', 'cursor'] as const;
-export type Editor = (typeof EDITORS)[number];
+export { EDITORS } from '../shared/model.ts';
+export type { Editor } from '../shared/model.ts';
 
 /** found through PATH unless WORKLOG_EDITOR_BIN names the binary */
 export const EDITOR_BINS: Record<Editor, string> = { jetbrains: 'webstorm', vscode: 'code', cursor: 'cursor' };

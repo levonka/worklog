@@ -4,7 +4,7 @@ import path from 'node:path';
 import { promisify } from 'node:util';
 import type { Agent, AgentRequest, AgentRun, BranchPlace, Terminal } from '../shared/model.ts';
 import { isBranchName, TERMINAL_OPEN_LABELS } from '../shared/model.ts';
-import { readdirIfExists, writeTextAtomic } from './fs-utils.ts';
+import { readdirIfExists, writeTextAtomic, errorMessage } from './fs-utils.ts';
 import { HttpError, STATUS_INTERNAL_ERROR } from './http.ts';
 import type { Store } from './store.ts';
 import { ValidationError } from './store.ts';
@@ -133,7 +133,7 @@ function launchFailure(error: unknown): string {
   const stderr = error instanceof Error && 'stderr' in error && typeof error.stderr === 'string' ? error.stderr.trim() : '';
   if (stderr.includes(NOT_ALLOWED)) return 'нет разрешения управлять им: Системные настройки → Конфиденциальность и безопасность → Автоматизация';
   if (stderr !== '') return stderr;
-  return (error instanceof Error ? error.message : String(error)).trim();
+  return errorMessage(error).trim();
 }
 
 /** records the run, then opens the chosen terminal with its session; on failure nothing of it stays */

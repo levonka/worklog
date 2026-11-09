@@ -1,13 +1,14 @@
 import { envFilePath } from '../server/env-file.ts';
+import { errorMessage } from '../server/fs-utils.ts';
 import type { CliResult } from './commands.ts';
-import { isSetupCommand, runSetup } from './setup.ts';
+import { isSetupCommand } from './setup-commands.ts';
 
 async function withConfig(argv: string[]): Promise<CliResult> {
   let config: typeof import('../server/config.ts');
   try {
     config = await import('../server/config.ts');
   } catch (error) {
-    return { code: 1, stdout: '', stderr: `${error instanceof Error ? error.message : String(error)}\nИсправить: worklog config set <ИМЯ> <значение>, проверить: worklog doctor\n` };
+    return { code: 1, stdout: '', stderr: `${errorMessage(error)}\nИсправить: worklog config set <ИМЯ> <значение>, проверить: worklog doctor\n` };
   }
   const { loadProfile } = await import('../server/profile.ts');
   const { runCli } = await import('./commands.ts');
@@ -26,7 +27,12 @@ async function withConfig(argv: string[]): Promise<CliResult> {
 }
 
 const argv = process.argv.slice(2);
-const { code, stdout, stderr } = isSetupCommand(argv[0]) ? await runSetup(argv, { envFile: envFilePath() }) : await withConfig(argv);
+async function setup(argv: string[]): Promise<CliResult> {
+  const { runSetup } = await import('./setup.ts');
+  return runSetup(argv, { envFile: envFilePath() });
+}
+
+const { code, stdout, stderr } = isSetupCommand(argv[0]) ? await setup(argv) : await withConfig(argv);
 if (stdout) process.stdout.write(stdout);
 if (stderr) process.stderr.write(stderr);
 process.exitCode = code;
