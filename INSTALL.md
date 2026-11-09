@@ -1,6 +1,6 @@
 # Installing Worklog — instructions for the agent
 
-You are an AI coding agent (Claude Code or Codex) installing Worklog for a colleague. Usually they started you in their work project and wrote one line: «установи <GitHub link>. данные о компании бери здесь <profile link>». The profile link points to the company profile, a JSON file in the company's GitLab. Keep it for step 3.
+You are an AI coding agent (Claude Code or Codex) installing Worklog for a colleague. Usually they started you in their work project and wrote one line: «установи worklog по инструкции https://raw.githubusercontent.com/levonka/worklog/main/INSTALL.md. данные о компании бери здесь <profile link>». If you were given only the repository link, read this file before cloning anything. The profile link points to the company profile, a JSON file in the company's GitLab. Keep it for step 3.
 
 ## Rules
 
