@@ -1,0 +1,70 @@
+<header class="dv__head">
+  <h1 class="dv__title">Сделано</h1>
+  <span class="dv__spacer"></span>
+  @if (!searching() && years().length > 1) {
+    <div class="dv__years" role="group" aria-label="Год">
+      @for (y of years(); track y) {
+        <button type="button" class="dv__year" [class.dv__year_active]="y === year()" [attr.aria-pressed]="y === year()" (click)="chooseYear(y)">
+          {{ y }}
+        </button>
+      }
+    </div>
+  }
+  <input
+    #searchBox
+    class="dv__search"
+    type="search"
+    placeholder="Поиск: название или задача"
+    aria-label="Поиск по сделанному"
+    autocomplete="off"
+    (input)="search(searchBox.value)"
+  />
+  <ng-content />
+</header>
+
+<div class="dv__body">
+  @if (months().length === 0) {
+    <p class="dv__empty">{{ searching() ? 'Ничего не найдено' : 'Пока ничего не сделано' }}</p>
+  } @else {
+    @if (!searching()) {
+      <p class="dv__summary">{{ summary() }}</p>
+      <div class="dv__chart">
+        @for (bar of bars(); track bar.month) {
+          <button
+            type="button"
+            class="dv__bar"
+            [class.dv__bar_current]="bar.current"
+            [disabled]="bar.count === 0"
+            [attr.aria-label]="barLabel(bar)"
+            [title]="barLabel(bar)"
+            (click)="scrollTo(bar.month)"
+          >
+            <span class="dv__bar-track"><span class="dv__bar-fill" [style.height.%]="bar.height"></span></span>
+            <span class="dv__bar-label">{{ bar.label }}</span>
+          </button>
+        }
+      </div>
+    }
+
+    @for (month of months(); track monthKey(month)) {
+      <section class="dv__month" [attr.data-month]="monthKey(month)">
+        <h2 class="dv__month-head">
+          <span class="dv__month-title">{{ monthTitle(month) }}</span>
+          <span class="dv__month-meta">{{ monthMeta(month) }}</span>
+        </h2>
+        @for (row of month.rows; track row.direction.id) {
+          <button type="button" class="dv__row" (click)="open(row.direction.id)">
+            <span class="dv__row-title">{{ row.direction.title }}</span>
+            @if (row.platforms; as platforms) {
+              <span class="dv__chip">{{ platforms }}</span>
+            }
+            @if (count(row.tickets); as tickets) {
+              <span class="dv__count">{{ tickets }}</span>
+            }
+            <span class="dv__date">{{ date(row.doneAt) }}</span>
+          </button>
+        }
+      </section>
+    }
+  }
+</div>

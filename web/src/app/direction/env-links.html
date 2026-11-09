@@ -1,0 +1,36 @@
+<div class="el__grid" [style.--el-cols]="columns().length">
+  <span></span>
+  @for (segment of columns(); track segment) {
+    <span class="el__col">{{ segment }}</span>
+  }
+  @for (group of groups(); track group.platform) {
+    <button type="button" class="el__group" [title]="'Скопировать ссылки ' + group.platform" (click)="copy(group.platform)">
+      {{ group.platform }} <span class="el__copy" aria-hidden="true">⧉</span>
+    </button>
+    @for (row of group.rows; track row.label) {
+      <span class="el__row">{{ row.label }}</span>
+      @for (cell of row.cells; track cell.segment) {
+        @if (cell.url; as url) {
+          <a class="el__cell" [class.el__cell_off]="cell.off" [href]="url" [title]="url" target="_blank" rel="noopener" draggable="false">{{ cell.segment }}</a>
+        } @else {
+          <span class="el__empty"></span>
+        }
+      }
+    }
+  }
+</div>
+@if (hidden().length > 0) {
+  @if (expanded()) {
+    <button type="button" class="el__more" (click)="expanded.set(false)">− свернуть</button>
+  } @else {
+    <button type="button" class="el__more" (click)="expanded.set(true)">＋ {{ hidden().join(', ') }}</button>
+  }
+}
+<div class="el__storybook">
+  @for (link of storybook(); track link.url) {
+    <a class="el__link" [href]="link.url" [title]="link.url" target="_blank" rel="noopener" draggable="false">{{ link.title }}</a>
+  }
+</div>
+@if (copied(); as message) {
+  <span class="el__copied" role="status">{{ message }}</span>
+}

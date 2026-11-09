@@ -1,0 +1,95 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 12.5px;
+}
+
+.el__grid {
+  display: grid;
+  grid-template-columns: 76px repeat(var(--el-cols), 46px);
+  align-items: center;
+  gap: 1px 4px;
+}
+
+.el__col {
+  font-size: 11px;
+  text-align: center;
+  color: var(--wl-text-3);
+}
+
+.el__group {
+  grid-column: 1 / -1;
+  justify-self: start;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  padding: 2px 6px 2px 0;
+  border: 0;
+  border-radius: 5px;
+  font: inherit;
+  font-weight: 600;
+  background: transparent;
+  color: var(--wl-text);
+  cursor: default;
+}
+
+.el__copy {
+  font-weight: 400;
+  color: var(--wl-accent);
+}
+
+.el__group:hover .el__copy {
+  text-decoration: underline;
+}
+
+.el__row {
+  padding-left: 12px;
+  color: var(--wl-text-2);
+}
+
+.el__cell {
+  padding: 2px 0;
+  border-radius: 5px;
+  text-align: center;
+  text-decoration: none;
+  color: var(--wl-accent);
+}
+
+.el__cell:hover {
+  background: color-mix(in srgb, var(--wl-accent) 10%, transparent);
+}
+
+.el__cell_off {
+  color: color-mix(in srgb, var(--wl-accent) 50%, transparent);
+}
+
+.el__more {
+  padding: 0;
+  border: 0;
+  font: inherit;
+  font-size: 12px;
+  background: transparent;
+  color: var(--wl-accent);
+  cursor: default;
+}
+
+.el__storybook {
+  display: flex;
+  gap: 14px;
+}
+
+.el__link {
+  text-decoration: none;
+  color: var(--wl-accent);
+}
+
+.el__copied {
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 11.5px;
+  background: var(--wl-jira-green-bg);
+  color: var(--wl-jira-green-fg);
+}

@@ -1,0 +1,41 @@
+<span class="dc__title">{{ direction().title }}</span>
+@if (direction().tickets.length > 0) {
+  <span class="dc__meta">
+    @for (ticket of direction().tickets; track ticket.key) {
+      <span class="dc__key">{{ ticket.key }}</span>
+    }
+  </span>
+}
+@if (links().length > 0) {
+  <!-- a link opens the site, not the direction the card stands for -->
+  <span class="dc__links">
+    @for (link of links(); track $index) {
+      <a
+        class="dc__link"
+        [href]="link.url"
+        [title]="link.title"
+        target="_blank"
+        rel="noopener"
+        draggable="false"
+        (click)="$event.stopPropagation()"
+        (keydown.enter)="$event.stopPropagation()"
+      >
+        <wl-favicon [url]="link.url">
+          <span class="dc__link-icon">{{ link.icon }}</span>
+        </wl-favicon>
+      </a>
+    }
+  </span>
+}
+@if (waitingFor()) {
+  <span class="dc__wait">жду: {{ waitingFor() }}</span>
+}
+@if (stage()) {
+  <span class="dc__stage">{{ stage() }}</span>
+}
+@if (badge()) {
+  <span class="dc__badge">{{ badge() }}</span>
+}
+@if (agent()) {
+  <span class="dc__agent">{{ agent() }}</span>
+}

@@ -1,0 +1,144 @@
+@if (todo().done) {
+  <span class="tr__grip"></span>
+} @else {
+  <span class="tr__grip" cdkDragHandle title="Перетащить в списке или на карточку направления">
+    <svg width="8" height="14" viewBox="0 0 8 14" fill="currentColor" aria-hidden="true">
+      <circle cx="2" cy="2" r="1.3" />
+      <circle cx="6" cy="2" r="1.3" />
+      <circle cx="2" cy="7" r="1.3" />
+      <circle cx="6" cy="7" r="1.3" />
+      <circle cx="2" cy="12" r="1.3" />
+      <circle cx="6" cy="12" r="1.3" />
+    </svg>
+  </span>
+}
+
+<button
+  type="button"
+  class="tr__check"
+  [class.tr__check_on]="todo().done"
+  role="checkbox"
+  [attr.aria-checked]="todo().done"
+  [attr.aria-label]="todo().text"
+  (click)="toggleDone()"
+></button>
+
+<div class="tr__body">
+  @if (editing()) {
+    <input
+      #editor
+      class="tr__edit"
+      aria-label="Текст дела"
+      autocomplete="off"
+      [value]="todo().text"
+      (keydown.enter)="save(editor.value)"
+      (keydown.escape)="editing.set(false)"
+      (blur)="save(editor.value)"
+    />
+  } @else {
+    <span class="tr__text wl-selectable" (dblclick)="editing.set(true)">{{ todo().text }}</span>
+  }
+
+  <span class="tr__tags">
+    @if (showDirection()) {
+      @if (direction(); as direction) {
+        <span class="tr__dir" [title]="direction.title">
+          <span class="tr__dot" [style.background]="dotOf(direction)"></span>
+          <span class="tr__dir-title">{{ direction.title }}</span>
+        </span>
+      } @else {
+        <span class="tr__dir">без направления</span>
+      }
+    }
+    @if (todo().requestedBy; as requestedBy) {
+      <span class="tr__who">от {{ requestedBy }}</span>
+    }
+    @if (run(); as run) {
+      <span class="tr__agent" [title]="'Агент работает · ветка ' + run.branch">✦ {{ runSince() }}</span>
+    }
+    @if (repeat(); as repeat) {
+      <span class="tr__repeat" [title]="'Повторяется ' + repeat" [attr.aria-label]="'Повторяется ' + repeat">↻</span>
+    }
+    @if (due(); as due) {
+      <span class="tr__due" [class.tr__due_late]="due.late" title="Срок">{{ due.label }}</span>
+    }
+    @if (todo().time; as time) {
+      <span class="tr__time" title="Время">{{ time }}</span>
+    }
+    @if (todo().url; as url) {
+      <a class="tr__link" [href]="url" target="_blank" rel="noopener" [title]="url">↗ {{ linkHost() }}</a>
+    }
+  </span>
+</div>
+
+@if (dropTitle(); as title) {
+  <span class="tr__drop-hint">→ {{ title }}</span>
+}
+
+<button
+  type="button"
+  class="tr__more"
+  [class.tr__more_on]="menu() !== null"
+  title="Действия"
+  aria-label="Действия"
+  [attr.aria-expanded]="menu() !== null"
+  (click)="toggleMenu()"
+>…</button>
+
+@if (menu(); as panel) {
+  <div class="tr__backdrop" (click)="menu.set(null)"></div>
+  <div class="tr__menu" [class.tr__menu_up]="menuUp()">
+    @switch (panel) {
+      @case ('main') {
+        @if (!todo().done) {
+          <button type="button" class="tr__item" (click)="openAgentSheet()"><span class="tr__spark">✦</span> Поручить агенту</button>
+        }
+        @if (run(); as run) {
+          <button type="button" class="tr__item" (click)="finishAgent(run.id)">Снять отметку агента</button>
+        }
+        @if (!todo().done || run()) {
+          <hr class="tr__sep" />
+        }
+        <button type="button" class="tr__item" (click)="menu.set('direction')">Направление <span class="tr__arrow">▸</span></button>
+        <button type="button" class="tr__item" (click)="menu.set('requester')">Кто попросил</button>
+        <button type="button" class="tr__item" (click)="menu.set('due')">Срок</button>
+        <hr class="tr__sep" />
+        <button type="button" class="tr__item tr__item_danger" (click)="remove()">Удалить</button>
+      }
+      @case ('direction') {
+        <button type="button" class="tr__item" [class.tr__item_current]="todo().directionId === undefined" (click)="setDirection(null)">Без направления</button>
+        @for (direction of directions(); track direction.id) {
+          <button
+            type="button"
+            class="tr__item"
+            [class.tr__item_current]="direction.id === todo().directionId"
+            (click)="setDirection(direction.id)"
+          ><span class="tr__dot" [style.background]="dotOf(direction)"></span><span class="tr__item-text">{{ direction.title }}</span></button>
+        }
+      }
+      @case ('requester') {
+        <label class="tr__field">
+          от
+          <input
+            #field
+            class="tr__input"
+            placeholder="Ивана"
+            aria-label="Кто попросил"
+            autocomplete="off"
+            [value]="todo().requestedBy ?? ''"
+            (keydown.enter)="setRequester(field.value)"
+          />
+        </label>
+      }
+      @case ('due') {
+        <label class="tr__field">
+          <input #field type="date" class="tr__input" aria-label="Срок" [value]="todo().due ?? ''" (keydown.enter)="saveDue(field)" />
+        </label>
+        <button type="button" class="tr__item" (click)="saveDue(field)">Сохранить</button>
+        @if (todo().due) {
+          <button type="button" class="tr__item" (click)="setDue(null)">Убрать срок</button>
+        }
+      }
+    }
+  </div>
+}

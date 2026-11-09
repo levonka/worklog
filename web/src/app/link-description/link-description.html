@@ -1,0 +1,16 @@
+@if (editing()) {
+  <textarea
+    #field
+    class="ld__field"
+    rows="2"
+    placeholder="Что это, зачем, вход, полезное…"
+    aria-label="Описание ссылки"
+    [value]="text() ?? ''"
+    (keydown.meta.enter)="field.blur()"
+    (keydown.escape)="abandon($event)"
+    (blur)="commit(field.value)"
+  ></textarea>
+  <span class="ld__hint">⌘↩ — сохранить, Esc — отмена</span>
+} @else if (text(); as text) {
+  <wl-rich-text class="ld__text" [text]="text" title="Двойной клик — изменить" (dblclick)="edit.emit()" />
+}

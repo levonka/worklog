@@ -1,0 +1,45 @@
+<input
+  #field
+  class="tl__new"
+  placeholder="＋ Новое дело…"
+  aria-label="Новое дело"
+  autocomplete="off"
+  (keydown.enter)="add(field)"
+/>
+
+<div class="tl__list" cdkDropList (cdkDropListDropped)="dropped($event)">
+  @for (todo of todos(); track todo.id) {
+    <wl-todo-row
+      class="tl__row"
+      cdkDrag
+      [cdkDragData]="todo.id"
+      [todo]="todo"
+      [showDirection]="directionId() === undefined"
+      (cdkDragStarted)="dragCancel.arm()"
+      (cdkDragMoved)="todoMoved(todo, $event)"
+      (cdkDragEnded)="dropHint.clear()"
+    />
+  }
+</div>
+
+@if (doneToday().length > 0) {
+  <section class="tl__done">
+    <button
+      type="button"
+      class="tl__done-toggle"
+      [class.tl__done-toggle_open]="doneExpanded()"
+      [attr.aria-expanded]="doneExpanded()"
+      (click)="doneExpanded.set(!doneExpanded())"
+    >
+      <svg class="tl__chevron" width="8" height="8" viewBox="0 0 8 8" aria-hidden="true">
+        <path d="M2.5 1 5.5 4l-3 3" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+      Сделано сегодня <span class="tl__done-count">{{ doneToday().length }}</span>
+    </button>
+    @if (doneExpanded()) {
+      @for (todo of doneToday(); track todo.id) {
+        <wl-todo-row [todo]="todo" [showDirection]="directionId() === undefined" />
+      }
+    }
+  </section>
+}

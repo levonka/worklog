@@ -1,0 +1,47 @@
+<input #titleField class="ne__title" placeholder="Заголовок" aria-label="Заголовок заметки" autocomplete="off" [value]="note()?.title ?? ''" />
+<textarea
+  #bodyField
+  class="ne__field ne__field_body"
+  placeholder="3–10 строк. Если факт уже есть в README, коде или Confluence — одна строка и ссылка."
+  aria-label="Текст заметки"
+  [value]="note()?.body ?? ''"
+></textarea>
+<textarea
+  #linksField
+  class="ne__field ne__field_links"
+  placeholder="Ссылки, по одной в строке: libs/core/README.md · push-token.service.ts:42 · https://… название"
+  aria-label="Ссылки заметки"
+  spellcheck="false"
+  [value]="linkText()"
+></textarea>
+
+<div class="ne__dirs">
+  @for (direction of attached(); track direction.id) {
+    <span class="ne__chip">
+      {{ direction.title }}
+      <button type="button" class="ne__chip-remove" [attr.aria-label]="'Отвязать от ' + direction.title" (click)="detach(direction.id)">✕</button>
+    </span>
+  }
+  @if (available().length > 0) {
+    <select #directionSelect class="ne__select" aria-label="Привязать к направлению" (change)="attach(directionSelect)">
+      <option value="">＋ направление</option>
+      @for (direction of available(); track direction.id) {
+        <option [value]="direction.id">{{ direction.title }}</option>
+      }
+    </select>
+  }
+</div>
+
+@if (error(); as error) {
+  <p class="ne__error" role="alert">{{ error }}</p>
+}
+
+<div class="ne__actions">
+  @if (note()) {
+    <button type="button" class="ne__btn ne__btn_danger" (click)="remove()">Удалить</button>
+  }
+  <span class="ne__spacer"></span>
+  <span class="ne__hint">⌘↩</span>
+  <button type="button" class="ne__btn" (click)="done.emit()">Отмена</button>
+  <button type="button" class="ne__btn ne__btn_primary" [disabled]="saving()" (click)="save()">Сохранить</button>
+</div>

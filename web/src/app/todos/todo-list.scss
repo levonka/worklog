@@ -1,0 +1,73 @@
+:host {
+  max-width: 760px;
+  display: flex;
+  flex-direction: column;
+  padding: 10px 0 16px;
+}
+
+.tl__new {
+  height: 30px;
+  flex-shrink: 0;
+  margin: 0 12px 6px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 8px;
+  outline: none;
+  font-size: 12.5px;
+  background: color-mix(in srgb, var(--wl-text) 4%, transparent);
+}
+
+.tl__new::placeholder {
+  color: var(--wl-text-3);
+}
+
+.tl__new:focus {
+  background: var(--wl-bg);
+  box-shadow:
+    0 0 0 1px var(--wl-accent),
+    0 0 0 3.5px color-mix(in srgb, var(--wl-accent) 30%, transparent);
+}
+
+.tl__list {
+  display: flex;
+  flex-direction: column;
+}
+
+// the drop animation runs on the preview in <body>, out of reach of host variables
+.tl__list.cdk-drop-list-dragging .tl__row:not(.cdk-drag-placeholder),
+.tl__row.cdk-drag-animating {
+  transition: transform 220ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.tl__done-toggle {
+  align-self: flex-start;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 8px 6px 2px;
+  padding: 3px 10px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--wl-text-3);
+  cursor: default;
+}
+
+.tl__done-toggle:hover {
+  color: var(--wl-text-2);
+}
+
+.tl__chevron {
+  transition: transform 0.15s;
+}
+
+.tl__done-toggle_open .tl__chevron {
+  transform: rotate(90deg);
+}
+
+.tl__done-count {
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}

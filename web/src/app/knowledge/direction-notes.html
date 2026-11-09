@@ -1,0 +1,8 @@
+@for (note of notes(); track note.id) {
+  <wl-note-card [note]="note" [showDirections]="false" />
+}
+@if (creating()) {
+  <wl-note-editor [directionId]="directionId()" (done)="creating.set(false)" />
+} @else {
+  <button type="button" class="dn__add" (click)="creating.set(true)">＋ заметка</button>
+}

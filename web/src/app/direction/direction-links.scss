@@ -1,0 +1,103 @@
+:host {
+  --dl-fill: color-mix(in srgb, var(--wl-text) 6%, transparent);
+
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dl__link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 -8px;
+  padding: 0 4px 0 8px;
+  border-radius: 6px;
+}
+
+.dl__link:hover {
+  background: var(--dl-fill);
+}
+
+.dl__anchor {
+  flex: 1;
+  min-width: 0;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--wl-text);
+  text-decoration: none;
+}
+
+.dl__icon {
+  width: 16px;
+  flex-shrink: 0;
+  text-align: center;
+  font-size: 13px;
+}
+
+.dl__text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dl__desc {
+  padding: 0 0 4px 24px;
+}
+
+.dl__btn {
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  line-height: 1;
+  font-size: 9px;
+  background: transparent;
+  color: var(--wl-text-3);
+  cursor: default;
+  opacity: 0;
+}
+
+.dl__link:hover .dl__btn,
+.dl__btn:focus-visible {
+  opacity: 1;
+}
+
+.dl__btn:hover {
+  background: var(--dl-fill);
+  color: var(--wl-text);
+}
+
+.dl__form {
+  display: flex;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.dl__input {
+  min-width: 0;
+  height: 28px;
+  flex: 1;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 7px;
+  outline: none;
+  font-size: 12.5px;
+  background: color-mix(in srgb, var(--wl-text) 4%, transparent);
+}
+
+.dl__input_url {
+  flex: 2;
+}
+
+.dl__input:focus {
+  background: var(--wl-bg);
+  box-shadow: 0 0 0 1px var(--wl-accent);
+}
+
+.dl__input::placeholder {
+  color: var(--wl-text-3);
+}

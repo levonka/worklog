@@ -1,0 +1,79 @@
+:host {
+  --kv-fill: color-mix(in srgb, var(--wl-text) 6%, transparent);
+
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.kv__bar {
+  height: 46px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px 0 16px;
+  border-bottom: 1px solid var(--wl-sep);
+}
+
+.kv__title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.kv__spacer {
+  flex: 1;
+}
+
+.kv__search {
+  width: 220px;
+  min-width: 0;
+  height: 24px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 6px;
+  outline: none;
+  background: var(--kv-fill);
+  font-size: 12px;
+}
+
+.kv__search:focus {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--wl-accent) 50%, transparent);
+}
+
+.kv__add {
+  height: 24px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 6px;
+  background: var(--kv-fill);
+  font-size: 12.5px;
+  white-space: nowrap;
+  cursor: default;
+}
+
+.kv__add:disabled {
+  opacity: 0.5;
+}
+
+.kv__body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 24px 24px;
+  overflow-y: auto;
+}
+
+.kv__body > * {
+  width: 100%;
+  max-width: 760px;
+}
+
+.kv__empty {
+  margin: 24px 0;
+  color: var(--wl-text-3);
+}

@@ -1,0 +1,31 @@
+:host {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+}
+
+.bl__label {
+  color: var(--wl-text-2);
+}
+
+.bl__name {
+  padding: 2px 7px;
+  border-radius: 5px;
+  font: 12px ui-monospace, "SF Mono", Menlo, monospace;
+  background: color-mix(in srgb, var(--wl-text) 6%, transparent);
+}
+
+.bl__copy {
+  padding: 2px 6px;
+  border: 0;
+  border-radius: 5px;
+  font-size: 12px;
+  background: transparent;
+  color: var(--wl-text-2);
+  cursor: default;
+}
+
+.bl__copy:hover {
+  background: color-mix(in srgb, var(--wl-text) 6%, transparent);
+}

@@ -1,0 +1,55 @@
+@if (kind() === 'todos') {
+  <header class="pn__bar">
+    <h1 class="pn__title">{{ view().title }}</h1>
+    <span class="pn__spacer"></span>
+    <ng-container [ngTemplateOutlet]="paneActions" />
+  </header>
+}
+
+<div class="pn__body">
+  <!-- the board and the direction view have their own header and take the pane controls into it -->
+  @switch (kind()) {
+    @case ('board') {
+      <wl-board>
+        <ng-container [ngTemplateOutlet]="paneActions" />
+      </wl-board>
+    }
+    @case ('todos') {
+      <wl-todo-list />
+    }
+    @case ('history') {
+      <wl-history-view>
+        <ng-container [ngTemplateOutlet]="paneActions" />
+      </wl-history-view>
+    }
+    @case ('done') {
+      <wl-done-view>
+        <ng-container [ngTemplateOutlet]="paneActions" />
+      </wl-done-view>
+    }
+    @case ('knowledge') {
+      <wl-knowledge-view>
+        <ng-container [ngTemplateOutlet]="paneActions" />
+      </wl-knowledge-view>
+    }
+    @case ('daily') {
+      <wl-daily-view>
+        <ng-container [ngTemplateOutlet]="paneActions" />
+      </wl-daily-view>
+    }
+    @case ('direction') {
+      <!-- a fresh view for every direction: text typed for one must not end up in another -->
+      @for (id of directionIds(); track id) {
+        <wl-direction-view [directionId]="id">
+          <ng-container [ngTemplateOutlet]="paneActions" />
+        </wl-direction-view>
+      }
+    }
+  }
+</div>
+
+<ng-template #paneActions>
+  @if (isRight()) {
+    <button type="button" class="pn__btn" title="Убрать разделение" aria-label="Убрать разделение" (click)="tabs.unsplit()">⇥</button>
+  }
+</ng-template>

@@ -1,0 +1,48 @@
+:host {
+  padding: 1px 6px;
+  border-radius: 9px;
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--js-bg);
+  color: var(--js-fg);
+}
+
+:host(.wl-jira-status_gray) {
+  --js-bg: var(--wl-jira-gray-bg);
+  --js-fg: var(--wl-jira-gray-fg);
+}
+
+:host(.wl-jira-status_purple) {
+  --js-bg: var(--wl-jira-purple-bg);
+  --js-fg: var(--wl-jira-purple-fg);
+}
+
+:host(.wl-jira-status_blue) {
+  --js-bg: var(--wl-jira-blue-bg);
+  --js-fg: var(--wl-jira-blue-fg);
+}
+
+:host(.wl-jira-status_yellow) {
+  --js-bg: var(--wl-jira-yellow-bg);
+  --js-fg: var(--wl-jira-yellow-fg);
+}
+
+:host(.wl-jira-status_orange) {
+  --js-bg: var(--wl-jira-orange-bg);
+  --js-fg: var(--wl-jira-orange-fg);
+}
+
+:host(.wl-jira-status_cyan) {
+  --js-bg: var(--wl-jira-cyan-bg);
+  --js-fg: var(--wl-jira-cyan-fg);
+}
+
+:host(.wl-jira-status_teal) {
+  --js-bg: var(--wl-jira-teal-bg);
+  --js-fg: var(--wl-jira-teal-fg);
+}
+
+:host(.wl-jira-status_green) {
+  --js-bg: var(--wl-jira-green-bg);
+  --js-fg: var(--wl-jira-green-fg);
+}

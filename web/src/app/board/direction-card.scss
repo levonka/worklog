@@ -1,0 +1,120 @@
+// the drag preview is a clone of this host appended to <body>: only global tokens reach it
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 9px 11px 10px;
+  border-radius: 9px;
+  background: light-dark(#ffffff, #2b2b2e);
+  box-shadow:
+    0 0 0 0.5px light-dark(rgba(0, 0, 0, 0.12), rgba(255, 255, 255, 0.1)),
+    0 1px 2px rgba(0, 0, 0, 0.05);
+  overflow-wrap: anywhere;
+  cursor: default;
+  outline: none;
+  transition: box-shadow 0.15s;
+}
+
+:host(:hover) {
+  box-shadow:
+    0 0 0 0.5px light-dark(rgba(0, 0, 0, 0.16), rgba(255, 255, 255, 0.14)),
+    0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+:host(:focus-visible),
+:host(.wl-direction-card_target) {
+  box-shadow: 0 0 0 2px var(--wl-accent);
+}
+
+.dc__title {
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.dc__meta {
+  font-size: 11px;
+  color: var(--wl-text-2);
+  font-variant-numeric: tabular-nums;
+}
+
+// lines break between keys, never inside one
+.dc__key {
+  white-space: nowrap;
+}
+
+.dc__key + .dc__key::before {
+  content: ' · ';
+}
+
+.dc__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  margin-left: -3px;
+}
+
+.dc__link {
+  display: flex;
+  padding: 3px;
+  border-radius: 5px;
+}
+
+.dc__link:hover {
+  background: color-mix(in srgb, var(--wl-text) 8%, transparent);
+}
+
+.dc__link-icon {
+  font-size: 12px;
+  line-height: 1;
+}
+
+.dc__wait {
+  padding: 5px 8px;
+  border-radius: 6px;
+  font-size: 11.5px;
+  background: color-mix(in srgb, var(--wl-st-waiting) 12%, transparent);
+  color: light-dark(#8a4b00, #ffb340);
+}
+
+.dc__stage {
+  align-self: flex-start;
+  font-size: 11px;
+  color: var(--wl-text-2);
+}
+
+.dc__agent {
+  align-self: flex-start;
+  padding: 2px 7px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 500;
+  background: color-mix(in srgb, #7a3ff2 11%, transparent);
+  color: light-dark(#6a2fe0, #b18cff);
+}
+
+.dc__badge {
+  align-self: flex-start;
+  padding: 2px 7px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 500;
+  background: color-mix(in srgb, var(--wl-accent) 11%, transparent);
+  color: light-dark(#0a5fd0, #6cb2ff);
+}
+
+// the slot a dragged card leaves behind or is about to land in
+:host(.cdk-drag-placeholder) {
+  background: color-mix(in srgb, var(--wl-text) 5%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--wl-text) 10%, transparent);
+}
+
+:host(.cdk-drag-placeholder) > * {
+  visibility: hidden;
+}
+
+:host(.cdk-drag-preview) {
+  box-shadow:
+    0 0 0 0.5px light-dark(rgba(0, 0, 0, 0.12), rgba(255, 255, 255, 0.14)),
+    0 12px 28px rgba(0, 0, 0, 0.22);
+}

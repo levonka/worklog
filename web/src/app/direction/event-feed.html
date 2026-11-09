@@ -1,0 +1,12 @@
+<input #field class="ef__input" placeholder="Что произошло?" aria-label="Что произошло?" autocomplete="off" (keydown.enter)="add(field)" />
+<ol class="ef__events">
+  @for (event of events(); track event.id) {
+    <li class="ef__event" [class.ef__event_status]="event.kind === 'status'">
+      <span class="ef__time">{{ event.time }}</span>
+      @if (event.source === 'jira') {
+        <span class="ef__source">Jira</span>
+      }
+      <span class="ef__text wl-selectable">{{ event.text }}</span>
+    </li>
+  }
+</ol>

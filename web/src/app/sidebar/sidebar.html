@@ -1,0 +1,83 @@
+<nav class="sb__nav">
+  @for (item of nav(); track item.id) {
+    <button type="button" class="sb__item" [class.sb__item_open]="item.open" (click)="tabs.openTab(item.id)">
+      <span class="sb__icon">{{ item.icon }}</span>
+      <span class="sb__label">{{ item.title }}</span>
+      @if (item.count > 0) {
+        <span class="sb__count">{{ item.count }}</span>
+      }
+    </button>
+  }
+</nav>
+
+@for (group of groups(); track group.id) {
+  <section class="sb__group">
+    <header class="sb__group-head">
+      <h2 class="sb__group-title">{{ group.title }}</h2>
+      <button
+        type="button"
+        class="sb__group-add"
+        [class.sb__group-add_on]="addingTo() === group.id"
+        title="Добавить ссылку"
+        aria-label="Добавить ссылку"
+        (click)="startAdding(group.id)"
+      >＋</button>
+    </header>
+
+    @for (link of group.links; track link.url) {
+      <div class="sb__link">
+        <a class="sb__link-anchor" [href]="link.url" [title]="link.description ?? link.url" target="_blank" rel="noopener">
+          <wl-favicon [url]="link.url" aria-hidden="true">
+            <span class="sb__fav" [style.background]="link.color">{{ link.letter }}</span>
+          </wl-favicon>
+          <span class="sb__label">{{ link.title }}</span>
+        </a>
+        <button
+          type="button"
+          class="sb__info"
+          [class.sb__info_on]="link.description !== undefined || infoKey() === link.key"
+          [title]="link.description !== undefined ? 'Описание' : 'Добавить описание'"
+          [attr.aria-label]="'Описание ' + link.title"
+          [attr.aria-expanded]="infoKey() === link.key"
+          (click)="toggleInfo(link.key, link.description === undefined)"
+        >{{ link.description !== undefined ? 'ⓘ' : '✎' }}</button>
+        <button type="button" class="sb__remove" title="Удалить ссылку" [attr.aria-label]="'Удалить ' + link.title" (click)="remove(group.id, link.url)">✕</button>
+      </div>
+      @if (infoKey() === link.key) {
+        <div class="sb__desc">
+          <wl-link-description
+            [text]="link.description"
+            [editing]="editingInfo()"
+            (edit)="editingInfo.set(true)"
+            (save)="saveDescription(group.id, link.url, $event)"
+            (cancel)="closeEditing(link.description === undefined)"
+          />
+          @if (!editingInfo()) {
+            <button type="button" class="sb__desc-edit" (click)="editingInfo.set(true)">Изменить</button>
+          }
+        </div>
+      }
+    }
+
+    @if (addingTo() === group.id) {
+      <div class="sb__form">
+        <input
+          #linkTitle
+          class="sb__input"
+          placeholder="Название"
+          aria-label="Название ссылки"
+          (keydown.enter)="linkUrl.focus()"
+          (keydown.escape)="cancelAdding()"
+        />
+        <input
+          #linkUrl
+          class="sb__input"
+          placeholder="https://…"
+          aria-label="Адрес ссылки"
+          (keydown.enter)="add(group.id, group.title, linkTitle.value, linkUrl.value)"
+          (keydown.escape)="cancelAdding()"
+        />
+      </div>
+    }
+  </section>
+}

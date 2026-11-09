@@ -1,0 +1,87 @@
+<dialog #dialog class="as__dialog" aria-labelledby="as-title" (cancel)="cancel($event)" (keydown)="launchByKey($event)">
+  <h2 id="as-title" class="as__title"><span class="as__spark">✦</span> Поручение агенту · <span class="as__subject">{{ subject() }}</span></h2>
+
+  <div class="as__templates" role="group" aria-label="Шаблон">
+    @for (item of templates; track item.template) {
+      <button
+        type="button"
+        class="as__template"
+        [class.as__template_on]="item.template === template()"
+        [attr.aria-pressed]="item.template === template()"
+        (click)="template.set(item.template)"
+      >{{ item.label }}</button>
+    }
+  </div>
+
+  @if (parts().length > 0) {
+    <section class="as__section">
+      <h3 class="as__label">Контекст из карточки</h3>
+      <div class="as__context">
+        @for (row of parts(); track row.part) {
+          <label class="as__part">
+            <input type="checkbox" class="as__check" [checked]="isOn(row.part)" (change)="togglePart(row.part)" />
+            <span class="as__part-label">{{ row.label }}</span>
+            <span class="as__part-summary" [class.as__part-summary_off]="!isOn(row.part)">{{ row.summary }}</span>
+          </label>
+        }
+      </div>
+    </section>
+  }
+
+  <section class="as__section">
+    <h3 class="as__label">Дополнительный контекст{{ needsExtra() ? '' : ' · необязательно' }}</h3>
+    <textarea
+      #extraField
+      class="as__extra"
+      rows="5"
+      aria-label="Дополнительный контекст"
+      [placeholder]="placeholder()"
+      [value]="extra()"
+      (input)="extra.set(extraField.value)"
+    ></textarea>
+  </section>
+
+  @if (agents().length > 1) {
+    <div class="as__agent-row">
+      Агент
+      <div class="as__agents" role="group" aria-label="Агент">
+        @for (name of agents(); track name) {
+          <button type="button" class="as__agent" [class.as__agent_on]="name === agent()" [attr.aria-pressed]="name === agent()" (click)="pickAgent(name)">
+            {{ agentLabels[name] }}
+          </button>
+        }
+      </div>
+    </div>
+  }
+
+  <label class="as__branch">
+    Ветка
+    <input
+      #branchField
+      class="as__branch-input"
+      [class.as__branch-input_invalid]="!branchValid()"
+      aria-label="Ветка"
+      autocomplete="off"
+      spellcheck="false"
+      [value]="branch()"
+      (input)="setBranch(branchField.value)"
+    />
+    <span class="as__branch-hint" [class.as__branch-hint_bad]="!branchValid()">{{ branchHint() }}</span>
+  </label>
+
+  @if (failure(); as failure) {
+    <p class="as__failure wl-selectable" role="alert">{{ failure }}</p>
+  } @else if (gone()) {
+    <p class="as__failure" role="alert">Карточки больше нет</p>
+  }
+
+  <footer class="as__foot">
+    @if (launchHint(); as hint) {
+      <span class="as__hint">{{ hint }}</span>
+    } @else {
+      <span class="as__hint"></span>
+    }
+    <button type="button" class="as__btn" (click)="close()">Отмена</button>
+    <button type="button" class="as__btn as__btn_primary" [disabled]="!canLaunch()" (click)="launch()">Запустить ⌘↩</button>
+  </footer>
+</dialog>

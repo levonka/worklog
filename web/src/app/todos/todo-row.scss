@@ -1,0 +1,315 @@
+// the drag preview is a clone of this host appended to <body>: only global tokens reach it
+:host {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin: 0 6px;
+  padding: 7px 6px 7px 8px;
+  border-radius: 8px;
+}
+
+// above the rows below it, which the open menu overlaps
+:host(.wl-todo-row_menu) {
+  z-index: 10;
+}
+
+:host(:hover) {
+  background: color-mix(in srgb, var(--wl-text) 4%, transparent);
+}
+
+// shows up with the row under the pointer, like the … button
+.tr__grip {
+  width: 14px;
+  height: 18px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  margin: -1px -2px 0 -4px;
+  color: var(--wl-text-2);
+  opacity: 0;
+  cursor: grab;
+}
+
+:host(.wl-todo-row_target) {
+  background: color-mix(in srgb, var(--wl-accent) 8%, transparent);
+  box-shadow: inset 0 0 0 2px var(--wl-accent);
+}
+
+// over the row's right edge, not in the flow: the text keeps its width and the row its height
+.tr__drop-hint {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  max-width: calc(100% - 48px);
+  padding: 1px 7px;
+  overflow: hidden;
+  border-radius: 5px;
+  background: var(--wl-accent);
+  color: #fff;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  translate: 0 -50%;
+  pointer-events: none;
+}
+
+.tr__check {
+  position: relative;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  margin-top: 1px;
+  padding: 0;
+  border: 1.5px solid light-dark(#c7c7cc, #636366);
+  border-radius: 50%;
+  background: transparent;
+  cursor: default;
+}
+
+.tr__check:hover,
+.tr__check_on {
+  border-color: var(--wl-accent);
+}
+
+.tr__check_on {
+  background: var(--wl-accent);
+}
+
+.tr__check_on::after {
+  content: '✓';
+  position: absolute;
+  inset: 0;
+  font-size: 10px;
+  line-height: 13px;
+  color: #fff;
+}
+
+.tr__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.tr__text {
+  overflow-wrap: anywhere;
+}
+
+:host(.wl-todo-row_done) .tr__text {
+  color: var(--wl-text-3);
+  text-decoration: line-through;
+}
+
+.tr__edit,
+.tr__input {
+  min-width: 0;
+  border: 0;
+  outline: none;
+  background: var(--wl-bg);
+  box-shadow: 0 0 0 1px var(--wl-accent);
+}
+
+.tr__edit {
+  margin: -2px -4px;
+  padding: 1px 3px;
+  border-radius: 4px;
+}
+
+.tr__tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--wl-text-2);
+}
+
+.tr__dir {
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.tr__dir-title,
+.tr__item-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tr__dot {
+  width: 8px;
+  height: 8px;
+  flex-shrink: 0;
+  border-radius: 50%;
+}
+
+.tr__repeat {
+  color: var(--wl-text-3);
+}
+
+.tr__time {
+  font-variant-numeric: tabular-nums;
+}
+
+.tr__link {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--wl-accent);
+  text-decoration: none;
+}
+
+.tr__link:hover {
+  text-decoration: underline;
+}
+
+.tr__who {
+  color: light-dark(#b25f00, #ffb340);
+}
+
+.tr__agent,
+.tr__spark {
+  color: light-dark(#6a2fe0, #b18cff);
+}
+
+.tr__due_late,
+.tr__item_danger {
+  color: var(--wl-danger);
+}
+
+.tr__more {
+  width: 22px;
+  height: 20px;
+  flex-shrink: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--wl-text-2);
+  opacity: 0;
+  cursor: default;
+}
+
+:host(:hover) .tr__grip,
+:host(:hover) .tr__more,
+.tr__more:focus-visible,
+.tr__more_on {
+  opacity: 1;
+}
+
+.tr__more:hover,
+.tr__more_on {
+  background: color-mix(in srgb, var(--wl-text) 7%, transparent);
+}
+
+.tr__backdrop {
+  position: fixed;
+  inset: 0;
+}
+
+.tr__menu {
+  position: absolute;
+  top: calc(100% - 4px);
+  right: 6px;
+  z-index: 1;
+  width: 220px;
+  max-height: 320px;
+  display: flex;
+  flex-direction: column;
+  padding: 5px;
+  overflow-y: auto;
+  border-radius: 10px;
+  background: light-dark(rgba(255, 255, 255, 0.86), rgba(44, 44, 48, 0.86));
+  backdrop-filter: blur(24px) saturate(1.8);
+  box-shadow:
+    0 0 0 0.5px light-dark(rgba(0, 0, 0, 0.18), rgba(255, 255, 255, 0.14)),
+    0 10px 32px rgba(0, 0, 0, 0.2);
+}
+
+.tr__menu_up {
+  top: auto;
+  bottom: calc(100% - 4px);
+}
+
+.tr__item {
+  height: 24px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 9px;
+  border: 0;
+  border-radius: 5px;
+  outline: none;
+  background: transparent;
+  white-space: nowrap;
+  cursor: default;
+}
+
+.tr__item:hover,
+.tr__item:focus-visible {
+  background: var(--wl-accent);
+  color: #fff;
+}
+
+.tr__arrow,
+.tr__item_current::after {
+  margin-left: auto;
+  font-size: 10px;
+}
+
+.tr__item_current::after {
+  content: '✓';
+}
+
+.tr__sep {
+  width: calc(100% - 18px);
+  margin: 4px auto;
+  border: 0;
+  border-top: 1px solid var(--wl-sep);
+}
+
+.tr__field {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 4px 5px 9px;
+  color: var(--wl-text-2);
+}
+
+.tr__input {
+  flex: 1;
+  height: 24px;
+  padding: 0 7px;
+  border-radius: 5px;
+  color: var(--wl-text);
+}
+
+// the slot keeps the row's height, so the rows below do not jump when a drag starts; its line marks where the todo lands
+:host(.cdk-drag-placeholder) > * {
+  visibility: hidden;
+}
+
+:host(.cdk-drag-placeholder)::before {
+  content: '';
+  position: absolute;
+  top: calc(50% - 1px);
+  right: 8px;
+  left: 28px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--wl-accent);
+}
+
+:host(.cdk-drag-preview) {
+  background: light-dark(#ffffff, #2b2b2e);
+  box-shadow:
+    0 0 0 0.5px light-dark(rgba(0, 0, 0, 0.15), rgba(255, 255, 255, 0.14)),
+    0 8px 24px rgba(0, 0, 0, 0.16);
+  rotate: -0.6deg;
+}

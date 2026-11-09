@@ -1,0 +1,21 @@
+:host {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  user-select: text;
+}
+
+.rt__code {
+  padding: 0 3px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--wl-text) 7%, transparent);
+  font: 12px ui-monospace, "SF Mono", Menlo, monospace;
+}
+
+.rt__link {
+  color: var(--wl-accent);
+  text-decoration: none;
+}
+
+.rt__link:hover {
+  text-decoration: underline;
+}

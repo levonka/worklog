@@ -1,0 +1,65 @@
+:host {
+  display: flex;
+  flex-direction: column;
+}
+
+.ef__input {
+  height: 28px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 7px;
+  outline: none;
+  font-size: 12.5px;
+  background: color-mix(in srgb, var(--wl-text) 4%, transparent);
+}
+
+.ef__input:focus {
+  background: var(--wl-bg);
+  box-shadow: 0 0 0 1px var(--wl-accent);
+}
+
+.ef__input::placeholder,
+.ef__time,
+.ef__event_status .ef__text {
+  color: var(--wl-text-3);
+}
+
+.ef__events {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ef__event {
+  display: flex;
+  gap: 10px;
+  font-size: 12.5px;
+}
+
+.ef__time {
+  width: 84px;
+  flex-shrink: 0;
+  padding-top: 1px;
+  font-size: 11.5px;
+  white-space: nowrap;
+}
+
+.ef__text {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.ef__source {
+  align-self: flex-start;
+  margin-right: -4px;
+  padding: 0 5px;
+  border-radius: 4px;
+  font-size: 10.5px;
+  font-weight: 600;
+  line-height: 17px;
+  background: var(--wl-jira-blue-bg);
+  color: var(--wl-jira-blue-fg);
+}

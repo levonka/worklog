@@ -1,0 +1,49 @@
+@for (link of links(); track link.url) {
+  <div class="dl__item">
+    <div class="dl__link">
+      <a class="dl__anchor" [href]="link.url" [title]="link.url" target="_blank" rel="noopener" draggable="false">
+        <wl-favicon [url]="link.url" [title]="link.label">
+          <span class="dl__icon">{{ link.icon }}</span>
+        </wl-favicon>
+        <span class="dl__text wl-selectable">{{ link.title }}</span>
+      </a>
+      <button
+        type="button"
+        class="dl__btn"
+        [title]="link.description ? 'Изменить описание' : 'Добавить описание'"
+        [attr.aria-label]="'Описание ' + link.title"
+        (click)="editingUrl.set(link.url)"
+      >✎</button>
+      <button type="button" class="dl__btn" title="Удалить ссылку" [attr.aria-label]="'Удалить ' + link.title" (click)="remove(link.url)">✕</button>
+    </div>
+    @if (link.description || editingUrl() === link.url) {
+      <wl-link-description
+        class="dl__desc"
+        [text]="link.description"
+        [editing]="editingUrl() === link.url"
+        (edit)="editingUrl.set(link.url)"
+        (save)="saveDescription(link.url, $event)"
+        (cancel)="editingUrl.set(null)"
+      />
+    }
+  </div>
+}
+<div class="dl__form">
+  <input
+    #linkUrl
+    class="dl__input dl__input_url"
+    placeholder="＋ ссылка: https://…"
+    aria-label="Адрес ссылки"
+    autocomplete="off"
+    spellcheck="false"
+    (keydown.enter)="add(linkUrl, linkTitle)"
+  />
+  <input
+    #linkTitle
+    class="dl__input"
+    placeholder="название"
+    aria-label="Название ссылки"
+    autocomplete="off"
+    (keydown.enter)="add(linkUrl, linkTitle)"
+  />
+</div>

@@ -1,0 +1,30 @@
+<h2 class="ndf__heading">Новое направление</h2>
+
+<input
+  #title
+  class="ndf__input"
+  placeholder="Название"
+  aria-label="Название направления"
+  autocomplete="off"
+  (input)="error.set('')"
+  (keydown.enter)="create(title.value, tickets.value)"
+/>
+<input
+  #tickets
+  class="ndf__input"
+  [placeholder]="ticketsPlaceholder()"
+  aria-label="Тикеты через пробел"
+  autocomplete="off"
+  spellcheck="false"
+  (input)="error.set('')"
+  (keydown.enter)="create(title.value, tickets.value)"
+/>
+
+@if (error()) {
+  <p class="ndf__error" role="alert">{{ error() }}</p>
+}
+
+<div class="ndf__actions">
+  <button type="button" class="ndf__btn" (click)="closed.emit()">Отмена</button>
+  <button type="button" class="ndf__btn ndf__btn_primary" [disabled]="saving()" (click)="create(title.value, tickets.value)">Создать</button>
+</div>

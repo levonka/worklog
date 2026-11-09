@@ -1,0 +1,8 @@
+.superpowers/
+node_modules/
+web/dist/
+web/.angular/
+logs/
+data/
+*.tmp-*
+.DS_Store

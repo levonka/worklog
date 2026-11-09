@@ -1,0 +1,342 @@
+:host {
+  --dv-fill: color-mix(in srgb, var(--wl-text) 6%, transparent);
+
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.dv__bar {
+  height: 46px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px 0 16px;
+  border-bottom: 1px solid var(--wl-sep);
+}
+
+.dv__dot {
+  width: 9px;
+  height: 9px;
+  flex-shrink: 0;
+  border-radius: 50%;
+}
+
+// one box for the title and the field that replaces it, so the text does not move when renaming starts
+.dv__title,
+.dv__title-edit {
+  min-width: 0;
+  margin: 0 0 0 -5px;
+  padding: 2px 4px;
+  border-radius: 5px;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.dv__title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dv__title-edit,
+.dv__ticket-input,
+.dv__wait-input {
+  border: 0;
+  outline: none;
+}
+
+.dv__title-edit {
+  flex: 4;
+  background: var(--wl-bg);
+  box-shadow: 0 0 0 1px var(--wl-accent);
+}
+
+.dv__spacer {
+  flex: 1;
+}
+
+.dv__status,
+.dv__mark,
+.dv__chip-remove {
+  border: 0;
+  background: transparent;
+  cursor: default;
+}
+
+.dv__body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px 20px 24px;
+  overflow-y: auto;
+}
+
+.dv__body > * {
+  max-width: 760px;
+}
+
+.dv__controls {
+  align-self: flex-start;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.dv__statuses {
+  align-self: flex-start;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 7px;
+  background: var(--dv-fill);
+}
+
+.dv__status,
+.dv__mark {
+  height: 22px;
+  padding: 0 11px;
+  border-radius: 5px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.dv__title:hover,
+.dv__status:hover,
+.dv__mark:hover {
+  background: var(--dv-fill);
+}
+
+.dv__status:disabled {
+  color: var(--wl-text-2);
+}
+
+.dv__status:disabled:hover {
+  background: transparent;
+}
+
+.dv__status_on,
+.dv__status_on:hover,
+.dv__mark_on,
+.dv__mark_on:hover {
+  background: light-dark(#ffffff, #636366);
+  box-shadow:
+    0 0 0 0.5px rgba(0, 0, 0, 0.1),
+    0 1px 2px rgba(0, 0, 0, 0.08);
+  font-weight: 500;
+}
+
+.dv__wait {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  background: rgba(255, 159, 10, 0.1);
+  font-weight: 600;
+  color: light-dark(#8a4b00, #ffb340);
+}
+
+.dv__wait-input {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--wl-text);
+}
+
+.dv__tickets {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.dv__chip {
+  position: relative;
+  border-radius: 6px;
+  font-size: 12px;
+  background: var(--dv-fill);
+}
+
+.dv__ticket {
+  display: block;
+  padding: 3px 8px;
+  color: var(--wl-text);
+  text-decoration: none;
+}
+
+.dv__ticket-icon,
+.dv__mr-icon {
+  margin-right: 5px;
+  vertical-align: -3px;
+}
+
+// no stand-in for a ticket: without an icon the key starts the chip
+.dv__ticket-icon.wl-favicon_failed {
+  display: none;
+}
+
+.dv__key {
+  font-weight: 600;
+}
+
+.dv__platform,
+.dv__ticket-input::placeholder,
+.dv__wait-input::placeholder {
+  color: var(--wl-text-3);
+}
+
+// a badge on the corner, so the chip does not grow on hover
+.dv__chip-remove {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  padding: 0;
+  line-height: 1;
+  font-size: 7px;
+  background: var(--wl-text-2);
+  color: var(--wl-bg);
+  opacity: 0;
+}
+
+.dv__chip:hover .dv__chip-remove,
+.dv__chip-remove:focus-visible {
+  opacity: 1;
+}
+
+.dv__ticket-input {
+  width: 90px;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  background: transparent;
+}
+
+.dv__ticket-input:focus {
+  background: var(--wl-bg);
+  box-shadow: 0 0 0 1px var(--wl-accent);
+}
+
+.dv__ticket-input_invalid,
+.dv__ticket-input_invalid:focus {
+  box-shadow: 0 0 0 1px var(--wl-danger);
+}
+
+.dv__section {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dv__label {
+  margin: 0 0 2px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--wl-text-3);
+}
+
+// the list brings its own inset for the rows
+.dv__todos {
+  margin: -6px -12px 0;
+  padding: 0;
+}
+
+.dv__spark {
+  color: light-dark(#7a3ff2, #b18cff);
+}
+
+.dv__agent-btn {
+  height: 24px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  font-size: 12px;
+  color: var(--wl-text-2);
+  white-space: nowrap;
+  cursor: default;
+}
+
+.dv__agent-btn:hover {
+  background: var(--dv-fill);
+  color: var(--wl-text);
+}
+
+.dv__agent {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  background: color-mix(in srgb, #7a3ff2 10%, transparent);
+  font-size: 12px;
+}
+
+.dv__agent-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.dv__branch {
+  font: 11.5px "SF Mono", Menlo, monospace;
+}
+
+.dv__agent-finish {
+  height: 22px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 5px;
+  background: light-dark(#ffffff, #3a3a3c);
+  box-shadow: 0 0 0 0.5px color-mix(in srgb, var(--wl-text) 18%, transparent);
+  font-size: 12px;
+  white-space: nowrap;
+  cursor: default;
+}
+
+.dv__jira {
+  margin-left: 6px;
+}
+
+.dv__jira-refresh {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  font-size: 13px;
+  line-height: 22px;
+  background: transparent;
+  color: var(--wl-text-3);
+  cursor: default;
+}
+
+.dv__jira-refresh:hover:not(:disabled) {
+  background: var(--dv-fill);
+  color: var(--wl-text-2);
+}
+
+.dv__jira-refresh_busy {
+  animation: dv-spin 0.9s linear infinite;
+}
+
+.dv__jira-refresh_problem {
+  color: var(--wl-warn);
+}
+
+@keyframes dv-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

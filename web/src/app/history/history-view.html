@@ -1,0 +1,62 @@
+<header class="hv__bar">
+  <h1 class="hv__title">История</h1>
+  <span class="hv__spacer"></span>
+  <input
+    #searchBox
+    class="hv__search"
+    type="search"
+    placeholder="Поиск: задача, имя, слово"
+    aria-label="Поиск по истории"
+    autocomplete="off"
+    (input)="search(searchBox.value)"
+  />
+  <ng-content />
+</header>
+
+<div class="hv__body">
+  @for (day of shown(); track day.date) {
+    <section class="hv__day">
+      <h2 class="hv__day-title">{{ dayTitle(day.date) }}</h2>
+
+      @for (daily of day.dailies; track daily.id) {
+        <article class="hv__daily">
+          <div class="hv__daily-head">Дейлик · {{ time(daily.heldAt) }}</div>
+          <p class="hv__daily-text wl-selectable">{{ daily.text }}</p>
+          @if (daily.items.length > 0) {
+            <details class="hv__items">
+              <summary class="hv__items-title">Пункты ({{ daily.items.length }})</summary>
+              @for (item of daily.items; track $index) {
+                <div class="hv__item">
+                  <span class="hv__src" [class.hv__src_summary]="item.origin === 'summary'">{{ item.origin === 'summary' ? '✦' : '✎' }}</span>
+                  <span class="hv__item-direction">{{ itemLabel(item) }}</span>
+                  <span class="wl-selectable">{{ item.text }}</span>
+                </div>
+              }
+            </details>
+          }
+        </article>
+      }
+
+      @for (entry of day.entries; track $index) {
+        <div class="hv__entry" [class.hv__entry_status]="entry.eventKind === 'status'">
+          <span class="hv__time">{{ time(entry.at) }}</span>
+          @if (entry.direction; as direction) {
+            <button type="button" class="hv__direction" (click)="open(direction.id)">
+              <span class="hv__dot" [style.background]="dot(entry)"></span>{{ direction.title }}
+            </button>
+          }
+          @if (entry.source === 'session-summary') {
+            <span class="hv__src hv__src_summary">✦</span>
+          }
+          <span class="hv__entry-text wl-selectable">{{ entry.text }}</span>
+        </div>
+      }
+    </section>
+  } @empty {
+    <p class="hv__empty">{{ query().trim() === '' ? 'Пока пусто' : 'Ничего не найдено' }}</p>
+  }
+
+  @if (hasMore()) {
+    <button type="button" class="hv__more" (click)="more()">Показать ещё</button>
+  }
+</div>

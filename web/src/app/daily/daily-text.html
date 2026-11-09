@@ -1,0 +1,42 @@
+<div class="dt__head">
+  <span class="dt__label">Текст для дейлика</span>
+  <span class="dt__badge">{{ badge() }}</span>
+</div>
+
+<div class="dt__actions">
+  <button type="button" class="dt__btn" (click)="copy()">{{ copied() ? 'Скопировано ✓' : 'Скопировать текст' }}</button>
+  <button type="button" class="dt__btn dt__btn_primary" [disabled]="text().trim() === ''" (click)="hold()">
+    {{ confirming() ? 'Точно? Нажмите ещё раз' : 'Дейлик прошёл' }}
+  </button>
+</div>
+
+@if (held()) {
+  <p class="dt__saved">Сохранено в Историю <button type="button" class="dt__link" (click)="openHistory()">Открыть</button></p>
+}
+
+@if (worklog.newEventsAfterText() > 0) {
+  <p class="dt__hint">
+    Появились новые события — пересобрать:
+    <button type="button" class="dt__link" (click)="rebuildFromTemplate()">шаблоном</button>
+    ·
+    <button type="button" class="dt__link" (click)="rebuildFromSessions()">✦ из сессий</button>
+  </p>
+}
+
+@if (aiWords().length > 0) {
+  <p class="dt__warning">В тексте есть: {{ aiWords().map(quote).join(', ') }} — перед отправкой лучше убрать</p>
+}
+
+<textarea
+  #area
+  class="dt__text wl-selectable"
+  aria-label="Текст для дейлика"
+  placeholder="За период ничего не записано"
+  spellcheck="true"
+  [value]="text()"
+  (focus)="focus()"
+  (input)="input(area.value)"
+  (blur)="blur()"
+></textarea>
+
+<p class="dt__note">После дейлика уйдёт в «Историю»</p>

@@ -1,0 +1,36 @@
+@if (editing()) {
+  <wl-note-editor [note]="note()" (done)="editing.set(false)" />
+} @else {
+  <article class="nc__card">
+    <header class="nc__head">
+      <h3 class="nc__title wl-selectable">{{ note().title }}</h3>
+      <button type="button" class="nc__edit" title="Изменить" [attr.aria-label]="'Изменить ' + note().title" (click)="editing.set(true)">✎</button>
+    </header>
+    @if (note().body) {
+      <wl-rich-text class="nc__body" [text]="note().body" />
+    }
+    @if (files().length > 0 || urls().length > 0) {
+      <div class="nc__links">
+        @for (item of files(); track item.label) {
+          <button
+            type="button"
+            class="nc__file"
+            [class.nc__file_missing]="item.missing"
+            [title]="item.missing ? 'Файла нет: ' + item.label : 'Открыть в редакторе: ' + item.label"
+            (click)="open(item.file)"
+          >{{ item.short }}</button>
+        }
+        @for (url of urls(); track url.url) {
+          <a class="nc__url" [href]="url.url" [title]="url.url" target="_blank" rel="noopener">{{ url.label }}</a>
+        }
+      </div>
+    }
+    @if (showDirections() && directions().length > 0) {
+      <div class="nc__dirs">
+        @for (direction of directions(); track direction.id) {
+          <button type="button" class="nc__dir" (click)="openDirection(direction.id)">{{ direction.title }}</button>
+        }
+      </div>
+    }
+  </article>
+}

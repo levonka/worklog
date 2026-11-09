@@ -1,0 +1,147 @@
+:host {
+  --ne-fill: color-mix(in srgb, var(--wl-text) 5%, transparent);
+
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 10px;
+  background: var(--wl-bg);
+  box-shadow:
+    0 0 0 1px var(--wl-sep),
+    0 4px 14px rgba(0, 0, 0, 0.08);
+}
+
+.ne__title,
+.ne__field {
+  width: 100%;
+  border: 0;
+  border-radius: 6px;
+  outline: none;
+  background: var(--ne-fill);
+}
+
+.ne__title {
+  height: 30px;
+  padding: 0 10px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.ne__field {
+  padding: 7px 10px;
+  resize: none;
+  field-sizing: content;
+  line-height: 1.4;
+}
+
+.ne__field_body {
+  min-height: 84px;
+}
+
+.ne__field_links {
+  min-height: 44px;
+  font: 12px/1.5 ui-monospace, "SF Mono", Menlo, monospace;
+}
+
+.ne__title:focus,
+.ne__field:focus {
+  background: var(--wl-bg);
+  box-shadow: 0 0 0 1px var(--wl-accent);
+}
+
+.ne__title::placeholder,
+.ne__field::placeholder {
+  color: var(--wl-text-3);
+}
+
+.ne__dirs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.ne__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 22px;
+  padding: 0 4px 0 8px;
+  border-radius: 11px;
+  background: var(--ne-fill);
+  font-size: 12px;
+}
+
+.ne__chip-remove {
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  font-size: 8px;
+  color: var(--wl-text-3);
+  cursor: default;
+}
+
+.ne__chip-remove:hover {
+  color: var(--wl-text);
+  background: var(--ne-fill);
+}
+
+.ne__select {
+  height: 22px;
+  border: 0;
+  border-radius: 11px;
+  padding: 0 6px;
+  background: transparent;
+  font-size: 12px;
+  color: var(--wl-accent);
+  cursor: default;
+}
+
+.ne__error {
+  margin: 0;
+  font-size: 12px;
+  color: #ff3b30;
+}
+
+.ne__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ne__spacer {
+  flex: 1;
+}
+
+.ne__hint {
+  font-size: 11px;
+  color: var(--wl-text-3);
+}
+
+.ne__btn {
+  height: 24px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 6px;
+  background: var(--ne-fill);
+  font-size: 12.5px;
+  cursor: default;
+}
+
+.ne__btn_primary {
+  background: var(--wl-accent);
+  color: #fff;
+}
+
+.ne__btn_primary:disabled {
+  opacity: 0.5;
+}
+
+.ne__btn_danger {
+  background: transparent;
+  color: #ff3b30;
+}

@@ -1,0 +1,211 @@
+:host {
+  --dv-fill: color-mix(in srgb, var(--wl-text) 6%, transparent);
+
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.dv__head {
+  height: 46px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px 0 16px;
+  border-bottom: 1px solid var(--wl-sep);
+}
+
+.dv__title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.dv__spacer {
+  flex: 1;
+}
+
+.dv__years {
+  display: inline-flex;
+  padding: 2px;
+  border-radius: 7px;
+  background: var(--dv-fill);
+}
+
+.dv__year {
+  height: 20px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  font: inherit;
+  font-size: 12px;
+  color: var(--wl-text-2);
+  cursor: default;
+}
+
+.dv__year_active {
+  background: var(--wl-bg);
+  color: var(--wl-text);
+  box-shadow:
+    0 0 0 0.5px var(--wl-sep),
+    0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+.dv__search {
+  width: 220px;
+  min-width: 0;
+  height: 24px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 6px;
+  outline: none;
+  background: var(--dv-fill);
+  font: inherit;
+  font-size: 12px;
+  color: var(--wl-text);
+}
+
+.dv__search:focus {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--wl-accent) 50%, transparent);
+}
+
+.dv__body {
+  flex: 1;
+  min-height: 0;
+  padding: 12px 24px 24px;
+  overflow-y: auto;
+}
+
+.dv__body > * {
+  max-width: 760px;
+}
+
+.dv__summary {
+  margin: 0 0 10px;
+  font-size: 12.5px;
+  color: var(--wl-text-2);
+}
+
+.dv__chart {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 18px;
+}
+
+.dv__bar {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  cursor: default;
+}
+
+.dv__bar-track {
+  height: 56px;
+  display: flex;
+  align-items: flex-end;
+}
+
+.dv__bar-fill {
+  width: 100%;
+  border-radius: 3px 3px 0 0;
+  background: var(--wl-accent);
+  opacity: 0.55;
+}
+
+.dv__bar:hover:not(:disabled) .dv__bar-fill,
+.dv__bar_current .dv__bar-fill {
+  opacity: 1;
+}
+
+.dv__bar-label {
+  font-size: 11px;
+  text-align: center;
+  color: var(--wl-text-3);
+}
+
+.dv__bar_current .dv__bar-label {
+  font-weight: 600;
+  color: var(--wl-text-2);
+}
+
+.dv__month {
+  margin-bottom: 16px;
+  scroll-margin-top: 8px;
+}
+
+.dv__month-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0 0 4px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.dv__month-meta {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--wl-text-3);
+}
+
+.dv__row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 8px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  font: inherit;
+  font-size: 12.5px;
+  text-align: left;
+  color: var(--wl-text);
+  cursor: default;
+}
+
+.dv__row:hover {
+  background: var(--dv-fill);
+}
+
+.dv__row-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dv__chip,
+.dv__count {
+  flex-shrink: 0;
+  padding: 0 5px;
+  border: 1px solid var(--wl-sep);
+  border-radius: 4px;
+  font-size: 11px;
+  color: var(--wl-text-2);
+}
+
+.dv__date {
+  flex-shrink: 0;
+  width: 48px;
+  font-size: 12px;
+  text-align: right;
+  color: var(--wl-text-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.dv__empty {
+  font-size: 12px;
+  color: var(--wl-text-3);
+}

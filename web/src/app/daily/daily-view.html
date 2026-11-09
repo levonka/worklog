@@ -1,0 +1,103 @@
+<header class="dly__bar">
+  <h1 class="dly__title">{{ title() }}</h1>
+  <span class="dly__spacer"></span>
+  <button type="button" class="dly__summary" [disabled]="runState() === 'running'" (click)="startSummary()">
+    @if (runState() === 'running') {
+      Собираю… {{ elapsed() }}
+    } @else {
+      ✦ Собрать из сессий
+    }
+  </button>
+  <ng-content />
+</header>
+
+<div class="dly__content">
+  <div class="dly__doc">
+    <p class="dly__period">{{ period() }}</p>
+    @if (runError(); as error) {
+      <p class="dly__error">Не удалось собрать из сессий: {{ error }}</p>
+    }
+
+    <h2 class="dly__section">Сделал</h2>
+    @if (empty()) {
+      <p class="dly__empty">За период ничего не записано</p>
+    }
+    @for (group of groups(); track group.direction.id) {
+      <section class="dly__group">
+        <div class="dly__group-head">
+          <span class="dly__dot" [style.background]="group.dot"></span>
+          <button type="button" class="dly__group-title" (click)="open(group.direction.id)">{{ group.direction.title }}</button>
+          <span class="dly__chip">{{ group.status }}</span>
+          @if (group.keys) {
+            <span class="dly__keys">{{ group.keys }}</span>
+          }
+        </div>
+        @for (line of group.lines; track line.key) {
+          <ng-container [ngTemplateOutlet]="lineTemplate" [ngTemplateOutletContext]="{ $implicit: line }" />
+        }
+      </section>
+    }
+    @if (unbound().length > 0) {
+      <section class="dly__group dly__unbound">
+        <div class="dly__group-head">
+          <span class="dly__unbound-title">Не привязано</span>
+          <span class="dly__keys">из сессий</span>
+        </div>
+        @for (line of unbound(); track line.key) {
+          <ng-container [ngTemplateOutlet]="lineTemplate" [ngTemplateOutletContext]="{ $implicit: line }" />
+        }
+      </section>
+    }
+
+    @if (candidates().length > 0) {
+      <h2 class="dly__section">Предлагаю в дела</h2>
+      @for (candidate of candidates(); track candidate.id) {
+        <div class="dly__candidate" [class.dly__candidate_ai]="candidate.ai !== null" [attr.title]="candidate.ai">
+          <span class="dly__src dly__src_summary">✦</span>
+          <span class="dly__candidate-text">{{ candidate.label }}</span>
+          <button type="button" class="dly__accept" (click)="accept(candidate.id)">В дела</button>
+          <button type="button" class="dly__remove" title="Не нужно" aria-label="Не нужно" (click)="dismiss(candidate.id)">✕</button>
+        </div>
+      }
+    }
+
+    @if (waiting().length > 0) {
+      <h2 class="dly__section">Жду</h2>
+      @for (entry of waiting(); track entry.id) {
+        <p class="dly__waiting-item"><button type="button" class="dly__link" (click)="open(entry.id)">{{ entry.title }}</button>{{ entry.label }}</p>
+      }
+    }
+
+    <p class="dly__legend">✎ записано в направлении · ✦ из сессий Claude</p>
+  </div>
+
+  <wl-daily-text />
+</div>
+
+<ng-template #lineTemplate let-line>
+  <div
+    class="dly__line"
+    [class.dly__line_status]="line.status"
+    [class.dly__line_summary]="line.kind === 'summary'"
+    [class.dly__line_ai]="line.ai !== null"
+    [attr.title]="line.ai"
+  >
+    @if (line.kind === 'summary') {
+      <span class="dly__src dly__src_summary">✦</span>
+    } @else {
+      <span class="dly__src">✎</span>
+    }
+    <span class="dly__line-text wl-selectable">{{ line.text }}</span>
+    @if (line.item; as item) {
+      <span class="dly__controls">
+        <select #bind class="dly__bind" aria-label="Направление пункта" (change)="rebind(item, bind.value)">
+          <option value="" [selected]="item.directionId === null">Не привязано</option>
+          @for (target of targetsFor(item); track target.id) {
+            <option [value]="target.id" [selected]="item.directionId === target.id">{{ target.title }}</option>
+          }
+        </select>
+        <button type="button" class="dly__remove" title="Убрать пункт" aria-label="Убрать пункт" (click)="remove(item)">✕</button>
+      </span>
+    }
+  </div>
+</ng-template>

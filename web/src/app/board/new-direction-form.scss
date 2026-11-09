@@ -1,0 +1,71 @@
+:host {
+  width: 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 12px 10px;
+}
+
+.ndf__heading {
+  margin: 0 0 2px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.ndf__input {
+  height: 26px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 6px;
+  outline: none;
+  font-size: 12.5px;
+  background: var(--wl-bg);
+  box-shadow: 0 0 0 1px var(--wl-sep);
+}
+
+.ndf__input:focus {
+  box-shadow:
+    0 0 0 1px var(--wl-accent),
+    0 0 0 3.5px color-mix(in srgb, var(--wl-accent) 30%, transparent);
+}
+
+.ndf__error {
+  margin: 0;
+  font-size: 11.5px;
+  color: var(--wl-danger);
+}
+
+.ndf__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.ndf__btn {
+  height: 24px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 6px;
+  font-size: 12.5px;
+  background: light-dark(#ffffff, #48484d);
+  box-shadow:
+    0 0 0 0.5px light-dark(rgba(0, 0, 0, 0.18), rgba(255, 255, 255, 0.08)),
+    0 1px 1px rgba(0, 0, 0, 0.06);
+  cursor: default;
+}
+
+.ndf__btn:active {
+  filter: brightness(0.95);
+}
+
+.ndf__btn_primary {
+  font-weight: 500;
+  color: #fff;
+  background: var(--wl-accent);
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
+}
+
+.ndf__btn:disabled {
+  opacity: 0.5;
+}

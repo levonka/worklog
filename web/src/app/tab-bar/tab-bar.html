@@ -1,0 +1,62 @@
+<button
+  type="button"
+  class="tb__toggle"
+  [title]="tabs.sidebarHidden() ? 'Показать боковую панель' : 'Скрыть боковую панель'"
+  [attr.aria-label]="tabs.sidebarHidden() ? 'Показать боковую панель' : 'Скрыть боковую панель'"
+  [attr.aria-pressed]="!tabs.sidebarHidden()"
+  (click)="tabs.toggleSidebar()"
+>
+  <svg width="18" height="14" viewBox="0 0 18 14" aria-hidden="true">
+    <rect x="0.75" y="0.75" width="16.5" height="12.5" rx="3" fill="none" stroke="currentColor" stroke-width="1.5" />
+    <path d="M6.25 1v12" stroke="currentColor" stroke-width="1.5" />
+  </svg>
+</button>
+
+<div
+  class="tb__tabs"
+  role="tablist"
+  cdkDropList
+  cdkDropListOrientation="horizontal"
+  (cdkDropListDropped)="dropped($event)"
+>
+  @for (tab of items(); track tab.id) {
+    <div
+      class="tb__tab"
+      [class.tb__tab_on]="tab.shown"
+      role="tab"
+      tabindex="0"
+      [attr.aria-selected]="tab.shown"
+      [title]="tab.title"
+      cdkDrag
+      [cdkDragData]="tab.id"
+      (cdkDragStarted)="dragStarted(tab.id)"
+      (cdkDragMoved)="dragMoved($event)"
+      (click)="tabs.openTab(tab.id)"
+      (keydown.enter)="activate($event, tab.id)"
+      (keydown.delete)="closeByKey($event, tab.id)"
+      (keydown.backspace)="closeByKey($event, tab.id)"
+    >
+      @if (tab.dot; as dot) {
+        <span class="tb__dot" [style.background]="dot"></span>
+      } @else {
+        <span class="tb__icon" aria-hidden="true">{{ tab.icon }}</span>
+      }
+      <span class="tb__title">{{ tab.title }}</span>
+      <!-- for the mouse: the keyboard closes a tab with Delete or Backspace -->
+      <button type="button" class="tb__close" tabindex="-1" aria-hidden="true" title="Закрыть вкладку" (click)="close($event, tab.id)">✕</button>
+    </div>
+  }
+</div>
+
+@if (splitZone(); as zone) {
+  <div
+    class="tb__split-zone"
+    [style.left.px]="zone.left"
+    [style.top.px]="zone.top"
+    [style.width.px]="zone.width"
+    [style.height.px]="zone.height"
+    aria-hidden="true"
+  >
+    <div class="tb__split-panel" [class.tb__split-panel_over]="overSplitZone()">Открыть справа</div>
+  </div>
+}

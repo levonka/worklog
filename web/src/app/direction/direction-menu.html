@@ -1,0 +1,29 @@
+<button
+  type="button"
+  class="dm__more"
+  [class.dm__more_on]="panel() !== null"
+  title="Действия"
+  aria-label="Действия"
+  [attr.aria-expanded]="panel() !== null"
+  (click)="toggle()"
+>…</button>
+@if (panel(); as current) {
+  <div class="dm__backdrop" (click)="close()"></div>
+  <div class="dm__menu">
+    @switch (current) {
+      @case ('main') {
+        <button type="button" class="dm__item" (click)="panel.set('confirm')">Удалить направление</button>
+      }
+      @case ('confirm') {
+        <p class="dm__confirm">
+          Удалить «{{ direction().title }}»?
+          <span class="dm__hint">Тикеты, ссылки и лента пропадут, дела останутся без направления.</span>
+        </p>
+        <div class="dm__actions">
+          <button type="button" class="dm__btn" (click)="close()">Отмена</button>
+          <button type="button" class="dm__btn dm__btn_danger" [disabled]="deleting()" (click)="remove()">Удалить</button>
+        </div>
+      }
+    }
+  </div>
+}

@@ -1,0 +1,97 @@
+<header class="bd__bar">
+  <h1 class="bd__title">Доска <span class="bd__sub">· {{ activeLabel() }}</span></h1>
+  <span class="bd__spacer"></span>
+
+  <button type="button" class="bd__done-toggle" title="Завершённые — на экране «Сделано»" (click)="openDone()">Готово ({{ done().length }})</button>
+
+  <div class="bd__anchor">
+    <button
+      type="button"
+      class="bd__add"
+      [class.bd__add_on]="adding()"
+      title="Новое направление"
+      aria-label="Новое направление"
+      [attr.aria-expanded]="adding()"
+      (click)="toggleAdding()"
+    >＋</button>
+    @if (adding()) {
+      <wl-new-direction-form class="bd__popover" (closed)="adding.set(false)" />
+    }
+  </div>
+
+  <ng-content />
+</header>
+
+<div class="bd__columns" cdkDropListGroup>
+  @for (column of columns(); track column.status; let first = $first) {
+    <section class="bd__column" [attr.aria-label]="column.label">
+      <h2 class="bd__column-head">
+        <span class="bd__dot" [style.background]="column.dot"></span>
+        <span class="bd__label">{{ column.label }}</span>
+        <span class="bd__count">{{ column.directions.length }}</span>
+      </h2>
+
+      <div class="bd__list" cdkDropList [cdkDropListData]="column.status" [cdkDropListEnterPredicate]="canEnter" (cdkDropListDropped)="dropped($event)">
+        @for (direction of column.directions; track direction.id) {
+          <wl-direction-card
+            class="bd__card"
+            cdkDrag
+            [cdkDragData]="direction.id"
+            [direction]="direction"
+            (cdkDragStarted)="dragCancel.arm()"
+            (cdkDragMoved)="cardMoved(direction.id, $event)"
+            (cdkDragEnded)="dropHint.clear()"
+            [stats]="stats().get(direction.id)"
+            [run]="store.runOfDirection(direction.id)"
+            (opened)="open(direction.id)"
+          />
+        }
+      </div>
+
+      @if (first) {
+        <div
+          class="bd__tray"
+          [class.bd__tray_open]="trayOpen()"
+          cdkDropList
+          [cdkDropListData]="parkedStatus"
+          cdkDropListSortingDisabled
+          (cdkDropListDropped)="dropped($event)"
+        >
+          <button
+            type="button"
+            class="bd__tray-head"
+            [title]="parkedTitles()"
+            [disabled]="parked().length === 0"
+            [attr.aria-expanded]="trayOpen()"
+            (click)="toggleTray()"
+          >
+            <span class="bd__dot bd__dot_parked"></span>
+            <span class="bd__tray-text"><span class="bd__tray-label">Отложено</span>@if (!trayOpen() && parkedTitles()) { · {{ parkedTitles() }}}</span>
+            @if (parked().length > 0) {
+              <svg class="bd__chevron" width="8" height="8" viewBox="0 0 8 8" aria-hidden="true">
+                <path d="M2.5 1 5.5 4l-3 3" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            }
+          </button>
+
+          @if (trayOpen()) {
+            @for (direction of parked(); track direction.id) {
+              <wl-direction-card
+                class="bd__card bd__card_parked"
+                cdkDrag
+                [cdkDragData]="direction.id"
+                [direction]="direction"
+                (cdkDragStarted)="dragCancel.arm()"
+                (cdkDragMoved)="cardMoved(direction.id, $event)"
+                (cdkDragEnded)="dropHint.clear()"
+                [stats]="stats().get(direction.id)"
+                [run]="store.runOfDirection(direction.id)"
+                (opened)="open(direction.id)"
+              />
+            }
+          }
+        </div>
+      }
+    </section>
+  }
+</div>

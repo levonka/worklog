@@ -1,0 +1,6 @@
+@if (state() !== 'failed') {
+  <img class="fv__img" [src]="src()" alt="" width="16" height="16" [hidden]="state() !== 'loaded'" (load)="state.set('loaded')" (error)="state.set('failed')" />
+}
+@if (state() !== 'loaded') {
+  <ng-content />
+}

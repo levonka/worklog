@@ -1,0 +1,12 @@
+#!/bin/zsh
+NODE=${WORKLOG_NODE:-$(sed -n 's/^WORKLOG_NODE=//p' "${WORKLOG_ENV_FILE:-$HOME/.config/worklog/env}" 2>/dev/null | tail -1)}
+# the same reading as server/env-file.ts: no \r, one pair of quotes, ~/ is home
+NODE=${NODE%$'\r'}
+[[ $NODE == \"*\" || $NODE == \'*\' ]] && NODE=${${NODE#?}%?}
+NODE=${NODE/#\~\//$HOME/}
+NODE=${NODE:-$(command -v node)}
+if [[ -z $NODE ]]; then
+  print -u2 'Worklog: не найден node — укажи WORKLOG_NODE в ~/.config/worklog/env'
+  exit 1
+fi
+exec "$NODE" "${0:A:h:h}/cli/worklog.ts" "$@"

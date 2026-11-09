@@ -1,0 +1,174 @@
+<header class="dv__bar">
+  @if (direction(); as direction) {
+    <span class="dv__dot" [style.background]="dot()"></span>
+    @if (renaming()) {
+      <input
+        #titleEditor
+        class="dv__title-edit"
+        aria-label="Название направления"
+        autocomplete="off"
+        [value]="direction.title"
+        (keydown.enter)="rename(titleEditor.value)"
+        (keydown.escape)="renaming.set(false)"
+        (blur)="rename(titleEditor.value)"
+      />
+    } @else {
+      <h1 class="dv__title wl-selectable" title="Нажмите, чтобы переименовать" (click)="startRenaming()">{{ direction.title }}</h1>
+    }
+  }
+  <span class="dv__spacer"></span>
+
+  @if (direction(); as direction) {
+    <button type="button" class="dv__agent-btn" title="Поручить агенту" (click)="openAgentSheet()"><span class="dv__spark">✦</span> Поручить агенту</button>
+    <wl-direction-menu [direction]="direction" />
+  }
+
+  <ng-content />
+</header>
+
+@if (direction(); as direction) {
+  <div class="dv__body">
+    <div class="dv__controls">
+      <div class="dv__statuses" role="group" aria-label="Этап">
+        @for (item of stages; track item.stage) {
+          <button
+            type="button"
+            class="dv__status"
+            [class.dv__status_on]="item.stage === stage()"
+            [attr.aria-pressed]="item.stage === stage()"
+            [disabled]="jiraLed()"
+            [title]="jiraLed() ? 'Этап из Jira' : ''"
+            (click)="setStage(item.stage)"
+          >{{ item.label }}</button>
+        }
+      </div>
+      <div class="dv__statuses" role="group" aria-label="Пометка">
+        @for (item of marks; track item.mark) {
+          <button
+            type="button"
+            class="dv__mark"
+            [class.dv__mark_on]="item.mark === direction.status"
+            [attr.aria-pressed]="item.mark === direction.status"
+            (click)="toggleMark(item.mark)"
+          >{{ item.label }}</button>
+        }
+      </div>
+    </div>
+
+    @if (run(); as run) {
+      <div class="dv__agent" role="status">
+        <span class="dv__spark">✦</span>
+        <span class="dv__agent-text">Агент работает · {{ runSince() }} · <code class="dv__branch wl-selectable">{{ run.branch }}</code></span>
+        <button type="button" class="dv__agent-finish" title="Если вкладку Warp закрыли раньше, чем агент закончил" (click)="finishAgent(run.id)">Снять отметку</button>
+      </div>
+    }
+
+    @if (direction.status === 'waiting') {
+      <label class="dv__wait">
+        Кого жду
+        <input
+          #waitField
+          class="dv__wait-input"
+          placeholder="бэк, девопсов, аналитика…"
+          aria-label="Кого жду"
+          autocomplete="off"
+          [value]="direction.waitingFor ?? ''"
+          (keydown.enter)="waitField.blur()"
+          (keydown.escape)="cancelWaitingFor(waitField)"
+          (blur)="saveWaitingFor(waitField.value)"
+        />
+      </label>
+    }
+
+    <ng-template #ticketText let-ticket>
+      <b class="dv__key wl-selectable">{{ ticket.key }}</b>
+      @if (ticket.platform !== 'other') {
+        <span class="dv__platform"> {{ ticket.platform }}</span>
+      }
+      @if (ticket.jira; as jira) {
+        <wl-jira-status class="dv__jira" [status]="jira.status" />
+      }
+    </ng-template>
+    <div class="dv__tickets">
+      @for (ticket of direction.tickets; track ticket.key) {
+        <span class="dv__chip">
+          <!-- the space lives inside the text: whitespace between tags and blocks is stripped -->
+          @if (ticket.url) {
+            <a class="dv__ticket" [href]="ticket.url" [title]="ticket.url" target="_blank" rel="noopener" draggable="false">
+              <wl-favicon class="dv__ticket-icon" [url]="ticket.url" />
+              <ng-container [ngTemplateOutlet]="ticketText" [ngTemplateOutletContext]="{ $implicit: ticket }" />
+            </a>
+          } @else {
+            <span class="dv__ticket">
+              <ng-container [ngTemplateOutlet]="ticketText" [ngTemplateOutletContext]="{ $implicit: ticket }" />
+            </span>
+          }
+          <button type="button" class="dv__chip-remove" title="Убрать тикет" [attr.aria-label]="'Убрать ' + ticket.key" (click)="removeTicket(ticket.key)">✕</button>
+        </span>
+      }
+      @for (mr of mergeRequests(); track mr.id) {
+        <span class="dv__chip">
+          <a class="dv__ticket" [href]="mr.url" [title]="mr.url" target="_blank" rel="noopener" draggable="false">
+            <wl-favicon class="dv__mr-icon" [url]="mr.url">🔀</wl-favicon>
+            <b class="dv__key wl-selectable">MR !{{ mr.id }}</b>
+          </a>
+          <button type="button" class="dv__chip-remove" title="Убрать ссылку на MR" [attr.aria-label]="'Убрать MR !' + mr.id" (click)="removeMergeRequest(mr.id)">✕</button>
+        </span>
+      }
+      <input
+        #ticketField
+        class="dv__ticket-input"
+        [class.dv__ticket-input_invalid]="ticketInvalid()"
+        [attr.aria-invalid]="ticketInvalid()"
+        [title]="ticketInvalid() ? 'Не похоже на ключ задачи, нужен вид ' + keyExample() : ''"
+        placeholder="＋ тикет"
+        aria-label="Добавить тикет"
+        autocomplete="off"
+        spellcheck="false"
+        (input)="ticketInvalid.set(false)"
+        (keydown.enter)="addTicket(ticketField)"
+      />
+      @if (direction.status !== 'done') {
+        <button
+          type="button"
+          class="dv__jira-refresh"
+          [class.dv__jira-refresh_busy]="jiraBusy()"
+          [class.dv__jira-refresh_problem]="jiraProblem()"
+          [disabled]="jiraBusy()"
+          [title]="jiraTitle()"
+          aria-label="Обновить статусы Jira"
+          (click)="refreshJira()"
+        >{{ jiraProblem() ? '⚠︎' : '↻' }}</button>
+      }
+    </div>
+
+    @if (branch(); as branch) {
+      <wl-branch-line [branch]="branch" />
+
+      <section class="dv__section">
+        <h2 class="dv__label">Стенды и сборки</h2>
+        <wl-env-links [tickets]="direction.tickets" [branch]="branch" />
+      </section>
+    }
+
+    <section class="dv__section">
+      <h2 class="dv__label">Ссылки</h2>
+      <wl-direction-links [direction]="direction" />
+    </section>
+
+    <section class="dv__section">
+      <h2 class="dv__label">Знания</h2>
+      <wl-direction-notes [directionId]="direction.id" />
+    </section>
+
+    <section class="dv__section">
+      <h2 class="dv__label">Дела</h2>
+      <wl-todo-list class="dv__todos" [directionId]="direction.id" />
+    </section>
+
+    <section class="dv__section">
+      <h2 class="dv__label">Лента</h2>
+      <wl-event-feed [direction]="direction" />
+    </section>
+  </div>
+}

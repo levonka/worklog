@@ -1,0 +1,107 @@
+:host {
+  --nc-fill: color-mix(in srgb, var(--wl-text) 6%, transparent);
+
+  display: block;
+}
+
+.nc__card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--wl-bg-2);
+}
+
+.nc__head {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.nc__title {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.nc__edit {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  font-size: 11px;
+  color: var(--wl-text-3);
+  cursor: default;
+  opacity: 0;
+}
+
+.nc__card:hover .nc__edit,
+.nc__edit:focus-visible {
+  opacity: 1;
+}
+
+.nc__edit:hover {
+  color: var(--wl-text);
+  background: var(--nc-fill);
+}
+
+.nc__body {
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.nc__links,
+.nc__dirs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.nc__file,
+.nc__url,
+.nc__dir {
+  max-width: 100%;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 8px;
+  overflow: hidden;
+  border: 0;
+  border-radius: 6px;
+  background: var(--nc-fill);
+  font-size: 12px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  text-decoration: none;
+  cursor: default;
+}
+
+.nc__file {
+  font: 11.5px ui-monospace, "SF Mono", Menlo, monospace;
+  color: var(--wl-accent);
+}
+
+.nc__file_missing {
+  color: #ff3b30;
+  text-decoration: line-through;
+}
+
+.nc__url {
+  color: var(--wl-accent);
+}
+
+.nc__dir {
+  color: var(--wl-text-2);
+}
+
+.nc__file:hover,
+.nc__url:hover,
+.nc__dir:hover {
+  background: color-mix(in srgb, var(--wl-text) 10%, transparent);
+}

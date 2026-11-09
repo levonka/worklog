@@ -1,0 +1,28 @@
+<header class="kv__bar">
+  <h1 class="kv__title">Знания</h1>
+  <span class="kv__spacer"></span>
+  <input
+    #searchBox
+    class="kv__search"
+    type="search"
+    placeholder="Поиск: слово, файл, задача"
+    aria-label="Поиск по заметкам"
+    autocomplete="off"
+    (input)="query.set(searchBox.value)"
+  />
+  <button type="button" class="kv__add" [disabled]="creating()" (click)="creating.set(true)">＋ Заметка</button>
+  <ng-content />
+</header>
+
+<div class="kv__body">
+  @if (creating()) {
+    <wl-note-editor (done)="creating.set(false)" />
+  }
+  @for (note of shown(); track note.id) {
+    <wl-note-card [note]="note" />
+  } @empty {
+    @if (!creating()) {
+      <p class="kv__empty">{{ query() ? 'Ничего не нашлось' : 'Заметок пока нет. Короткий факт и ссылка на файл или страницу — «＋ Заметка».' }}</p>
+    }
+  }
+</div>
