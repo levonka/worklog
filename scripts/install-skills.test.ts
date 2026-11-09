@@ -23,7 +23,7 @@ function install(target: string, binDir: string = path.join(target, '.bin')) {
 test('install-skills links every skill folder and can run again', async t => {
   const target = path.join(await tempDir(t), 'skills');
   const skills = (await readdir(path.join(ROOT_DIR, 'skills'), { withFileTypes: true })).filter(e => e.isDirectory()).map(e => e.name);
-  assert.ok(skills.includes('worklog-update') && skills.includes('worklog-tabs') && skills.includes('worklog') && skills.includes('worklog-setup'));
+  assert.ok(skills.includes('worklog-update') && skills.includes('worklog-chrome-tabs') && skills.includes('worklog') && skills.includes('worklog-setup'));
 
   const first = install(target);
   assert.equal(first.status, 0, first.stderr);
@@ -39,14 +39,14 @@ test('install-skills leaves a foreign folder or link with the same name alone', 
   await mkdir(path.join(target, 'worklog-update'));
   await writeFile(path.join(target, 'worklog-update', 'SKILL.md'), 'чужой');
   const other = await tempDir(t);
-  await symlink(other, path.join(target, 'worklog-tabs'));
+  await symlink(other, path.join(target, 'worklog-chrome-tabs'));
 
   const result = install(target);
   assert.equal(result.status, 1);
   assert.match(result.stderr, /worklog-update: пропускаю/);
-  assert.match(result.stderr, /worklog-tabs: пропускаю/);
+  assert.match(result.stderr, /worklog-chrome-tabs: пропускаю/);
   assert.ok((await lstat(path.join(target, 'worklog-update'))).isDirectory());
-  assert.equal(await readlink(path.join(target, 'worklog-tabs')), other);
+  assert.equal(await readlink(path.join(target, 'worklog-chrome-tabs')), other);
 });
 
 test('install-skills links the CLI into the bin folder and can run again', async t => {
@@ -114,4 +114,16 @@ test('install-skills links for an agent set in the env file or living in CODEX_H
   const result = spawnSync('zsh', [SCRIPT], { env: { ...process.env, HOME: other, CLAUDE_SKILLS_DIR: '', CODEX_SKILLS_DIR: '', CODEX_HOME: path.join(other, 'codex-home'), WORKLOG_ENV_FILE: '/nonexistent', WORKLOG_BIN_DIR: path.join(other, 'bin') }, encoding: 'utf8' });
   assert.equal(result.status, 0, result.stderr);
   assert.equal(await readlink(path.join(other, '.agents', 'skills', 'worklog')), path.join(ROOT_DIR, 'skills', 'worklog'));
+});
+
+test('install-skills removes its own links to skills that are gone and keeps foreign ones', async t => {
+  const target = path.join(await tempDir(t), 'skills');
+  await mkdir(target);
+  await symlink(path.join(ROOT_DIR, 'skills', 'worklog-renamed'), path.join(target, 'worklog-renamed'));
+  await symlink('/nonexistent/skill', path.join(target, 'foreign'));
+  const result = install(target);
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stdout, /worklog-renamed: убран/);
+  await assert.rejects(lstat(path.join(target, 'worklog-renamed')));
+  assert.equal(await readlink(path.join(target, 'foreign')), '/nonexistent/skill');
 });

@@ -31,6 +31,13 @@ link_to() {
 
 for target in $targets; do
   mkdir -p "$target"
+  # a link of ours to a skill that was renamed or removed
+  for link in "$target"/*(N@); do
+    if [[ $(readlink "$link") == "$root"/skills/* && ! -e $link ]]; then
+      rm "$link"
+      print "${link:t}: убран, такого скилла больше нет"
+    fi
+  done
   for dir in "$root"/skills/*(/); do
     link_to "$dir" "$target/${dir:t}"
   done

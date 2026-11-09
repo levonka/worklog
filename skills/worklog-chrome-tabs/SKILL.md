@@ -1,5 +1,5 @@
 ---
-name: worklog-tabs
+name: worklog-chrome-tabs
 description: Use when the user asks to sort their open Chrome tabs into Worklog — «разбери вкладки», «разложи вкладки по направлениям», «что из вкладок сохранить в worklog».
 ---
 

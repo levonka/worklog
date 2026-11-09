@@ -130,15 +130,15 @@ test('doctor wants full paths to claude and the editor', async t => {
 
 test('doctor tells a foreign skill from a missing one', async t => {
   const { machine, config, probes, root } = await rig(t);
-  await mkdir(path.join(root, 'skills', 'worklog-tabs'));
+  await mkdir(path.join(root, 'skills', 'worklog-chrome-tabs'));
   const missing = byId(await runDoctor(machine, config, probes), 'skills');
   assert.equal(missing.status, 'fail');
-  assert.match(missing.detail, /не установлены: .*skills\/worklog-tabs/);
+  assert.match(missing.detail, /не установлены: .*skills\/worklog-chrome-tabs/);
   assert.match(missing.fix ?? '', /npm run skills/);
 
-  await mkdir(path.join(machine.skillsDirs.claude, 'worklog-tabs'));
+  await mkdir(path.join(machine.skillsDirs.claude, 'worklog-chrome-tabs'));
   const foreign = byId(await runDoctor(machine, config, probes), 'skills');
-  assert.match(foreign.detail, /не из этого клона: .*worklog-tabs/);
+  assert.match(foreign.detail, /не из этого клона: .*worklog-chrome-tabs/);
   assert.match(foreign.fix ?? '', /спроси коллегу/);
 });
 
