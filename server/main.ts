@@ -65,7 +65,7 @@ try {
             openBin: OPEN_BIN,
             osascriptBin: OSASCRIPT_BIN,
           },
-          mergeRequests: { codeRoot: CODE_ROOT, pollMs: JIRA_POLL_MS },
+          ...(profile?.gitlab?.mergeRequestsUrl === undefined ? {} : { mergeRequests: { codeRoot: CODE_ROOT, pollMs: JIRA_POLL_MS } }),
         }),
     jira: profileJira === undefined ? undefined : { connect: () => createJiraFetch(jiraConfig(profileJira, JIRA_FILES)), pollMs: JIRA_POLL_MS },
   });

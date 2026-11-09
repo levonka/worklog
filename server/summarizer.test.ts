@@ -222,8 +222,10 @@ test('runCodex passes the prompt on stdin and reads the answer file', async t =>
   const { bin, dir } = await stub(t, codexBody(`JSON.stringify({ prose: 'ok' })`));
   assert.deepEqual(await runCodex('промпт', { bin, cwd: tmpdir(), timeoutMs: 5000 }), { prose: 'ok' });
   const argv: string[] = JSON.parse(await readFile(path.join(dir, 'argv.json'), 'utf8'));
-  assert.deepEqual(argv.slice(0, 5), ['exec', '--ephemeral', '--skip-git-repo-check', '-s', 'read-only']);
-  assert.equal(argv[argv.indexOf('-C') + 1], tmpdir());
+  assert.deepEqual(argv.slice(0, 6), ['exec', '--ephemeral', '--skip-git-repo-check', '--ignore-user-config', '-s', 'read-only']);
+  const folder = argv[argv.indexOf('-C') + 1];
+  assert.notEqual(folder, tmpdir());
+  assert.equal(path.dirname(argv[argv.indexOf('-o') + 1]), folder);
   assert.equal(argv.at(-1), '-');
   assert.equal(argv.includes('-m'), false);
   assert.equal(JSON.parse(await readFile(path.join(dir, 'schema.json'), 'utf8')).type, 'object');

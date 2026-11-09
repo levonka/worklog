@@ -5,8 +5,11 @@ set -eu
 root=${0:A:h:h}
 failed=0
 targets=()
-[[ -n ${CLAUDE_SKILLS_DIR:-} || -d $HOME/.claude ]] && targets+=("${CLAUDE_SKILLS_DIR:-$HOME/.claude/skills}")
-[[ -n ${CODEX_SKILLS_DIR:-} || -d $HOME/.codex ]] && targets+=("${CODEX_SKILLS_DIR:-$HOME/.agents/skills}")
+source "$root/scripts/settings.sh"
+worklog_setting WORKLOG_CLAUDE_BIN
+if [[ -n ${CLAUDE_SKILLS_DIR:-} || -n $REPLY || -d $HOME/.claude ]]; then targets+=("${CLAUDE_SKILLS_DIR:-$HOME/.claude/skills}"); fi
+worklog_setting WORKLOG_CODEX_BIN
+if [[ -n ${CODEX_SKILLS_DIR:-} || -n $REPLY || -d ${CODEX_HOME:-$HOME/.codex} ]]; then targets+=("${CODEX_SKILLS_DIR:-$HOME/.agents/skills}"); fi
 if (( ${#targets} == 0 )); then
   print -u2 'Не найдены ни Claude Code (~/.claude), ни Codex (~/.codex): скиллы ставить некуда'
   failed=1

@@ -861,3 +861,18 @@ test('a run without agent reads as claude', async t => {
   const runs = (await new Store(dataDir).read()).runs;
   assert.deepEqual(runs.map(r => [r.id, r.agent ?? 'claude']).sort(), [['r1', 'claude'], ['r2', 'codex']]);
 });
+
+test('releaseJiraStages hands the stage back when the profile has no Jira', async t => {
+  const dataDir = await tempDataDir(t);
+  const led = new Store(dataDir, { profile: TEST_PROFILE });
+  const dir = await led.createDirection({ title: 'Сторы', ticketKeys: ['APP-1'] });
+  await led.applyJira([{ key: 'APP-1', status: 'In QA', segments: [] }], '2026-11-09T10:00:00.000Z');
+  assert.equal((await led.read()).directions[0].stageFromJira, true);
+
+  assert.equal(await led.releaseJiraStages(), 0);
+  const { jira: _jira, ...noJira } = TEST_PROFILE;
+  assert.equal(await new Store(dataDir, { profile: noJira }).releaseJiraStages(), 1);
+  const released = (await led.read()).directions.find(d => d.id === dir.id);
+  assert.equal(released?.stageFromJira, undefined);
+  await new Store(dataDir, { profile: noJira }).setStatus(dir.id, 'done');
+});

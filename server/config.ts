@@ -24,11 +24,8 @@ export function setting(name: SettingName): string | undefined {
 
 export const ROOT_DIR = path.resolve(import.meta.dirname, '..');
 export const DATA_DIR = path.resolve(setting('WORKLOG_DATA_DIR') || path.join(ROOT_DIR, 'data'));
-const MAX_PORT = 65535;
-const DIGITS = /^\d+$/;
-
-export const PORT = intFromEnv('WORKLOG_PORT', setting('WORKLOG_PORT'), 4317, MAX_PORT);
-export const IDLE_MS = intFromEnv('WORKLOG_IDLE_MS', setting('WORKLOG_IDLE_MS'), 180_000);
+export const PORT = intSetting('WORKLOG_PORT', 4317);
+export const IDLE_MS = intSetting('WORKLOG_IDLE_MS', 180_000);
 export const CHROME_DIR = path.resolve(setting('WORKLOG_CHROME_DIR') || path.join(homedir(), 'Library', 'Application Support', 'Google', 'Chrome'));
 export const STATIC_DIR = path.join(ROOT_DIR, 'web', 'dist', 'web', 'browser');
 export const CLAUDE_PROJECTS_DIR = path.resolve(setting('WORKLOG_CLAUDE_PROJECTS_DIR') || path.join(homedir(), '.claude', 'projects'));
@@ -45,7 +42,7 @@ export const AGENT_SETUP: AgentSetup = resolveAgents({ agent: setting('WORKLOG_A
 export const CODEX_SESSIONS_DIR = path.resolve(setting('WORKLOG_CODEX_SESSIONS_DIR') || path.join(homedir(), '.codex', 'sessions'));
 /** none: Claude takes sonnet, Codex its own default */
 export const SUMMARY_MODEL = setting('WORKLOG_SUMMARY_MODEL');
-export const SUMMARY_TIMEOUT_MS = intFromEnv('WORKLOG_SUMMARY_TIMEOUT_MS', setting('WORKLOG_SUMMARY_TIMEOUT_MS'), MAX_SUMMARY_TIMEOUT_MS, MAX_SUMMARY_TIMEOUT_MS);
+export const SUMMARY_TIMEOUT_MS = intSetting('WORKLOG_SUMMARY_TIMEOUT_MS', MAX_SUMMARY_TIMEOUT_MS);
 
 export const PROFILE_PATH = path.resolve(setting('WORKLOG_PROFILE') || path.join(CONFIG_DIR, 'profile.json'));
 /** where the profile was fetched from: a GitLab file link or a full path */
@@ -57,7 +54,7 @@ export const JIRA_FILES: JiraFiles = {
   keychainService: setting('WORKLOG_JIRA_KEYCHAIN') || 'worklog-jira-p12',
   tokenService: setting('WORKLOG_JIRA_TOKEN_KEYCHAIN') || 'worklog-jira-token',
 };
-export const JIRA_POLL_MS = intFromEnv('WORKLOG_JIRA_POLL_MS', setting('WORKLOG_JIRA_POLL_MS'), 300_000);
+export const JIRA_POLL_MS = intSetting('WORKLOG_JIRA_POLL_MS', 300_000);
 
 function oneOf<T extends string>(name: SettingName, values: readonly T[], fallback: T): T {
   // setting() has already refused a value outside the list
@@ -65,9 +62,8 @@ function oneOf<T extends string>(name: SettingName, values: readonly T[], fallba
   return values.find(value => value === raw) ?? fallback;
 }
 
-export function intFromEnv(name: string, raw: string | undefined, fallback: number, max: number = Number.MAX_SAFE_INTEGER): number {
-  if (raw === undefined || raw === '') return fallback;
-  const value = Number(raw);
-  if (!DIGITS.test(raw) || value > max) throw new Error(`Некорректное значение ${name}: ${raw}`);
-  return value;
+/** a number setting; setting() has already refused anything but digits within the limit */
+function intSetting(name: SettingName, fallback: number): number {
+  const raw = setting(name);
+  return raw === undefined ? fallback : Number(raw);
 }

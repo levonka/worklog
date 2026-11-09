@@ -2,8 +2,9 @@
 set -eu
 
 ROOT=${0:A:h:h}
-source "$ROOT/scripts/node-path.sh"
-PORT=${WORKLOG_PORT:-4317}
+source "$ROOT/scripts/settings.sh"
+worklog_setting WORKLOG_PORT
+PORT=${REPLY:-4317}
 APP_URL=http://localhost:$PORT
 HEALTH_URL=$APP_URL/api/health
 

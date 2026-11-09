@@ -56,6 +56,8 @@ export interface App {
 }
 
 export async function createApp(opts: AppOptions): Promise<App> {
+  // before the store that records undo history: this conversion is not the user's step to undo; broken data answers 500 later, not here
+  await new Store(opts.dataDir, { profile: opts.profile ?? null }).releaseJiraStages().catch(() => 0);
   const live = createLiveHub({ dataDir: opts.dataDir, idleMs: opts.idleMs, onIdle: opts.onIdle ?? (() => {}) });
   const history = new History();
   const store = new Store(opts.dataDir, { onCommit: changes => history.record(changes), profile: opts.profile ?? null });

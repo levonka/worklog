@@ -236,8 +236,9 @@ export async function runCodex(prompt: string, opts: ClaudeOptions): Promise<unk
     const answer = path.join(dir, 'answer.json');
     await writeFile(schema, JSON.stringify(SUMMARY_SCHEMA));
     const model = opts.model === undefined ? [] : ['-m', opts.model];
-    const args = ['exec', '--ephemeral', '--skip-git-repo-check', '-s', 'read-only', '-C', opts.cwd, '-o', answer, '--output-schema', schema, ...model, '-'];
-    const result = await runProcess('codex', opts.bin, args, { cwd: opts.cwd, timeoutMs: opts.timeoutMs, input: prompt });
+    // an empty folder and no user config: no AGENTS.md, MCP servers or settings reach the summary
+    const args = ['exec', '--ephemeral', '--skip-git-repo-check', '--ignore-user-config', '-s', 'read-only', '-C', dir, '-o', answer, '--output-schema', schema, ...model, '-'];
+    const result = await runProcess('codex', opts.bin, args, { cwd: dir, timeoutMs: opts.timeoutMs, input: prompt });
     if (result.code !== 0) throw new Error(`codex завершился с кодом ${result.code}: ${lastLine(result.stderr) || 'нет вывода'}`);
     const parsed: unknown = await readFile(answer, 'utf8').then(text => JSON.parse(text)).catch(() => null);
     if (!isRecord(parsed)) throw new Error('codex вернул ответ без структуры');

@@ -17,7 +17,7 @@ async function tempDir(t: TestContext): Promise<string> {
 
 function install(target: string, binDir: string = path.join(target, '.bin')) {
   // a home without agents: only the folder given here is a target
-  return spawnSync('zsh', [SCRIPT], { env: { ...process.env, HOME: path.join(target, '.home'), CLAUDE_SKILLS_DIR: target, CODEX_SKILLS_DIR: '', WORKLOG_BIN_DIR: binDir }, encoding: 'utf8' });
+  return spawnSync('zsh', [SCRIPT], { env: { ...process.env, HOME: path.join(target, '.home'), CLAUDE_SKILLS_DIR: target, CODEX_SKILLS_DIR: '', CODEX_HOME: '', WORKLOG_ENV_FILE: '/nonexistent', WORKLOG_BIN_DIR: binDir }, encoding: 'utf8' });
 }
 
 test('install-skills links every skill folder and can run again', async t => {
@@ -74,7 +74,7 @@ test('install-skills leaves a foreign worklog in the bin folder alone', async t 
 });
 
 function installAt(home: string) {
-  return spawnSync('zsh', [SCRIPT], { env: { ...process.env, HOME: home, CLAUDE_SKILLS_DIR: '', CODEX_SKILLS_DIR: '', WORKLOG_BIN_DIR: path.join(home, 'bin') }, encoding: 'utf8' });
+  return spawnSync('zsh', [SCRIPT], { env: { ...process.env, HOME: home, CLAUDE_SKILLS_DIR: '', CODEX_SKILLS_DIR: '', CODEX_HOME: '', WORKLOG_ENV_FILE: path.join(home, 'env'), WORKLOG_BIN_DIR: path.join(home, 'bin') }, encoding: 'utf8' });
 }
 
 test('install-skills links into both agents when both are present', async t => {
@@ -101,4 +101,17 @@ test('install-skills says there is nowhere to install without an agent', async t
   const result = installAt(await tempDir(t));
   assert.equal(result.status, 1);
   assert.match(result.stderr, /ни Claude Code .* ни Codex/);
+});
+
+test('install-skills links for an agent set in the env file or living in CODEX_HOME', async t => {
+  const home = await tempDir(t);
+  await writeFile(path.join(home, 'env'), 'WORKLOG_CLAUDE_BIN=/opt/bin/claude\n');
+  assert.equal(installAt(home).status, 0);
+  assert.equal(await readlink(path.join(home, '.claude', 'skills', 'worklog')), path.join(ROOT_DIR, 'skills', 'worklog'));
+
+  const other = await tempDir(t);
+  await mkdir(path.join(other, 'codex-home'));
+  const result = spawnSync('zsh', [SCRIPT], { env: { ...process.env, HOME: other, CLAUDE_SKILLS_DIR: '', CODEX_SKILLS_DIR: '', CODEX_HOME: path.join(other, 'codex-home'), WORKLOG_ENV_FILE: '/nonexistent', WORKLOG_BIN_DIR: path.join(other, 'bin') }, encoding: 'utf8' });
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(await readlink(path.join(other, '.agents', 'skills', 'worklog')), path.join(ROOT_DIR, 'skills', 'worklog'));
 });

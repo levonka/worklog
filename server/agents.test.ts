@@ -23,3 +23,8 @@ test('resolveAgents honours WORKLOG_AGENT and refuses an unknown one', () => {
   assert.equal(resolveAgents({ agent: 'codex', claudeBin: '/opt/bin/claude' }).main, 'codex');
   assert.throws(() => resolveAgents({ agent: 'gpt' }), /WORKLOG_AGENT: gpt \(claude, codex\)/);
 });
+
+test('resolveAgents does not invent claude when codex is chosen', () => {
+  assert.deepEqual(resolveAgents({ agent: 'codex' }), { main: 'codex', bins: {} });
+  assert.deepEqual(installedAgents(resolveAgents({ agent: 'codex', codexBin: '/opt/bin/codex' }).bins), ['codex']);
+});

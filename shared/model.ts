@@ -562,7 +562,8 @@ function portAt(value: unknown, path: string): number {
 
 function projectAt(value: unknown, path: string): ProfileProject {
   const raw = objectAt(value, path);
-  return { prefix: textAt(raw['prefix'], `${path}.prefix`), label: textAt(raw['label'], `${path}.label`) };
+  // ticket keys are upper case, hosts lower case: the profile is read the same way
+  return { prefix: textAt(raw['prefix'], `${path}.prefix`).toUpperCase(), label: textAt(raw['label'], `${path}.label`) };
 }
 
 function jiraAt(value: unknown, path: string): ProfileJira {
@@ -624,8 +625,9 @@ function gitlabAt(value: unknown, path: string): ProfileGitlab {
 function linkHostsAt(value: unknown, path: string): NonNullable<Profile['linkHosts']> {
   const raw = objectAt(value, path);
   const hosts: NonNullable<Profile['linkHosts']> = {};
-  if (raw['confluence'] !== undefined) hosts.confluence = listAt(raw['confluence'], `${path}.confluence`, textAt);
-  if (raw['jenkinsPrefixes'] !== undefined) hosts.jenkinsPrefixes = listAt(raw['jenkinsPrefixes'], `${path}.jenkinsPrefixes`, textAt);
+  const lower = (item: unknown, at: string): string => textAt(item, at).toLowerCase();
+  if (raw['confluence'] !== undefined) hosts.confluence = listAt(raw['confluence'], `${path}.confluence`, lower);
+  if (raw['jenkinsPrefixes'] !== undefined) hosts.jenkinsPrefixes = listAt(raw['jenkinsPrefixes'], `${path}.jenkinsPrefixes`, lower);
   return hosts;
 }
 

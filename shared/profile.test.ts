@@ -155,3 +155,9 @@ test('profileQuickLinks skips links that need a login it does not have', () => {
   assert.deepEqual(profileQuickLinks(TEST_PROFILE, ''), { groups: [], skipped: ['Мои MR'] });
   assert.deepEqual(profileQuickLinks(null, 'jdoe'), { groups: [], skipped: [] });
 });
+
+test('parseProfile normalises the case of project prefixes and link hosts', () => {
+  const profile = parseProfile({ ...TEST_PROFILE, projects: [{ prefix: 'app-', label: 'App' }], linkHosts: { confluence: ['Wiki.Example.com'], jenkinsPrefixes: ['CI.'] } });
+  assert.equal(ticketFromKey('APP-1', profile).platform, 'App');
+  assert.deepEqual(profile.linkHosts, { confluence: ['wiki.example.com'], jenkinsPrefixes: ['ci.'] });
+});

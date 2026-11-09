@@ -5,7 +5,7 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { homedir } from 'node:os';
-import { parseEnvFile, readEnvFile, withEnvValue } from './env-file.ts';
+import { MAX_SUMMARY_TIMEOUT_MS, parseEnvFile, readEnvFile, settingProblem, withEnvValue } from './env-file.ts';
 
 test('parseEnvFile keeps the value verbatim after the first =', () => {
   assert.deepEqual(parseEnvFile('WORKLOG_CODE_ROOT=/Users/x/My Projects/a=b\n'), { WORKLOG_CODE_ROOT: '/Users/x/My Projects/a=b' });
@@ -55,4 +55,14 @@ test('withEnvValue keeps a value with spaces, = and quotes readable as is', () =
 
 test('withEnvValue refuses a value with a line break', () => {
   assert.throws(() => withEnvValue('', 'WORKLOG_CODE_ROOT', '/a\nWORKLOG_PORT=1'), /перенос строки/);
+});
+
+test('settingProblem takes decimal digits within the limit and named choices only', () => {
+  for (const raw of ['0x10', '1e3', '-1', ' 1', '1.5', '70000']) assert.match(settingProblem('WORKLOG_PORT', raw) ?? '', /до 65535/);
+  assert.equal(settingProblem('WORKLOG_PORT', '65535'), null);
+  assert.equal(settingProblem('WORKLOG_IDLE_MS', 'soon'), 'нужно целое число');
+  assert.notEqual(settingProblem('WORKLOG_SUMMARY_TIMEOUT_MS', String(MAX_SUMMARY_TIMEOUT_MS + 1)), null);
+  assert.equal(settingProblem('WORKLOG_TERMINAL', 'termnal'), 'warp, iterm, terminal');
+  assert.equal(settingProblem('WORKLOG_CODE_ROOT', 'Projects/app'), 'нужен полный путь');
+  assert.equal(settingProblem('WORKLOG_CLAUDE_BIN', 'claude'), null);
 });

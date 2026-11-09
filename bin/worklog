@@ -1,5 +1,5 @@
 #!/bin/zsh
-source "${0:A:h:h}/scripts/node-path.sh"
+source "${0:A:h:h}/scripts/settings.sh"
 if [[ -z $NODE ]]; then
   print -u2 'Worklog: не найден node — укажи WORKLOG_NODE в ~/.config/worklog/env'
   exit 1

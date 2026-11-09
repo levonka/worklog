@@ -4,22 +4,6 @@ import { spawnSync } from 'node:child_process';
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { homedir, tmpdir } from 'node:os';
 import path from 'node:path';
-import { intFromEnv } from './config.ts';
-
-test('intFromEnv takes decimal digits and falls back when unset or empty', () => {
-  assert.equal(intFromEnv('X', '4318', 1), 4318);
-  assert.equal(intFromEnv('X', '0', 1, 65535), 0);
-  assert.equal(intFromEnv('X', undefined, 7), 7);
-  assert.equal(intFromEnv('X', '', 7), 7);
-});
-
-test('intFromEnv rejects anything but decimal digits and values above max', () => {
-  for (const raw of ['0x10', '1e3', '-1', ' 1', '1.5']) {
-    assert.throws(() => intFromEnv('WORKLOG_PORT', raw, 1), { message: `Некорректное значение WORKLOG_PORT: ${raw}` });
-  }
-  assert.throws(() => intFromEnv('WORKLOG_PORT', '70000', 1, 65535), /70000/);
-  assert.equal(intFromEnv('WORKLOG_PORT', '65535', 1, 65535), 65535);
-});
 
 test('summary timeout above the stale limit is refused', () => {
   const script = "await import('./server/config.ts')";

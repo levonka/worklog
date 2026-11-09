@@ -591,6 +591,13 @@ export class Store {
   }
 
   /** adds the links whose url is in no group yet; the user's own edits stay as they are */
+  /** at start: a profile without Jira (or none) leaves no direction locked to it */
+  async releaseJiraStages(): Promise<number> {
+    // the lock only when there is something to release
+    if (releasedJiraStages((await this.read()).directions, this.profile) === 0) return 0;
+    return this.mutate(s => releasedJiraStages(s.directions, this.profile));
+  }
+
   async importQuickLinks(groups: readonly ProfileLinkGroup[]): Promise<{ added: number; present: number }> {
     return this.mutate(s => {
       const known = new Set(s.linkGroups.flatMap(group => group.links.map(link => link.url)));
@@ -860,6 +867,17 @@ function columnEnd(s: WorklogState, status: Status, id: string): number {
 
 function jiraStageRefusal(direction: Direction): string {
   return `Этап направления «${direction.title}» берётся из Jira (сейчас: ${STATUS_LABELS[directionStage(direction)]}). Можно поставить пометку: wait, parked`;
+}
+
+/** directions whose stage came from Jira go back to manual when the profile cannot give them one */
+export function releasedJiraStages(directions: Direction[], profile: Profile | null): number {
+  let released = 0;
+  for (const direction of directions) {
+    if (direction.stageFromJira !== true || jiraStage(direction.tickets, directionStage(direction), profile) !== null) continue;
+    delete direction.stageFromJira;
+    released++;
+  }
+  return released;
 }
 
 /** the stage from the tickets' Jira data: the event to write and the column to move to */

@@ -11,14 +11,14 @@ export function resolveAgents(values: { agent?: string; claudeBin?: string; code
   const bins: Partial<Record<Agent, string>> = {};
   if (values.claudeBin) bins.claude = values.claudeBin;
   if (values.codexBin) bins.codex = values.codexBin;
-  // a machine without settings keeps the behaviour from before Codex
-  if (bins.claude === undefined && bins.codex === undefined) bins.claude = 'claude';
   if (values.agent) {
     const chosen = AGENTS.find(agent => agent === values.agent);
     if (chosen === undefined) throw new Error(`Некорректное значение WORKLOG_AGENT: ${values.agent} (${AGENTS.join(', ')})`);
-    // a chosen agent without a path runs by name, like claude without settings; doctor asks for the path
-    return { main: chosen, bins: { ...bins, [chosen]: bins[chosen] ?? chosen } };
+    // a chosen agent without a path is not installed: doctor asks for the path, a handed task gets a clear refusal
+    return { main: chosen, bins };
   }
+  // a machine without settings keeps the behaviour from before Codex
+  if (bins.claude === undefined && bins.codex === undefined) bins.claude = 'claude';
   return { main: bins.claude !== undefined ? 'claude' : 'codex', bins };
 }
 
