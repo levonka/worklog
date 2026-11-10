@@ -7,7 +7,7 @@ description: Use when the user asks to install, finish installing, update, re-ch
 
 1. Find the clone: `readlink ~/.local/bin/worklog` gives `<clone>/bin/worklog`. No link — ask the user where Worklog lies.
 2. Read `<clone>/INSTALL.md` — its «Rules» first, then the section for the request:
-   - «продолжи установку worklog», «установи worklog» — «Install», from the first step whose `doctor` checks are not `ok`;
+   - «продолжи установку worklog», «установи worklog» — «Install», from the first step whose `doctor` checks do not pass;
    - «обнови worklog» — «Update Worklog»;
    - «обнови профиль worklog» — «Update the profile»;
    - «worklog не работает», «проверь worklog» — «Worklog does not work».

@@ -66,3 +66,10 @@ test('settingProblem takes decimal digits within the limit and named choices onl
   assert.equal(settingProblem('WORKLOG_CODE_ROOT', 'Projects/app'), 'нужен полный путь');
   assert.equal(settingProblem('WORKLOG_CLAUDE_BIN', 'claude'), null);
 });
+
+test('settingProblem lets the editor be none and Jira be switched off', () => {
+  assert.equal(settingProblem('WORKLOG_EDITOR', 'none'), null);
+  assert.equal(settingProblem('WORKLOG_JIRA', 'off'), null);
+  assert.equal(settingProblem('WORKLOG_JIRA', 'on'), null);
+  assert.equal(settingProblem('WORKLOG_JIRA', 'no'), 'on, off');
+});

@@ -50,11 +50,11 @@ async function doctorConfig(): Promise<DoctorConfig | string> {
       chromeDir: config.CHROME_DIR,
       agents: config.AGENT_SETUP,
       editor: config.EDITOR,
-      editorBin: config.EDITOR_BIN,
       terminal: config.TERMINAL,
       port: config.PORT,
       profilePath: config.PROFILE_PATH,
       profileSource: config.PROFILE_SOURCE,
+      jiraOn: config.JIRA_ON,
       jiraFiles: config.JIRA_FILES,
     };
   } catch (error) {

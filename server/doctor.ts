@@ -5,7 +5,7 @@ import { homedir } from 'node:os';
 import path from 'node:path';
 import tls from 'node:tls';
 import type { Agent, Profile, ProfileJira, Terminal } from '../shared/model.ts';
-import type { Editor } from './code-files.ts';
+import type { EditorCommand } from './code-files.ts';
 import { EDITOR_BINS } from './code-files.ts';
 import type { AgentSetup } from './agents.ts';
 import { installedAgents } from './agents.ts';
@@ -23,6 +23,7 @@ export const CHECK_IDS = ['macos', 'node', 'git', 'chrome', 'agents', 'env', 'co
 export type CheckId = (typeof CHECK_IDS)[number];
 export const CHECK_STATUSES = ['ok', 'warn', 'fail', 'skip'] as const;
 export type CheckStatus = (typeof CHECK_STATUSES)[number];
+const JIRA_CHECKS = ['p12', 'token', 'jira'] as const satisfies readonly CheckId[];
 
 export interface Check {
   id: CheckId;
@@ -50,12 +51,14 @@ export interface DoctorConfig {
   codeRoot: string | undefined;
   chromeDir: string;
   agents: AgentSetup;
-  editor: Editor;
-  editorBin: string;
+  /** null: the colleague has no editor of ours */
+  editor: EditorCommand | null;
   terminal: Terminal;
   port: number;
   profilePath: string;
   profileSource: string | undefined;
+  /** false: Jira is put off until WORKLOG_JIRA=on */
+  jiraOn: boolean;
   jiraFiles: JiraFiles;
 }
 
@@ -181,6 +184,7 @@ export async function runDoctor(machine: DoctorMachine, config: DoctorConfig | s
   };
   const once: DoctorProbes = { ...probes, readPassword: readOnce };
   const jiraChecks = (async (): Promise<Check[]> => {
+    if (profile?.jira !== undefined && !config.jiraOn) return JIRA_CHECKS.map(id => check(id, 'skip', 'Jira отложена; вернуть: worklog config set WORKLOG_JIRA on'));
     const p12 = await p12Check(profile?.jira, config.jiraFiles, once);
     const token = await tokenCheck(profile?.jira, config.jiraFiles, once);
     return [p12, token, await jiraCheck(profile?.jira, config.jiraFiles, once, p12, token)];
@@ -200,7 +204,7 @@ export async function runDoctor(machine: DoctorMachine, config: DoctorConfig | s
     codexDataCheck(machine, config),
     cliCheck(machine),
     terminalCheck(machine, config.terminal),
-    editorCheck(config),
+    editorCheck(config.editor),
     dataCheck(config.dataDir),
   ]);
   checks.push(chrome, agents, env, codeRoot, profileCheck(config, profile, profileError), webCheck, ...jira, port, skills, codexData, cli, terminal, editor, data);
@@ -231,10 +235,11 @@ async function binProblem(bin: string, name: string): Promise<string | null> {
   return path.isAbsolute(bin) ? `${bin} не найден или не запускается` : `нужен полный путь к ${name}, а записано «${bin}»`;
 }
 
-async function editorCheck(config: DoctorConfig): Promise<Check> {
-  const name = EDITOR_BINS[config.editor];
-  const problem = await binProblem(config.editorBin, name);
-  return problem === null ? check('editor', 'ok', config.editorBin) : check('editor', 'fail', problem, `worklog config set WORKLOG_EDITOR_BIN "$(command -v ${name})"`);
+async function editorCheck(editor: EditorCommand | null): Promise<Check> {
+  if (editor === null) return check('editor', 'skip', 'редактор не выбран: файлы из заметок не открываются');
+  const name = EDITOR_BINS[editor.name];
+  const problem = await binProblem(editor.bin, name);
+  return problem === null ? check('editor', 'ok', editor.bin) : check('editor', 'fail', problem, `worklog config set WORKLOG_EDITOR_BIN "$(command -v ${name})"`);
 }
 
 const AGENT_BIN_SETTINGS: Record<Agent, SettingName> = { claude: 'WORKLOG_CLAUDE_BIN', codex: 'WORKLOG_CODEX_BIN' };

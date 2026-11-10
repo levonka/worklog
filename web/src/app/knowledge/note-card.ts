@@ -49,6 +49,7 @@ export class NoteCard {
   protected readonly files = computed(() =>
     this.note().files.map(file => ({ file, label: fileLabel(file), short: shortFileLabel(file), missing: this.codeFiles.missing().has(file.path) })),
   );
+  protected readonly openable = this.codeFiles.openable;
   protected readonly urls = computed(() => this.note().urls.map(url => ({ ...url, label: url.title ?? hostOf(url.url) })));
 
   protected open(file: NoteFile): void {

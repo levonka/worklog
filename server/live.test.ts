@@ -13,6 +13,8 @@ import { createApp } from './app.ts';
 import { createLiveHub } from './live.ts';
 import type { LiveHubOptions, Watcher } from './live.ts';
 import { Store } from './store.ts';
+import { TEST_PROFILE } from '../shared/test-profile.ts';
+import { isRecord } from './guards.ts';
 
 const ROOT_DIR = path.resolve(import.meta.dirname, '..');
 const CHANGE_FRAME = 'event: change\ndata: {}\n\n';
@@ -312,4 +314,30 @@ test('main prints its url and exits with code 0 when idle', async t => {
   assert.equal(result.code, 0);
   assert.match(result.stdout, /^Worklog: http:\/\/localhost:\d+\n$/);
   assert.equal(result.stderr, '');
+});
+
+/** what a running main answers on /api/jira with this environment */
+async function jiraOfMain(t: TestContext, env: Record<string, string>): Promise<unknown> {
+  const dataDir = await tempDir(t);
+  const missing = { WORKLOG_JIRA_P12: path.join(ROOT_DIR, 'missing.p12'), WORKLOG_CODE_ROOT: path.join(ROOT_DIR, 'missing-code'), WORKLOG_ENV_FILE: path.join(ROOT_DIR, 'missing-env') };
+  const child = spawn(process.execPath, ['server/main.ts'], { cwd: ROOT_DIR, env: { ...process.env, ...missing, WORKLOG_PORT: '0', WORKLOG_DATA_DIR: dataDir, ...env } });
+  t.after(() => child.kill());
+  let stdout = '';
+  child.stdout.on('data', chunk => (stdout += chunk));
+  assert.ok(await waitFor(() => /http:\/\/localhost:\d+/.test(stdout), PROCESS_TIMEOUT_MS), stdout);
+  const base = /http:\/\/localhost:\d+/.exec(stdout)?.[0] ?? '';
+  // the first poll settles right after start
+  await sleep(SETTLE_MS);
+  return (await fetch(`${base}/api/jira`)).json();
+}
+
+test('main does not poll Jira that is put off', async t => {
+  const profile = path.join(await tempDir(t), 'profile.json');
+  await writeFile(profile, JSON.stringify(TEST_PROFILE));
+
+  const polled = await jiraOfMain(t, { WORKLOG_PROFILE: profile });
+  const off = await jiraOfMain(t, { WORKLOG_PROFILE: profile, WORKLOG_JIRA: 'off' });
+
+  assert.ok(isRecord(polled) && /нет сертификата/.test(String(polled.message)), JSON.stringify(polled));
+  assert.deepEqual(off, { state: 'off', message: 'Jira не настроена', checkedAt: null, polling: false });
 });

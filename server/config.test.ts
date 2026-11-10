@@ -28,10 +28,10 @@ test('Jira files and the profile default to ~/.config/worklog', () => {
   });
 });
 
-const CONFIG_KEYS = ['WORKLOG_CODE_ROOT', 'WORKLOG_EDITOR', 'WORKLOG_EDITOR_BIN', 'WORKLOG_TERMINAL', 'WORKLOG_CLAUDE_BIN', 'WORKLOG_CODEX_BIN', 'WORKLOG_AGENT', 'WORKLOG_ENV_FILE'];
+const CONFIG_KEYS = ['WORKLOG_CODE_ROOT', 'WORKLOG_EDITOR', 'WORKLOG_EDITOR_BIN', 'WORKLOG_TERMINAL', 'WORKLOG_CLAUDE_BIN', 'WORKLOG_CODEX_BIN', 'WORKLOG_AGENT', 'WORKLOG_JIRA', 'WORKLOG_ENV_FILE'];
 
 function configIn(envFile: string, extra: Record<string, string> = {}) {
-  const script = "const c = await import('./server/config.ts'); console.log(JSON.stringify({ codeRoot: c.CODE_ROOT ?? null, editor: c.EDITOR, editorBin: c.EDITOR_BIN, terminal: c.TERMINAL, agents: c.AGENT_SETUP }))";
+  const script = "const c = await import('./server/config.ts'); console.log(JSON.stringify({ codeRoot: c.CODE_ROOT ?? null, editor: c.EDITOR, terminal: c.TERMINAL, agents: c.AGENT_SETUP, jiraOn: c.JIRA_ON }))";
   const base = Object.fromEntries(Object.entries(process.env).filter(([name]) => !CONFIG_KEYS.includes(name)));
   return spawnSync(process.execPath, ['--input-type=module', '-e', script], {
     cwd: path.resolve(import.meta.dirname, '..'),
@@ -52,7 +52,7 @@ test('config prefers the environment over the env file over the default', t => {
   t.after(env.done);
   const result = configIn(env.file, { WORKLOG_EDITOR: 'cursor' });
   assert.equal(result.status, 0, result.stderr);
-  assert.deepEqual(JSON.parse(result.stdout), { codeRoot: '/from/file', editor: 'cursor', editorBin: 'cursor', terminal: 'terminal', agents: { main: 'claude', bins: { claude: 'claude' } } });
+  assert.deepEqual(JSON.parse(result.stdout), { codeRoot: '/from/file', editor: { name: 'cursor', bin: 'cursor' }, terminal: 'terminal', agents: { main: 'claude', bins: { claude: 'claude' } }, jiraOn: true });
 });
 
 test('config leaves the code root unset without env', t => {
@@ -60,7 +60,17 @@ test('config leaves the code root unset without env', t => {
   t.after(env.done);
   const result = configIn(env.file);
   assert.equal(result.status, 0, result.stderr);
-  assert.deepEqual(JSON.parse(result.stdout), { codeRoot: null, editor: 'jetbrains', editorBin: 'webstorm', terminal: 'terminal', agents: { main: 'claude', bins: { claude: 'claude' } } });
+  assert.deepEqual(JSON.parse(result.stdout), { codeRoot: null, editor: { name: 'jetbrains', bin: 'webstorm' }, terminal: 'terminal', agents: { main: 'claude', bins: { claude: 'claude' } }, jiraOn: true });
+});
+
+test('config takes WORKLOG_EDITOR=none as no editor and WORKLOG_JIRA=off as Jira put off', t => {
+  const env = tempEnvFile('WORKLOG_EDITOR=none\nWORKLOG_EDITOR_BIN=/usr/local/bin/zed\nWORKLOG_JIRA=off\n');
+  t.after(env.done);
+  const result = configIn(env.file);
+  assert.equal(result.status, 0, result.stderr);
+  const { editor, jiraOn } = JSON.parse(result.stdout);
+  assert.equal(editor, null);
+  assert.equal(jiraOn, false);
 });
 
 test('config refuses an unknown terminal or editor', t => {

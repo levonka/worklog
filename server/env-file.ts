@@ -30,6 +30,7 @@ export const SETTINGS = [
   'WORKLOG_OSASCRIPT_BIN',
   'WORKLOG_SUMMARY_MODEL',
   'WORKLOG_SUMMARY_TIMEOUT_MS',
+  'WORKLOG_JIRA',
   'WORKLOG_JIRA_P12',
   'WORKLOG_JIRA_CA',
   'WORKLOG_JIRA_KEYCHAIN',
@@ -42,7 +43,11 @@ export const isSettingName = oneOf(SETTINGS);
 
 // a longer summary run would look stale to the screen and a second one could start beside it
 export const MAX_SUMMARY_TIMEOUT_MS = SUMMARY_STALE_MS - 60_000;
-const CHOICES: Partial<Record<SettingName, readonly string[]>> = { WORKLOG_TERMINAL: TERMINALS, WORKLOG_EDITOR: EDITORS, WORKLOG_AGENT: AGENTS };
+/** WORKLOG_EDITOR=none: no editor, note file links do not open */
+export const NO_EDITOR = 'none';
+/** WORKLOG_JIRA=off: Jira is put off, nothing polls it */
+export const JIRA_SWITCH = ['on', 'off'] as const;
+const CHOICES: Partial<Record<SettingName, readonly string[]>> = { WORKLOG_TERMINAL: TERMINALS, WORKLOG_EDITOR: [...EDITORS, NO_EDITOR], WORKLOG_AGENT: AGENTS, WORKLOG_JIRA: JIRA_SWITCH };
 const NUMBERS: Partial<Record<SettingName, number>> = {
   WORKLOG_PORT: 65535,
   WORKLOG_IDLE_MS: Number.MAX_SAFE_INTEGER,

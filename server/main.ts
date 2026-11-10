@@ -8,9 +8,9 @@ import {
   CODE_ROOT,
   DATA_DIR,
   EDITOR,
-  EDITOR_BIN,
   IDLE_MS,
   JIRA_FILES,
+  JIRA_ON,
   JIRA_POLL_MS,
   OPEN_BIN,
   OSASCRIPT_BIN,
@@ -54,7 +54,7 @@ try {
     ...(CODE_ROOT === undefined
       ? {}
       : {
-          code: { root: CODE_ROOT, editor: EDITOR, editorBin: EDITOR_BIN },
+          code: { root: CODE_ROOT, editor: EDITOR },
           agent: {
             runsDir: path.join(DATA_DIR, 'runs'),
             codeRoot: CODE_ROOT,
@@ -67,7 +67,7 @@ try {
           },
           ...(profile?.gitlab?.mergeRequestsUrl === undefined ? {} : { mergeRequests: { codeRoot: CODE_ROOT, pollMs: JIRA_POLL_MS } }),
         }),
-    jira: profileJira === undefined ? undefined : { connect: () => createJiraFetch(jiraConfig(profileJira, JIRA_FILES)), pollMs: JIRA_POLL_MS },
+    jira: profileJira === undefined || !JIRA_ON ? undefined : { connect: () => createJiraFetch(jiraConfig(profileJira, JIRA_FILES)), pollMs: JIRA_POLL_MS },
   });
   console.log(`Worklog: http://localhost:${new URL(app.url).port}`);
 } catch (error) {

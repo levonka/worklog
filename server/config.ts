@@ -1,13 +1,13 @@
 import { homedir } from 'node:os';
 import path from 'node:path';
-import type { Terminal } from '../shared/model.ts';
+import type { Editor, Terminal } from '../shared/model.ts';
 import { EDITORS, TERMINALS } from '../shared/model.ts';
 import type { AgentSetup } from './agents.ts';
 import { resolveAgents } from './agents.ts';
-import type { Editor } from './code-files.ts';
+import type { EditorCommand } from './code-files.ts';
 import { EDITOR_BINS } from './code-files.ts';
 import type { SettingName } from './env-file.ts';
-import { MAX_SUMMARY_TIMEOUT_MS, envFilePath, readEnvFile, settingProblem } from './env-file.ts';
+import { MAX_SUMMARY_TIMEOUT_MS, NO_EDITOR, envFilePath, readEnvFile, settingProblem } from './env-file.ts';
 import type { JiraFiles } from './jira.ts';
 
 const CONFIG_DIR = path.join(homedir(), '.config', 'worklog');
@@ -32,8 +32,7 @@ export const CLAUDE_PROJECTS_DIR = path.resolve(setting('WORKLOG_CLAUDE_PROJECTS
 const codeRoot = setting('WORKLOG_CODE_ROOT');
 /** the work project; none, opening files, the agent and MR links are off */
 export const CODE_ROOT = codeRoot === undefined ? undefined : path.resolve(codeRoot);
-export const EDITOR: Editor = oneOf('WORKLOG_EDITOR', EDITORS, 'jetbrains');
-export const EDITOR_BIN = setting('WORKLOG_EDITOR_BIN') || EDITOR_BINS[EDITOR];
+export const EDITOR: EditorCommand | null = setting('WORKLOG_EDITOR') === NO_EDITOR ? null : editorCommand(oneOf('WORKLOG_EDITOR', EDITORS, 'jetbrains'));
 export const TERMINAL: Terminal = oneOf('WORKLOG_TERMINAL', TERMINALS, 'terminal');
 export const WARP_TAB_DIR = path.resolve(setting('WORKLOG_WARP_TAB_DIR') || path.join(homedir(), '.warp', 'tab_configs'));
 export const OPEN_BIN = setting('WORKLOG_OPEN_BIN') || '/usr/bin/open';
@@ -55,6 +54,11 @@ export const JIRA_FILES: JiraFiles = {
   tokenService: setting('WORKLOG_JIRA_TOKEN_KEYCHAIN') || 'worklog-jira-token',
 };
 export const JIRA_POLL_MS = intSetting('WORKLOG_JIRA_POLL_MS', 300_000);
+export const JIRA_ON = setting('WORKLOG_JIRA') !== 'off';
+
+function editorCommand(name: Editor): EditorCommand {
+  return { name, bin: setting('WORKLOG_EDITOR_BIN') || EDITOR_BINS[name] };
+}
 
 function oneOf<T extends string>(name: SettingName, values: readonly T[], fallback: T): T {
   // setting() has already refused a value outside the list

@@ -75,12 +75,12 @@ async function rig(t: TestContext, profile: Profile | null = NO_JIRA): Promise<R
       codeRoot: dir,
       chromeDir: path.join(dir, 'chrome-profile'),
       agents: { main: 'claude', bins: { claude: await executable(path.join(dir, 'claude')) } },
-      editor: 'jetbrains',
-      editorBin: await executable(path.join(dir, 'webstorm')),
+      editor: { name: 'jetbrains', bin: await executable(path.join(dir, 'webstorm')) },
       terminal: 'warp',
       port: 1,
       profilePath,
       profileSource: 'https://git.example.com/team/docs/-/blob/main/profile.json',
+      jiraOn: true,
       jiraFiles: { p12Path: path.join(dir, 'jira.p12'), caPath: path.join(dir, 'jira-ca.crt'), keychainService: 'test-p12', tokenService: 'test-token' },
     },
     probes: {
@@ -122,10 +122,32 @@ test('doctor reports a broken env and still checks the machine', async t => {
 
 test('doctor wants full paths to claude and the editor', async t => {
   const { machine, config, probes } = await rig(t);
-  const checks = await runDoctor(machine, { ...config, agents: { main: 'claude', bins: { claude: 'claude' } }, editor: 'vscode', editorBin: '/nowhere/code' }, probes);
+  const checks = await runDoctor(machine, { ...config, agents: { main: 'claude', bins: { claude: 'claude' } }, editor: { name: 'vscode', bin: '/nowhere/code' } }, probes);
   assert.equal(byId(checks, 'agents').status, 'fail');
   assert.equal(byId(checks, 'agents').fix, 'worklog config set WORKLOG_CLAUDE_BIN "$(command -v claude)"');
   assert.equal(byId(checks, 'editor').fix, 'worklog config set WORKLOG_EDITOR_BIN "$(command -v code)"');
+});
+
+test('doctor skips the editor when the colleague has none', async t => {
+  const { machine, config, probes } = await rig(t);
+  const editor = byId(await runDoctor(machine, { ...config, editor: null }, probes), 'editor');
+  assert.equal(editor.status, 'skip');
+  assert.match(editor.detail, /редактор не выбран/);
+});
+
+test('doctor skips Jira that is put off and never asks it', async t => {
+  const { machine, config, probes } = await rig(t, TEST_PROFILE);
+  let asked = 0;
+  probes.jiraRequest = async () => {
+    asked++;
+    return { status: 200, body: '{"name":"jdoe"}' };
+  };
+  const checks = await runDoctor(machine, { ...config, jiraOn: false }, probes);
+  for (const id of ['p12', 'token', 'jira'] as const) {
+    assert.equal(byId(checks, id).status, 'skip');
+    assert.match(byId(checks, id).detail, /Jira отложена/);
+  }
+  assert.equal(asked, 0);
 });
 
 test('doctor tells a foreign skill from a missing one', async t => {

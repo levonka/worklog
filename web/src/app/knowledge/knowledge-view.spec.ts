@@ -4,6 +4,7 @@ import { TestBed } from '@angular/core/testing';
 import type { ComponentFixture } from '@angular/core/testing';
 import type { Direction, Note, WorklogState } from '@worklog/model';
 import { ticketFromKey } from '@worklog/model';
+import { CodeFiles } from '../core/code-files';
 import { TabsStore } from '../core/tabs-store';
 import { WorklogStore } from '../core/worklog-store';
 import { KnowledgeView } from './knowledge-view';
@@ -56,11 +57,11 @@ describe('KnowledgeView', () => {
   }
 
   // the view checks on opening and the service again when it first sees the notes
-  async function answerMissing(missing: string[] = []): Promise<void> {
+  async function answerMissing(missing: string[] = [], openable = true): Promise<void> {
     for (let round = 0; round < 3; round++) {
       await settle();
       await fixture.whenStable();
-      for (const request of http.match({ method: 'GET', url: '/api/note-files/missing' })) request.flush({ missing });
+      for (const request of http.match({ method: 'GET', url: '/api/note-files/missing' })) request.flush({ missing, openable });
     }
     await fixture.whenStable();
   }
@@ -139,6 +140,18 @@ describe('KnowledgeView', () => {
     expect(request.request.body).toEqual({ path: 'libs/local-storage/README.md' });
     request.flush(null);
     await answerRefresh();
+  });
+
+  it('without an editor a file link is plain text', async () => {
+    TestBed.inject(CodeFiles).check();
+    await answerMissing(['libs/push/push-token.service.ts'], false);
+
+    const files = Array.from(host.querySelectorAll('.nc__file'));
+    expect(files.map(f => [f.tagName, f.classList.contains('nc__file_static'), f.classList.contains('nc__file_missing')])).toEqual([
+      ['SPAN', true, false],
+      ['SPAN', true, true],
+    ]);
+    expect(files[0].getAttribute('title')).toBe('libs/local-storage/README.md');
   });
 
   it('creates a note with parsed links and refuses a link it does not understand', async () => {

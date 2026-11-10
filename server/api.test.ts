@@ -632,7 +632,7 @@ test('open-file runs the editor on the line and missing lists absent files', asy
   const bin = path.join(path.dirname(log), 'webstorm');
   await writeFile(bin, `#!/bin/sh\nprintf '%s\\n' "$@" > '${log}'\n`);
   await chmod(bin, 0o755);
-  const base = await startApp(t, { code: { root, editor: 'jetbrains', editorBin: bin } });
+  const base = await startApp(t, { code: { root, editor: { name: 'jetbrains', bin } } });
 
   assert.equal((await call(base, 'POST', '/api/open-file', { path: 'libs/a.ts', line: 7 })).status, 204);
   let args = '';
@@ -645,13 +645,24 @@ test('open-file runs the editor on the line and missing lists absent files', asy
   assert.equal((await call(base, 'POST', '/api/open-file', { path: '../a.ts' })).status, 400);
 
   await call(base, 'POST', '/api/notes', { title: 'x', files: [{ path: 'libs/a.ts' }, { path: 'libs/gone.ts', line: 2 }, { path: 'libs' }] });
-  assert.deepEqual(await json<{ missing: string[] }>(await call(base, 'GET', '/api/note-files/missing')), { missing: ['libs', 'libs/gone.ts'] });
+  assert.deepEqual(await json<{ missing: string[] }>(await call(base, 'GET', '/api/note-files/missing')), { missing: ['libs', 'libs/gone.ts'], openable: true });
 });
 
 test('open-file without a code config answers 503 and nothing is missing', async t => {
   const base = await startApp(t);
   assert.equal((await call(base, 'POST', '/api/open-file', { path: 'a.ts' })).status, 503);
-  assert.deepEqual(await json<{ missing: string[] }>(await call(base, 'GET', '/api/note-files/missing')), { missing: [] });
+  assert.deepEqual(await json<{ missing: string[] }>(await call(base, 'GET', '/api/note-files/missing')), { missing: [], openable: false });
+});
+
+test('open-file without an editor answers 503 while missing files are still found', async t => {
+  const root = await tempDir(t, 'worklog-api-code-');
+  const base = await startApp(t, { code: { root, editor: null } });
+
+  const refused = await call(base, 'POST', '/api/open-file', { path: 'a.ts' });
+  assert.equal(refused.status, 503);
+  assert.match((await json<{ error: string }>(refused)).error, /Редактор не выбран/);
+  await call(base, 'POST', '/api/notes', { title: 'x', files: [{ path: 'gone.ts' }] });
+  assert.deepEqual(await json<{ missing: string[] }>(await call(base, 'GET', '/api/note-files/missing')), { missing: ['gone.ts'], openable: false });
 });
 
 test('agent runs: launch opens Warp outside undo, finish is undoable, bad requests are 400', async t => {

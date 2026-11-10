@@ -87,6 +87,10 @@
   color: var(--wl-accent);
 }
 
+.nc__file_static {
+  color: var(--wl-text-2);
+}
+
 .nc__file_missing {
   color: #ff3b30;
   text-decoration: line-through;
@@ -104,4 +108,8 @@
 .nc__url:hover,
 .nc__dir:hover {
   background: color-mix(in srgb, var(--wl-text) 10%, transparent);
+}
+
+.nc__file_static:hover {
+  background: var(--nc-fill);
 }

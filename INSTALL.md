@@ -1,6 +1,6 @@
 # Installing Worklog — instructions for the agent
 
-You are an AI coding agent (Claude Code or Codex) installing Worklog for a colleague. Usually they started you in their work project and wrote one line: «установи worklog по инструкции https://raw.githubusercontent.com/levonka/worklog/main/INSTALL.md. данные о компании бери здесь <profile link>». If you were given only the repository link, read this file before cloning anything. The profile link points to the company profile, a JSON file in the company's GitLab. Keep it for step 3. If there is no profile link, ask once whether the company has a profile; without one Worklog is a plain tracker: skip step 3, step 6 and the profile links of step 8.
+You are an AI coding agent (Claude Code or Codex) installing Worklog for a colleague. Usually they started you in their work project and wrote one line: «установи worklog по инструкции https://raw.githubusercontent.com/levonka/worklog/main/INSTALL.md. данные о компании бери здесь <profile link>». If you were given only the repository link, read this file before cloning anything. The profile link points to the company profile, a JSON file in the company's GitLab. Keep it for step 3. If there is no profile link, ask once whether the company has a profile; without one Worklog is a plain tracker: skip step 3, step 6 and the profile links of step 8. Jira can also be put off (step 6) and the editor left out (step 4).
 
 ## Rules
 
@@ -9,8 +9,8 @@ You are an AI coding agent (Claude Code or Codex) installing Worklog for a colle
 - **Nothing irreversible or foreign without asking.** Do not overwrite or delete skills, data, `~/.claude/settings.json` or files you did not create. When something is in the way, show it and ask.
 - **Check every step.** After each step run `doctor` (`<clone>/bin/worklog doctor --json` until step 7, `~/.local/bin/worklog doctor --json` after) and go on only when the checks of that step (table below) pass: `ok` or `skip` (the check does not apply: no Jira in the profile, Codex is not installed). A `warn` passes only where the step says so; a `fail` never does. The output is `{ "ok": …, "checks": [{ "id", "status", "detail", "fix" }] }`; `status` is `ok`, `warn`, `fail` or `skip`; `fix` says what to do.
 - **Browser steps.** If you have a browser tool (Claude in Chrome or another), do the browser steps yourself, except where a step says the colleague acts. Without one, tell the colleague exactly what to open and do, and wait until they say it is done.
-- **Every step can be repeated.** «продолжи установку worklog» means: run `doctor` and continue from the first step whose checks do not pass.
-- **Dead end.** If a step cannot be fixed, stop and tell the colleague what broke and whom to ask: no access to the profile — the profile's author; Jira does not let them in — check the certificate and the VPN, then ask whoever issues Jira certificates. Do not work around the problem.
+- **Every step can be repeated.** «продолжи установку worklog» means: run `doctor` and continue from the first step whose checks do not pass. If `p12`, `token` and `jira` say «Jira отложена», ask once whether to set Jira up now (step 6).
+- **Dead end.** If a step cannot be fixed, stop and tell the colleague what broke and whom to ask: no access to the profile — the profile's author; Jira does not let them in — check the certificate and the VPN, then ask whoever issues Jira certificates, and offer to put Jira off (step 6). Do not work around the problem.
 
 | Step | doctor checks |
 |---|---|
@@ -39,12 +39,13 @@ You are an AI coding agent (Claude Code or Codex) installing Worklog for a colle
 - `WORKLOG_AGENT` — you yourself: `claude` or `codex`.
 - `WORKLOG_CLAUDE_BIN` and `WORKLOG_CODEX_BIN` — `command -v claude`, `command -v codex`. A path under `fnm_multishells` (a tool installed with npm under fnm) disappears with the shell: take `realpath` of it instead. Set yours; if the other one is found too, ask whether the colleague uses it as well and set it only on a yes. Both set: skills go to both, the daily summary reads the sessions of both, and the colleague picks the agent when handing over a task.
 - `WORKLOG_TERMINAL` — offer the installed ones: `warp` (`/Applications/Warp.app`), `iterm` (`/Applications/iTerm.app`), `terminal` (always there). Worklog opens a new tab there when the colleague hands a task to an agent.
-- `WORKLOG_EDITOR` and `WORKLOG_EDITOR_BIN` — offer the installed ones: `jetbrains` (`webstorm` or `idea`), `vscode` (`code`), `cursor` (`cursor`); the binary from `command -v`. If the shell command is missing: JetBrains Toolbox → settings → «Shell scripts»; VS Code and Cursor → command palette → «Shell Command: Install … in PATH».
+- `WORKLOG_EDITOR` and `WORKLOG_EDITOR_BIN` — offer the installed ones: `jetbrains` (`webstorm` or `idea`), `vscode` (`code`), `cursor` (`cursor`); the binary from `command -v`. If the shell command is missing: JetBrains Toolbox → settings → «Shell scripts»; VS Code and Cursor → command palette → «Shell Command: Install … in PATH». If the colleague uses none of them, `WORKLOG_EDITOR none` and no `WORKLOG_EDITOR_BIN`: file links in knowledge notes then show as text and do not open; `editor` is `skip`.
 - `WORKLOG_GITLAB_USER` — only when the profile has `gitlab`: `ssh -T -p <gitlab.sshPort> git@<gitlab.sshHost>` answers «Welcome to GitLab, @login!». If it does not, ask the colleague for their GitLab login.
 
 **5. Build.** In the clone: `npm ci`, `npm ci --prefix web`, `npm run build`.
 
 **6. Jira** — only when the profile has `jira`.
+- **Put off.** If the colleague has no certificate or token yet, or Jira does not let them in now, offer to finish without Jira: `worklog config set WORKLOG_JIRA off`. Worklog works without it — no ticket statuses, stages are set by hand — and `p12`, `token`, `jira` become `skip` «Jira отложена». Coming back: `worklog config set WORKLOG_JIRA on`, this step, then restart the server if it runs (CLAUDE.md of the clone).
 - **Certificate** (when `jira.clientCert` is `true`). Ask where their `.p12` lies, then `mkdir -p -m 700 ~/.config/worklog && install -m 600 <file> ~/.config/worklog/jira.p12`. For the password, write a script and open it in Terminal — the colleague types the password there and you never see it:
   ```bash
   f="$TMPDIR/worklog-p12-password.command"
@@ -72,7 +73,7 @@ You are an AI coding agent (Claude Code or Codex) installing Worklog for a colle
 
 **9. Launcher.** In the clone: `npm run launcher` — `Worklog.app` appears on the Desktop. It replaces only a launcher of its own; if it says another `Worklog.app` is there, show it to the colleague and ask.
 
-**10. Final check.** `open ~/Desktop/Worklog.app`; a Chrome window with Worklog opens. Then `doctor`: every check passes, `port` says `работает Worklog`, `jira` is `ok` when the profile has Jira. With Terminal or iTerm2 as the terminal, ask the colleague to hand one task to the agent from the window once («✦ Поручить агенту» → «Вопрос», any text): macOS asks whether Worklog may control the terminal («Автоматизация») — the answer must be «Разрешить». Close that tab afterwards. Tell the colleague in two lines what was set up, that «обнови worklog», «обнови профиль worklog» and «worklog не работает» work from any session, and that the end-of-session review is `/worklog` in Claude Code and `$worklog` in Codex.
+**10. Final check.** `open ~/Desktop/Worklog.app`; a Chrome window with Worklog opens. Then `doctor`: every check passes, `port` says `работает Worklog`, `jira` is `ok` when the profile has Jira and it is not put off. With Terminal or iTerm2 as the terminal, ask the colleague to hand one task to the agent from the window once («✦ Поручить агенту» → «Вопрос», any text): macOS asks whether Worklog may control the terminal («Автоматизация») — the answer must be «Разрешить». Close that tab afterwards. Tell the colleague in two lines what was set up, that «обнови worklog», «обнови профиль worklog» and «worklog не работает» work from any session, and that the end-of-session review is `/worklog` in Claude Code and `$worklog` in Codex.
 
 ## Update Worklog («обнови worklog»)
 

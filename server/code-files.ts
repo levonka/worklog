@@ -10,11 +10,16 @@ export type { Editor } from '../shared/model.ts';
 /** found through PATH unless WORKLOG_EDITOR_BIN names the binary */
 export const EDITOR_BINS: Record<Editor, string> = { jetbrains: 'webstorm', vscode: 'code', cursor: 'cursor' };
 
+export interface EditorCommand {
+  name: Editor;
+  bin: string;
+}
+
 export interface CodeConfig {
   /** the repository the note paths are relative to */
   root: string;
-  editor: Editor;
-  editorBin: string;
+  /** null: the user has no editor of ours, file links do not open */
+  editor: EditorCommand | null;
 }
 
 /** note paths with no file under the root, each once */
@@ -30,14 +35,14 @@ export function editorArgs(editor: Editor, file: string, line: number | undefine
 }
 
 /** opens the file in the editor on its line; the editor keeps running after the server stops */
-export async function openInEditor(config: CodeConfig, requested: NoteFile): Promise<void> {
+export async function openInEditor(root: string, editor: EditorCommand, requested: NoteFile): Promise<void> {
   const file = checkedNoteFile(requested);
-  const absolute = path.join(config.root, file.path);
+  const absolute = path.join(root, file.path);
   if (!(await isFile(absolute))) throw new NotFoundError(`Файла нет: ${file.path}`);
-  const child = spawn(config.editorBin, editorArgs(config.editor, absolute, file.line), { detached: true, stdio: 'ignore' });
+  const child = spawn(editor.bin, editorArgs(editor.name, absolute, file.line), { detached: true, stdio: 'ignore' });
   await new Promise<void>((resolve, reject) => {
     child.once('spawn', resolve);
-    child.once('error', error => reject(new Error(`Не удалось запустить редактор (${config.editorBin}): ${error.message}`)));
+    child.once('error', error => reject(new Error(`Не удалось запустить редактор (${editor.bin}): ${error.message}`)));
   });
   child.unref();
 }

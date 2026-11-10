@@ -12,13 +12,17 @@
     @if (files().length > 0 || urls().length > 0) {
       <div class="nc__links">
         @for (item of files(); track item.label) {
-          <button
-            type="button"
-            class="nc__file"
-            [class.nc__file_missing]="item.missing"
-            [title]="item.missing ? 'Файла нет: ' + item.label : 'Открыть в редакторе: ' + item.label"
-            (click)="open(item.file)"
-          >{{ item.short }}</button>
+          @if (openable()) {
+            <button
+              type="button"
+              class="nc__file"
+              [class.nc__file_missing]="item.missing"
+              [title]="item.missing ? 'Файла нет: ' + item.label : 'Открыть в редакторе: ' + item.label"
+              (click)="open(item.file)"
+            >{{ item.short }}</button>
+          } @else {
+            <span class="nc__file nc__file_static" [class.nc__file_missing]="item.missing" [title]="item.label">{{ item.short }}</span>
+          }
         }
         @for (url of urls(); track url.url) {
           <a class="nc__url" [href]="url.url" [title]="url.url" target="_blank" rel="noopener">{{ url.label }}</a>

@@ -176,8 +176,8 @@ export class ApiClient {
     return this.http.post<void>('/api/open-file', file);
   }
 
-  missingFiles(): Observable<{ missing: string[] }> {
-    return this.http.get<{ missing: string[] }>('/api/note-files/missing');
+  missingFiles(): Observable<{ missing: string[]; openable: boolean }> {
+    return this.http.get<{ missing: string[]; openable: boolean }>('/api/note-files/missing');
   }
 
   removeLink(id: string, url: string): Observable<void> {

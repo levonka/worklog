@@ -236,14 +236,15 @@ export function createApiRoutes(store: Store, history: History, clientCount: () 
     }),
     route('POST', /^\/api\/open-file$/, async ctx => {
       if (code === undefined) throw new HttpError(UNAVAILABLE, 'Открытие файлов не настроено');
+      if (code.editor === null) throw new HttpError(UNAVAILABLE, 'Редактор не выбран: worklog config set WORKLOG_EDITOR jetbrains|vscode|cursor');
       const body = await readObject(ctx);
       const line = optionalInteger(body, 'line');
-      await openInEditor(code, line === undefined ? { path: requiredString(body, 'path') } : { path: requiredString(body, 'path'), line });
+      await openInEditor(code.root, code.editor, line === undefined ? { path: requiredString(body, 'path') } : { path: requiredString(body, 'path'), line });
       return { status: NO_CONTENT };
     }),
     route('GET', /^\/api\/note-files\/missing$/, async () => ({
       status: OK,
-      body: { missing: code === undefined ? [] : await missingFiles(code.root, (await store.read()).notes) },
+      body: { missing: code === undefined ? [] : await missingFiles(code.root, (await store.read()).notes), openable: code !== undefined && code.editor !== null },
     })),
     route('GET', /^\/api\/jira$/, async () => ({ status: OK, body: jira?.health() ?? JIRA_OFF })),
     // outside history: statuses from Jira are not the user's change to take back
