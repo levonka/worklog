@@ -1,6 +1,6 @@
 # Worklog
 
-A personal local work tracker: directions (groups of Jira tickets, links and an event feed) on a status board, a continuous todo list, quick links, the daily stand-up note, history and a knowledge base. One user per machine, macOS, one Chrome `--app` window kept open all day, started from `~/Desktop/Worklog.app`. Data never leaves the machine. Everything about a company (Jira, projects, branches, stands, GitLab, sidebar links) comes from its profile; without one Worklog is a plain tracker.
+A personal local work tracker: directions (groups of Jira tickets, links and an event feed) on a status board, a continuous todo list, quick links, the daily stand-up note, history and a knowledge base. One user per machine, macOS, one Chrome `--app` window kept open all day, started from `~/Desktop/Worklog.app`. Data is stored only on the machine; the network traffic (Jira reads, `git` to GitLab, the prompts handed to the chosen agent) is listed in `README.md`, «Что уходит с машины», and nothing beyond it is allowed. Everything about a company (Jira, projects, branches, stands, GitLab, sidebar links) comes from its profile; without one Worklog is a plain tracker.
 
 Talk to the user in Russian.
 
@@ -32,7 +32,7 @@ Sessions usually start in the user's work project, where this file is not loaded
 - `web/` — Angular 22 (zoneless, standalone, signals, Vitest). This file overrides the generated `web/CLAUDE.md`: keep explicit `ChangeDetectionStrategy.OnPush` and `@Injectable({ providedIn: 'root' })`.
 - `web/src/app/agent/` — the task window (`wl-agent-sheet`, a native `<dialog>` opened through `AgentSheet`) and the «агент работает» time.
 - `web/src/app/daily/` — the Дейлик screen; `web/src/app/history/` — История; `web/src/app/done/` — Сделано (done directions by month); `web/src/app/knowledge/` — Знания and a direction's notes; `rich-text/` and `link-description/` are shared by notes and link descriptions.
-- `scripts/start.sh` — what `Worklog.app` runs: starts the server if needed, raises the open window or opens one. `scripts/build-launcher.sh` builds the app bundle. `scripts/check-leaks.sh` — the leak check (see Rules).
+- `scripts/start.sh` — what `Worklog.app` runs: starts the server if needed, raises the open window or opens one. `scripts/build-launcher.sh` builds the app bundle and replaces only a bundle of its own. `scripts/check-leaks.sh` — the leak check (see Rules).
 - `data/` — **the user's real data**, its own git repository, ignored by this one.
 
 ## Rules
