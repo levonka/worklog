@@ -63,6 +63,8 @@ Sessions usually start in the user's work project, where this file is not loaded
 
 Run all four before committing.
 
+`npm run demo` — the app on invented data (`scripts/demo-data.ts`) in a temporary folder on port 4399, for screenshots and manual checks; `docs/screenshot.png` is taken from it.
+
 ## Applying a change to the running app
 
 - Frontend change: `npm run build`, then ask the user to press ⌘R in the Worklog window. The server reads `web/dist` from disk on every request.

@@ -12,7 +12,8 @@
     "build": "npm --prefix web run build",
     "start": "node server/main.ts",
     "launcher": "zsh scripts/build-launcher.sh",
-    "skills": "zsh scripts/install-skills.sh"
+    "skills": "zsh scripts/install-skills.sh",
+    "demo": "zsh scripts/demo.sh"
   },
   "devDependencies": {
     "@types/node": "^24",
