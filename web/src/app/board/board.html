@@ -8,6 +8,7 @@
     <button
       type="button"
       class="bd__add"
+      data-tour="board-add"
       [class.bd__add_on]="adding()"
       title="Новое направление"
       aria-label="Новое направление"
@@ -28,7 +29,7 @@
   </p>
 }
 
-<div class="bd__columns" cdkDropListGroup>
+<div class="bd__columns" data-tour="board-columns" cdkDropListGroup>
   @for (column of columns(); track column.status; let first = $first) {
     <section class="bd__column" [attr.aria-label]="column.label">
       <h2 class="bd__column-head">

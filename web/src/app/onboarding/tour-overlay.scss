@@ -1,0 +1,193 @@
+:host {
+  --tu-dim: light-dark(rgba(0, 0, 0, 0.28), rgba(0, 0, 0, 0.5));
+  --tu-bubble: light-dark(#ffffff, #2c2c30);
+  --tu-edge: light-dark(rgba(0, 0, 0, 0.16), rgba(255, 255, 255, 0.14));
+}
+
+// above the app, its tooltips and drag previews; it takes every click
+.tu__layer {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+}
+
+.tu__dim {
+  position: absolute;
+  inset: 0;
+  background: var(--tu-dim);
+  animation: tu-appear 0.2s ease-out;
+}
+
+// the ring's own huge shadow dims the rest of the window
+.tu__ring {
+  position: absolute;
+  border-radius: 9px;
+  box-shadow:
+    0 0 0 2px var(--wl-accent),
+    0 0 0 6px color-mix(in srgb, var(--wl-accent) 25%, transparent),
+    0 0 0 200vmax var(--tu-dim);
+  pointer-events: none;
+  transition:
+    left 0.25s ease,
+    top 0.25s ease,
+    width 0.25s ease,
+    height 0.25s ease;
+}
+
+.tu__bubble {
+  position: absolute;
+  width: min(380px, calc(100vw - 16px));
+  padding: 14px 16px 12px;
+  border-radius: 12px;
+  background: var(--tu-bubble);
+  color: var(--wl-text);
+  box-shadow:
+    0 0 0 0.5px var(--tu-edge),
+    0 12px 36px rgba(0, 0, 0, 0.24);
+  visibility: hidden;
+}
+
+.tu__bubble_placed {
+  visibility: visible;
+  animation: tu-appear 0.18s ease-out;
+}
+
+.tu__arrow {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: var(--tu-bubble);
+  box-shadow: -0.5px -0.5px 0 0 var(--tu-edge);
+}
+
+.tu__arrow_up {
+  top: -6px;
+  left: calc(var(--tu-arrow-at) - 6px);
+  transform: rotate(45deg);
+}
+
+.tu__arrow_down {
+  bottom: -6px;
+  left: calc(var(--tu-arrow-at) - 6px);
+  transform: rotate(225deg);
+}
+
+.tu__arrow_left {
+  left: -6px;
+  top: calc(var(--tu-arrow-at) - 6px);
+  transform: rotate(-45deg);
+}
+
+.tu__arrow_right {
+  right: -6px;
+  top: calc(var(--tu-arrow-at) - 6px);
+  transform: rotate(135deg);
+}
+
+.tu__close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  font-size: 10px;
+  color: var(--wl-text-2);
+  background: transparent;
+}
+
+.tu__close:hover {
+  color: var(--wl-text);
+  background: color-mix(in srgb, var(--wl-text) 8%, transparent);
+}
+
+.tu__title {
+  margin: 0 22px 6px 0;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.tu__text {
+  margin: 0 0 10px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--wl-text);
+}
+
+.tu__prompt {
+  margin-bottom: 6px;
+}
+
+.tu__foot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.tu__count,
+.tu__skip {
+  white-space: nowrap;
+}
+
+.tu__count {
+  font-size: 11.5px;
+  color: var(--wl-text-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.tu__skip {
+  padding: 0;
+  border: 0;
+  font-size: 11.5px;
+  color: var(--wl-text-2);
+  background: transparent;
+}
+
+.tu__skip:hover {
+  color: var(--wl-text);
+  text-decoration: underline;
+}
+
+.tu__spacer {
+  flex: 1;
+}
+
+.tu__btn {
+  height: 24px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 6px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--wl-text);
+  background: color-mix(in srgb, var(--wl-text) 8%, transparent);
+}
+
+.tu__btn:hover {
+  background: color-mix(in srgb, var(--wl-text) 12%, transparent);
+}
+
+.tu__btn_primary,
+.tu__btn_primary:hover {
+  color: #ffffff;
+  background: var(--wl-accent);
+}
+
+.tu__btn:focus-visible,
+.tu__skip:focus-visible,
+.tu__close:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--wl-accent) 60%, transparent);
+  outline-offset: 1px;
+}
+
+@keyframes tu-appear {
+  from {
+    opacity: 0;
+  }
+}

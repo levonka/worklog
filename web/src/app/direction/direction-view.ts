@@ -30,7 +30,7 @@ import { inBackground } from '../core/background';
   templateUrl: './direction-view.html',
   styleUrl: './direction-view.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  host: { class: 'wl-direction-view' },
+  host: { class: 'wl-direction-view', '[attr.data-direction-view]': 'directionId()' },
 })
 export class DirectionView {
   private readonly store = inject(WorklogStore);

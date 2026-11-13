@@ -1,0 +1,2 @@
+<span class="pr__text wl-selectable">{{ text() }}</span>
+<button type="button" class="pr__copy" [class.pr__copy_done]="state() === 'copied'" [class.pr__copy_failed]="state() === 'failed'" (click)="copy()">{{ labels[state()] }}</button>

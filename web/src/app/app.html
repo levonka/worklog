@@ -1,8 +1,8 @@
 @if (!tabs.sidebarHidden()) {
-  <wl-sidebar />
+  <wl-sidebar [attr.inert]="touring() ? '' : null" />
 }
 
-<div class="rt__main">
+<div class="rt__main" [attr.inert]="touring() ? '' : null">
   @if (problem(); as problem) {
     <div class="rt__problem" role="alert">
       <svg class="rt__problem-icon" width="16" height="14" viewBox="0 0 16 14" aria-hidden="true">
@@ -46,3 +46,5 @@
 @if (agentSheet.target(); as target) {
   <wl-agent-sheet [target]="target" />
 }
+
+<wl-tour />

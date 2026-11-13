@@ -117,4 +117,24 @@ describe('App', () => {
     expect(close.defaultPrevented).toBe(true);
     expect(TestBed.inject(TabsStore).layout().tabs).toEqual(['todos']);
   });
+
+  it('starts the tour once the state has loaded', async () => {
+    http.expectOne(STATE_REQUEST).flush({ ...EMPTY_STATE, directions: [] });
+    await new Promise(resolve => setTimeout(resolve));
+    await fixture.whenStable();
+
+    expect(fixture.nativeElement.querySelector('.tu__title')?.textContent).toBe('Это Worklog');
+    // keyboard focus stays in the bubble: the window under the dim takes no Tab or Space
+    expect(fixture.nativeElement.querySelector('wl-sidebar')?.hasAttribute('inert')).toBe(true);
+    expect(fixture.nativeElement.querySelector('.rt__main')?.hasAttribute('inert')).toBe(true);
+  });
+
+  it('does not start the tour after it was closed', async () => {
+    http.expectOne(STATE_REQUEST).flush({ ...EMPTY_STATE, onboarding: { tourClosedAt: '2026-11-13T09:00:00.000Z' } });
+    await new Promise(resolve => setTimeout(resolve));
+    await fixture.whenStable();
+
+    expect(fixture.nativeElement.querySelector('.tu__bubble')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.rt__main')?.hasAttribute('inert')).toBe(false);
+  });
 });

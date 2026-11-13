@@ -22,7 +22,7 @@
   <span class="dv__spacer"></span>
 
   @if (direction(); as direction) {
-    <button type="button" class="dv__agent-btn" title="Поручить агенту" (click)="openAgentSheet()"><span class="dv__spark">✦</span> Поручить агенту</button>
+    <button type="button" class="dv__agent-btn" data-tour="agent-button" title="Поручить агенту" (click)="openAgentSheet()"><span class="dv__spark">✦</span> Поручить агенту</button>
     <wl-direction-menu [direction]="direction" />
   }
 
@@ -162,7 +162,7 @@
 
     <section class="dv__section">
       <h2 class="dv__label">Ссылки</h2>
-      <wl-direction-links [direction]="direction" />
+      <wl-direction-links data-tour="direction-links" [direction]="direction" />
     </section>
 
     <section class="dv__section">

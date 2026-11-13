@@ -1,0 +1,91 @@
+@if (scene(); as scene) {
+  @for (zone of scene.zones; track $index) {
+    <div
+      class="td__zone"
+      [class.td__zone_first]="zone.half === 'first'"
+      [class.td__zone_second]="zone.half === 'second'"
+      [class.td__zone_whole]="zone.half === 'whole'"
+      [style.left.px]="zone.rect.left"
+      [style.top.px]="zone.rect.top"
+      [style.width.px]="zone.rect.width"
+      [style.height.px]="zone.rect.height"
+    >
+      @if (zone.label) {
+        <span class="td__zone-label">{{ zone.label }}</span>
+      }
+    </div>
+  }
+
+  @for (move of scene.moves; track $index) {
+    <div
+      class="td__ghost"
+      [class.td__ghost_first]="move.half === 'first'"
+      [class.td__ghost_second]="move.half === 'second'"
+      [class.td__ghost_whole]="move.half === 'whole'"
+      [style.--from-x]="move.from.left + 'px'"
+      [style.--from-y]="move.from.top + 'px'"
+      [style.--to-x]="move.to.left + 'px'"
+      [style.--to-y]="move.to.top + 'px'"
+      [style.width.px]="move.from.width"
+      [style.height.px]="move.from.height"
+    >
+      <span class="td__text">{{ move.text }}</span>
+      <svg class="td__cursor" width="16" height="22" viewBox="0 0 16 22" aria-hidden="true">
+        <path
+          d="M1 1v16.5l4.2-4 2.9 6.6 2.6-1.1-2.8-6.5H14Z"
+          fill="#000"
+          stroke="#fff"
+          stroke-width="1.2"
+          stroke-linejoin="round"
+        />
+      </svg>
+    </div>
+
+    <!-- with reduced motion: the ghost where it starts and where it ends, a dashed arrow between; the way back is left out -->
+    @if (move.half !== 'second') {
+      <div
+        class="td__still td__still_from"
+        [style.left.px]="move.from.left"
+        [style.top.px]="move.from.top"
+        [style.width.px]="move.from.width"
+        [style.height.px]="move.from.height"
+      >
+        <span class="td__text">{{ move.text }}</span>
+      </div>
+      <div
+        class="td__still"
+        [style.left.px]="move.to.left"
+        [style.top.px]="move.to.top"
+        [style.width.px]="move.to.width"
+        [style.height.px]="move.to.height"
+      >
+        <span class="td__text">{{ move.text }}</span>
+      </div>
+      <svg class="td__path" aria-hidden="true">
+        <defs>
+          <marker
+            [attr.id]="'td-head-' + $index"
+            viewBox="0 0 8 8"
+            refX="6"
+            refY="4"
+            markerWidth="8"
+            markerHeight="8"
+            orient="auto"
+          >
+            <path d="M0 0 8 4 0 8Z" fill="currentColor" />
+          </marker>
+        </defs>
+        <line
+          [attr.x1]="move.from.left + move.from.width / 2"
+          [attr.y1]="move.from.top + move.from.height / 2"
+          [attr.x2]="move.to.left + move.to.width / 2"
+          [attr.y2]="move.to.top + move.to.height / 2"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-dasharray="5 4"
+          [attr.marker-end]="'url(#td-head-' + $index + ')'"
+        />
+      </svg>
+    }
+  }
+}

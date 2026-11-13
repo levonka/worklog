@@ -1,0 +1,59 @@
+@if (view(); as view) {
+  <div class="tu__layer">
+    @if (ring(); as ring) {
+      <div class="tu__ring" [style.left.px]="ring.left" [style.top.px]="ring.top" [style.width.px]="ring.width" [style.height.px]="ring.height"></div>
+    } @else {
+      <div class="tu__dim"></div>
+    }
+
+    @if (view.step.demo; as demo) {
+      @if (place() !== null) {
+        <wl-tour-demo [demo]="demo" />
+      }
+    }
+
+    @let at = place();
+    <div
+      #bubble
+      class="tu__bubble"
+      [class.tu__bubble_placed]="at !== null"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="tu-title"
+      [style.left.px]="at?.left ?? 0"
+      [style.top.px]="at?.top ?? 0"
+    >
+      @if (at?.arrow; as arrow) {
+        <span
+          class="tu__arrow"
+          [class.tu__arrow_up]="arrow === 'up'"
+          [class.tu__arrow_down]="arrow === 'down'"
+          [class.tu__arrow_left]="arrow === 'left'"
+          [class.tu__arrow_right]="arrow === 'right'"
+          [style.--tu-arrow-at]="(at?.arrowAt ?? 0) + 'px'"
+          aria-hidden="true"
+        ></span>
+      }
+      <button type="button" class="tu__close" title="Закрыть" aria-label="Закрыть экскурсию" (click)="tour.close()">✕</button>
+      <h2 id="tu-title" class="tu__title">{{ view.step.title }}</h2>
+      <p class="tu__text">{{ view.step.text }}</p>
+      @for (prompt of prompts(); track prompt) {
+        <wl-prompt class="tu__prompt" [text]="prompt" />
+      }
+      <footer class="tu__foot">
+        @if (view.single) {
+          <span class="tu__spacer"></span>
+          <button #primary type="button" class="tu__btn tu__btn_primary" (click)="tour.next()">Понятно</button>
+        } @else {
+          <span class="tu__count">{{ view.index + 1 }} из {{ view.total }}</span>
+          <button type="button" class="tu__skip" (click)="tour.close()">Пропустить экскурсию</button>
+          <span class="tu__spacer"></span>
+          @if (view.index > 0) {
+            <button type="button" class="tu__btn" (click)="tour.back()">Назад</button>
+          }
+          <button #primary type="button" class="tu__btn tu__btn_primary" (click)="tour.next()">{{ view.index + 1 === view.total ? 'Готово' : 'Дальше' }}</button>
+        }
+      </footer>
+    </div>
+  </div>
+}

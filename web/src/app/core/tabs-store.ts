@@ -1,6 +1,6 @@
 import { computed, effect, inject, Injectable, signal, untracked } from '@angular/core';
 import { EMPTY_STATE } from '@worklog/model';
-import type { Status } from '@worklog/model';
+import type { Status, WorklogState } from '@worklog/model';
 import type { Layout, TabId } from './tabs-layout';
 import { closeTab, DEFAULT_LAYOUT, directionIdOf, isTabId, openTab, reorderTabs, sanitize, setRatio, splitRight, unsplit } from './tabs-layout';
 import { WorklogStore } from './worklog-store';
@@ -28,6 +28,7 @@ export class TabsStore {
   private readonly hidden = signal(this.saved.sidebarHidden);
   private readonly lastFocused = signal<TabId | null>(null);
   private readonly closed: TabId[] = [];
+  private savingPaused = false;
 
   readonly layout = this.currentLayout.asReadonly();
   readonly sidebarHidden = this.hidden.asReadonly();
@@ -41,10 +42,7 @@ export class TabsStore {
   constructor() {
     effect(() => {
       const state = this.worklog.state();
-      // EMPTY_STATE is the placeholder before the first load: sanitizing against it would close every direction tab
-      if (state === EMPTY_STATE) return;
-      const directionIds = new Set(state.directions.map(direction => direction.id));
-      untracked(() => this.apply(layout => sanitize(layout, directionIds)));
+      untracked(() => this.apply(layout => this.withoutDeleted(layout, state)));
     });
   }
 
@@ -58,9 +56,14 @@ export class TabsStore {
     this.lastFocused.set(id);
   }
 
-  /** puts back a layout taken earlier, as the tour does when it ends */
+  /** while the tour moves tabs about: a reload meanwhile comes back to the layout from before it */
+  pauseSaving(paused: boolean): void {
+    this.savingPaused = paused;
+  }
+
+  /** puts back a layout taken earlier, as the tour does when it ends; tabs of directions deleted since are dropped */
   replaceLayout(layout: Layout): void {
-    this.apply(() => layout);
+    this.apply(() => this.withoutDeleted(layout, this.worklog.state()));
   }
 
   closeTab(id: TabId): void {
@@ -140,6 +143,12 @@ export class TabsStore {
     };
   }
 
+  // EMPTY_STATE is the placeholder before the first load: sanitizing against it would close every direction tab
+  private withoutDeleted(layout: Layout, state: WorklogState): Layout {
+    if (state === EMPTY_STATE) return layout;
+    return sanitize(layout, new Set(state.directions.map(direction => direction.id)));
+  }
+
   private apply(change: (layout: Layout) => Layout): void {
     const next = change(this.currentLayout());
     if (next === this.currentLayout()) return;
@@ -148,6 +157,7 @@ export class TabsStore {
   }
 
   private save(): void {
+    if (this.savingPaused) return;
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...this.currentLayout(), sidebarHidden: this.hidden() }));
     } catch {

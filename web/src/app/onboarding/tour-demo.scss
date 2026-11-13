@@ -1,0 +1,250 @@
+:host {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+
+.td__zone {
+  position: fixed;
+  border-radius: 10px;
+  opacity: 0;
+  animation: 5s ease-in-out 2 both;
+}
+
+// a card or a todo the item lands on, marked as the board marks a drop target
+.td__zone_first,
+.td__zone_second {
+  box-shadow:
+    0 0 0 2px var(--wl-accent),
+    0 0 0 5px color-mix(in srgb, var(--wl-accent) 22%, transparent);
+  background: color-mix(in srgb, var(--wl-accent) 10%, transparent);
+}
+
+.td__zone_first {
+  animation-name: td-zone-first;
+}
+
+.td__zone_second {
+  animation-name: td-zone-second;
+}
+
+// the right pane's drop zone, drawn as the tab bar draws it
+.td__zone_whole {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 18px;
+  border: 1.5px dashed color-mix(in srgb, var(--wl-accent) 45%, transparent);
+  background: color-mix(in srgb, var(--wl-accent) 5%, transparent);
+  animation-name: td-zone-whole;
+  animation-duration: 2.6s;
+}
+
+.td__zone-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--wl-accent);
+}
+
+.td__ghost,
+.td__still {
+  position: fixed;
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--wl-text);
+  background: var(--wl-bg);
+  box-shadow:
+    0 0 0 0.5px var(--wl-sep),
+    0 8px 22px rgba(0, 0, 0, 0.22);
+}
+
+.td__ghost {
+  top: 0;
+  left: 0;
+  opacity: 0;
+  animation: 5s ease-in-out 2 both;
+}
+
+.td__ghost_first {
+  animation-name: td-first;
+}
+
+.td__ghost_second {
+  animation-name: td-second;
+}
+
+.td__ghost_whole {
+  animation-name: td-whole;
+  animation-duration: 2.6s;
+}
+
+.td__text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.td__cursor {
+  position: absolute;
+  left: 58%;
+  top: 52%;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.3));
+}
+
+.td__still,
+.td__path {
+  display: none;
+}
+
+.td__still_from {
+  opacity: 0.55;
+}
+
+.td__path {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  color: var(--wl-accent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .td__ghost {
+    display: none;
+  }
+
+  .td__still,
+  .td__path {
+    display: block;
+  }
+
+  .td__still {
+    display: flex;
+  }
+
+  .td__zone {
+    opacity: 1;
+    animation: none;
+  }
+
+  .td__zone_second {
+    display: none;
+  }
+}
+
+@keyframes td-first {
+  0% {
+    opacity: 0;
+    transform: translate(var(--from-x), var(--from-y));
+  }
+  6% {
+    opacity: 1;
+    transform: translate(var(--from-x), var(--from-y));
+  }
+  36%,
+  44% {
+    opacity: 1;
+    transform: translate(var(--to-x), var(--to-y));
+  }
+  50%,
+  100% {
+    opacity: 0;
+    transform: translate(var(--to-x), var(--to-y));
+  }
+}
+
+@keyframes td-second {
+  0%,
+  50% {
+    opacity: 0;
+    transform: translate(var(--from-x), var(--from-y));
+  }
+  56% {
+    opacity: 1;
+    transform: translate(var(--from-x), var(--from-y));
+  }
+  86%,
+  94% {
+    opacity: 1;
+    transform: translate(var(--to-x), var(--to-y));
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--to-x), var(--to-y));
+  }
+}
+
+@keyframes td-whole {
+  0% {
+    opacity: 0;
+    transform: translate(var(--from-x), var(--from-y));
+  }
+  12% {
+    opacity: 1;
+    transform: translate(var(--from-x), var(--from-y));
+  }
+  72%,
+  88% {
+    opacity: 1;
+    transform: translate(var(--to-x), var(--to-y));
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--to-x), var(--to-y));
+  }
+}
+
+@keyframes td-zone-first {
+  0%,
+  28% {
+    opacity: 0;
+  }
+  34%,
+  46% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes td-zone-second {
+  0%,
+  78% {
+    opacity: 0;
+  }
+  84%,
+  96% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes td-zone-whole {
+  0%,
+  10% {
+    opacity: 0;
+  }
+  22%,
+  60% {
+    opacity: 1;
+  }
+  72%,
+  90% {
+    opacity: 1;
+    border-style: solid;
+    border-color: var(--wl-accent);
+    background: color-mix(in srgb, var(--wl-accent) 14%, transparent);
+  }
+  100% {
+    opacity: 0;
+  }
+}

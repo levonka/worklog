@@ -1,7 +1,7 @@
 <header class="dly__bar">
   <h1 class="dly__title">{{ title() }}</h1>
   <span class="dly__spacer"></span>
-  <button type="button" class="dly__summary" [disabled]="runState() === 'running'" (click)="startSummary()">
+  <button type="button" class="dly__summary" data-tour="daily-summary" [disabled]="runState() === 'running'" (click)="startSummary()">
     @if (runState() === 'running') {
       Собираю… {{ elapsed() }}
     } @else {

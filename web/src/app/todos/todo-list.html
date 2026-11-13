@@ -1,6 +1,7 @@
 <input
   #field
   class="tl__new"
+  [attr.data-tour]="directionId() === undefined ? 'todo-input' : null"
   placeholder="＋ Новое дело…"
   aria-label="Новое дело"
   autocomplete="off"

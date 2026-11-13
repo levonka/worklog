@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, untracked } from '@angular/core';
+import { EMPTY_STATE } from '@worklog/model';
 import type { OnInit } from '@angular/core';
 import { AgentSheetView } from './agent/agent-sheet';
 import { AgentSheet } from './core/agent-sheet';
@@ -8,6 +9,8 @@ import { LiveUpdates } from './core/live-updates';
 import { ProfileStore } from './core/profile-store';
 import { TabsStore } from './core/tabs-store';
 import { WorklogStore } from './core/worklog-store';
+import { Tour } from './onboarding/tour';
+import { TourOverlay } from './onboarding/tour-overlay';
 import { Pane } from './pane/pane';
 import { Sidebar } from './sidebar/sidebar';
 import { TabBar } from './tab-bar/tab-bar';
@@ -20,7 +23,7 @@ interface Problem {
 
 @Component({
   selector: 'wl-root',
-  imports: [AgentSheetView, Sidebar, TabBar, Pane],
+  imports: [AgentSheetView, Sidebar, TabBar, Pane, TourOverlay],
   templateUrl: './app.html',
   styleUrl: './app.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -33,6 +36,10 @@ export class App implements OnInit {
   protected readonly tabs = inject(TabsStore);
   protected readonly hotkeys = inject(Hotkeys);
   protected readonly agentSheet = inject(AgentSheet);
+  private readonly tour = inject(Tour);
+
+  /** the window under the tour's dim takes no keyboard focus either */
+  protected readonly touring = computed(() => this.tour.current() !== null);
 
   protected readonly problem = computed<Problem | null>(() => {
     if (!this.live.connected()) return { text: NO_CONNECTION, dismissible: false };
@@ -41,6 +48,13 @@ export class App implements OnInit {
     const actionError = this.store.actionError();
     return actionError === null ? null : { text: actionError, dismissible: true };
   });
+
+  constructor() {
+    // EMPTY_STATE is the placeholder before the first load
+    effect(() => {
+      if (this.store.state() !== EMPTY_STATE) untracked(() => this.tour.autoStart());
+    });
+  }
 
   ngOnInit(): void {
     inBackground(this.profiles.load());

@@ -1,4 +1,4 @@
-<input #field class="ef__input" placeholder="Что произошло?" aria-label="Что произошло?" autocomplete="off" (keydown.enter)="add(field)" />
+<input #field class="ef__input" data-tour="event-input" placeholder="Что произошло?" aria-label="Что произошло?" autocomplete="off" (keydown.enter)="add(field)" />
 <ol class="ef__events">
   @for (event of events(); track event.id) {
     <li class="ef__event" [class.ef__event_status]="event.kind === 'status'">

@@ -113,6 +113,15 @@ describe('TabsStore', () => {
     expect(saved()).toEqual({ ...before, sidebarHidden: false });
   });
 
+  it('replaceLayout drops tabs of directions deleted since the layout was taken', async () => {
+    const tabs = TestBed.inject(TabsStore);
+    await loadState({ directions: [direction('a')], todos: [], repeats: [], linkGroups: [], dailies: [], draft: null, notes: [], runs: [] });
+
+    tabs.replaceLayout({ tabs: ['board', 'direction:a', 'direction:gone'], active: 'direction:gone', split: 'direction:a', ratio: 0.5 });
+
+    expect(tabs.layout()).toEqual({ tabs: ['board', 'direction:a'], active: 'board', split: 'direction:a', ratio: 0.5 });
+  });
+
   it('drops tabs of deleted directions once the state has loaded, not before', async () => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ tabs: ['board', 'direction:a', 'direction:b'], active: 'direction:b', split: 'direction:a', ratio: 0.5 }));
     const tabs = TestBed.inject(TabsStore);
