@@ -26,7 +26,7 @@ function todo(id: string, text: string, fields: Partial<Todo> = {}): Todo {
 const STATE: WorklogState = {
   directions: [
     direction({
-      tickets: [ticketFromKey('CORE-580', TEST_PROFILE), ticketFromKey('APP-9618', TEST_PROFILE), ticketFromKey('WEB-5742', TEST_PROFILE)],
+      tickets: [ticketFromKey('CORE-580', TEST_PROFILE), ticketFromKey('APP-6120', TEST_PROFILE), ticketFromKey('WEB-3380', TEST_PROFILE)],
       links: [{ title: 'Теханализ', url: 'https://wiki.example.com/x', kind: 'confluence' }],
     }),
   ],
@@ -156,13 +156,13 @@ describe('AgentSheetView', () => {
     await open({ directionId: 'd1' });
     expect(text(host.querySelector('.as__title'))).toBe('✦ Поручение агенту · Браузерные сторы');
     expect(Array.from(host.querySelectorAll('.as__part'), part => [text(part.querySelector('.as__part-label')), text(part.querySelector('.as__part-summary'))])).toEqual([
-      ['Тикеты', 'CORE-580, APP-9618 (App), WEB-5742 (Web) — агент откроет их сам'],
+      ['Тикеты', 'CORE-580, APP-6120 (App), WEB-3380 (Web) — агент откроет их сам'],
       ['Ссылки', 'Теханализ'],
       ['Дела', '«Разобрать обёртки»'],
     ]);
     const branch = field('input[aria-label="Ветка"]', HTMLInputElement);
-    expect(branch.value).toBe('feature/APP-9618_WEB-5742');
-    await answerBranch('feature/APP-9618_WEB-5742', 'none');
+    expect(branch.value).toBe('feature/APP-6120_WEB-3380');
+    await answerBranch('feature/APP-6120_WEB-3380', 'none');
     expect(text(host.querySelector('.as__branch-hint'))).toBe('будет создана от dev');
 
     button('Декомпозировать').click();
@@ -177,7 +177,7 @@ describe('AgentSheetView', () => {
       directionId: 'd1',
       include: ['tickets', 'todos'],
       extra: 'по одному сервису',
-      branch: 'feature/APP-9618_WEB-5742',
+      branch: 'feature/APP-6120_WEB-3380',
     });
     request.flush({});
     await settle();
@@ -197,7 +197,7 @@ describe('AgentSheetView', () => {
     try {
       await useProfile();
       await open({ directionId: 'd1' }, { terminal: 'warp', codeRoot: '~/Projects/app', agents: ['claude', 'codex'], defaultAgent: 'claude' });
-      await answerBranch('feature/APP-9618_WEB-5742', 'local');
+      await answerBranch('feature/APP-6120_WEB-3380', 'local');
       expect(text(host.querySelector('.as__agent_on'))).toBe('Codex');
       button('Claude').click();
       await fixture.whenStable();
@@ -218,7 +218,7 @@ describe('AgentSheetView', () => {
   it('keeps a question on dev and does not launch it without the question', async () => {
     await useProfile();
     await open({ directionId: 'd1' });
-    await answerBranch('feature/APP-9618_WEB-5742', 'local');
+    await answerBranch('feature/APP-6120_WEB-3380', 'local');
     button('Вопрос').click();
     await fixture.whenStable();
     expect(field('input[aria-label="Ветка"]', HTMLInputElement).value).toBe('dev');

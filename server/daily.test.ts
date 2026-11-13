@@ -24,12 +24,12 @@ async function tempDir(t: TestContext, prefix: string): Promise<string> {
 }
 
 function direction(): Direction {
-  return { id: 'seo', title: 'SEO', status: 'in_progress', tickets: [ticketFromKey('APP-9355', TEST_PROFILE)], links: [], events: [], order: 0, createdAt: PERIOD, updatedAt: PERIOD };
+  return { id: 'seo', title: 'SEO', status: 'in_progress', tickets: [ticketFromKey('APP-7301', TEST_PROFILE)], links: [], events: [], order: 0, createdAt: PERIOD, updatedAt: PERIOD };
 }
 
 async function writeTranscript(projectsDir: string): Promise<void> {
   await mkdir(path.join(projectsDir, 'p'), { recursive: true });
-  const record = { type: 'user', timestamp: IN_PERIOD, sessionId: 's1', cwd: '/m', gitBranch: 'feature/APP-9355', message: { role: 'user', content: 'почини сео' } };
+  const record = { type: 'user', timestamp: IN_PERIOD, sessionId: 's1', cwd: '/m', gitBranch: 'feature/APP-7301', message: { role: 'user', content: 'почини сео' } };
   await writeFile(path.join(projectsDir, 'p', 's1.jsonl'), `${JSON.stringify(record)}\n`);
 }
 

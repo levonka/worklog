@@ -24,7 +24,7 @@ function direction(id: string): Direction {
     title: `Направление ${id}`,
     status: 'waiting',
     waitingFor: 'девопсы',
-    tickets: [{ key: 'APP-9355', platform: 'App', url: 'https://jira.example.com/browse/APP-9355' }],
+    tickets: [{ key: 'APP-7301', platform: 'App', url: 'https://jira.example.com/browse/APP-7301' }],
     links: [{ title: 'MR', url: 'https://git.example.com/x/-/merge_requests/1', kind: 'mr' }],
     events: [{ id: 'e1', at: '2026-11-05T10:00:00.000Z', text: 'Начал', source: 'manual', kind: 'note' }],
     order: 0,
@@ -446,16 +446,16 @@ test('applyJira stores the first status without an event', async t => {
 
 test('applyJira writes an event when the status changes', async t => {
   const dataDir = await tempDataDir(t);
-  const dir = await new Store(dataDir, { profile: TEST_PROFILE }).createDirection({ title: 'SEO', ticketKeys: ['WEB-5586'] });
-  await new Store(dataDir, { profile: TEST_PROFILE }).applyJira([{ key: 'WEB-5586', status: 'In Review', segments: ['EU'] }], JIRA_AT);
+  const dir = await new Store(dataDir, { profile: TEST_PROFILE }).createDirection({ title: 'SEO', ticketKeys: ['WEB-4410'] });
+  await new Store(dataDir, { profile: TEST_PROFILE }).applyJira([{ key: 'WEB-4410', status: 'In Review', segments: ['EU'] }], JIRA_AT);
 
   // a fresh store, as after a restart: the old status comes from the file
   const store = new Store(dataDir, { profile: TEST_PROFILE });
-  await store.applyJira([{ key: 'WEB-5586', status: 'In QA', segments: ['EU'] }], JIRA_LATER);
+  await store.applyJira([{ key: 'WEB-4410', status: 'In QA', segments: ['EU'] }], JIRA_LATER);
 
   const saved = (await store.read()).directions.find(d => d.id === dir.id);
   const last = saved?.events.at(-1);
-  assert.equal(last?.text, 'WEB-5586: In Review → In QA');
+  assert.equal(last?.text, 'WEB-4410: In Review → In QA');
   assert.equal(last?.source, 'jira');
   assert.equal(last?.kind, 'jira-status');
   assert.equal(last?.at, JIRA_LATER);
@@ -523,8 +523,8 @@ const MR_4022 = 'https://git.example.com/team/app/-/merge_requests/4022';
 
 test('applyMergeRequests adds the MR link of the direction branch once, without an event', async t => {
   const store = new Store(await tempDataDir(t), { profile: TEST_PROFILE });
-  const dir = await store.createDirection({ title: 'SEO', ticketKeys: ['APP-9355', 'WEB-5586'] });
-  const found = new Map([['feature/APP-9355_WEB-5586', 4022]]);
+  const dir = await store.createDirection({ title: 'SEO', ticketKeys: ['APP-7301', 'WEB-4410'] });
+  const found = new Map([['feature/APP-7301_WEB-4410', 4022]]);
 
   assert.equal(await store.applyMergeRequests(found), 1);
   assert.equal(await store.applyMergeRequests(found), 0);
@@ -538,18 +538,18 @@ test('applyMergeRequests adds the MR link of the direction branch once, without 
 test('applyMergeRequests adds no link without a merge request url', async t => {
   const { gitlab: _gitlab, ...withoutGitlab } = TEST_PROFILE;
   const store = new Store(await tempDataDir(t), { profile: withoutGitlab });
-  await store.createDirection({ title: 'SEO', ticketKeys: ['APP-9355'] });
+  await store.createDirection({ title: 'SEO', ticketKeys: ['APP-7301'] });
 
-  assert.equal(await store.applyMergeRequests(new Map([['feature/APP-9355', 4022]])), 0);
+  assert.equal(await store.applyMergeRequests(new Map([['feature/APP-7301', 4022]])), 0);
   assert.deepEqual((await store.read()).directions[0].links, []);
 });
 
 test('applyMergeRequests keeps a link to the same MR the user added', async t => {
   const store = new Store(await tempDataDir(t), { profile: TEST_PROFILE });
-  const dir = await store.createDirection({ title: 'SEO', ticketKeys: ['APP-9355'] });
+  const dir = await store.createDirection({ title: 'SEO', ticketKeys: ['APP-7301'] });
   await store.addLink(dir.id, { url: `${MR_4022}/diffs`, title: 'мой MR' });
 
-  assert.equal(await store.applyMergeRequests(new Map([['feature/APP-9355', 4022]])), 0);
+  assert.equal(await store.applyMergeRequests(new Map([['feature/APP-7301', 4022]])), 0);
   assert.equal((await store.read()).directions[0].links.length, 1);
 });
 

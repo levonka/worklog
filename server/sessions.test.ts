@@ -14,11 +14,11 @@ const IN = '2026-11-05T06:00:00.000Z';
 type Line = Record<string, unknown>;
 
 function user(content: unknown, extra: Line = {}): Line {
-  return { type: 'user', timestamp: IN, sessionId: 's1', cwd: '/Users/me/Projects/app', gitBranch: 'feature/APP-9355_WEB-5586', isSidechain: false, message: { role: 'user', content }, ...extra };
+  return { type: 'user', timestamp: IN, sessionId: 's1', cwd: '/Users/me/Projects/app', gitBranch: 'feature/APP-7301_WEB-4410', isSidechain: false, message: { role: 'user', content }, ...extra };
 }
 
 function assistant(content: unknown, extra: Line = {}): Line {
-  return { type: 'assistant', timestamp: IN, sessionId: 's1', cwd: '/Users/me/Projects/app', gitBranch: 'feature/APP-9355_WEB-5586', isSidechain: false, message: { role: 'assistant', content }, ...extra };
+  return { type: 'assistant', timestamp: IN, sessionId: 's1', cwd: '/Users/me/Projects/app', gitBranch: 'feature/APP-7301_WEB-4410', isSidechain: false, message: { role: 'assistant', content }, ...extra };
 }
 
 async function projectsDir(t: TestContext): Promise<string> {
@@ -45,13 +45,13 @@ test('keeps user text and assistant text, drops tool calls, thinking and tool re
     user('почини сео'),
     assistant([{ type: 'thinking', thinking: 'хм' }, { type: 'tool_use', name: 'Bash', input: {} }]),
     user([{ type: 'tool_result', content: 'много вывода' }]),
-    assistant([{ type: 'text', text: 'Починил: бэк не отдаёт seo_site3.' }]),
+    assistant([{ type: 'text', text: 'Починил: бэк не отдаёт seo_block.' }]),
     user([{ type: 'text', text: 'спасибо' }]),
   ]);
   const [session] = await collectSessions({ projectsDir: root, start: START, end: END });
   assert.equal(session.sessionId, 's1');
   assert.equal(session.project, '-Users-me-Projects-app');
-  assert.deepEqual(texts(session), ['user: почини сео', 'assistant: Починил: бэк не отдаёт seo_site3.', 'user: спасибо']);
+  assert.deepEqual(texts(session), ['user: почини сео', 'assistant: Починил: бэк не отдаёт seo_block.', 'user: спасибо']);
 });
 
 test('filters messages by period and skips sessions without user messages in it', async t => {
@@ -116,7 +116,7 @@ test('collects branches and cwds', async t => {
     user('три', { gitBranch: '' }),
   ]);
   const [session] = await collectSessions({ projectsDir: root, start: START, end: END });
-  assert.deepEqual(session.branches, ['feature/APP-9355_WEB-5586']);
+  assert.deepEqual(session.branches, ['feature/APP-7301_WEB-4410']);
   assert.deepEqual(session.cwds, ['/Users/me/Projects/app', '/Users/me/Projects/worklog']);
 });
 

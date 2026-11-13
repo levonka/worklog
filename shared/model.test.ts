@@ -30,8 +30,8 @@ function direction(id: string, status: Direction['status'], order: number): Dire
 }
 
 test('normalizeTicketKey trims and upper-cases valid keys', () => {
-  assert.equal(normalizeTicketKey(' app-9355 '), 'APP-9355');
-  assert.equal(normalizeTicketKey('WEB-5586'), 'WEB-5586');
+  assert.equal(normalizeTicketKey(' app-7301 '), 'APP-7301');
+  assert.equal(normalizeTicketKey('WEB-4410'), 'WEB-4410');
 });
 
 test('normalizeTicketKey rejects non-keys', () => {
@@ -323,7 +323,7 @@ function withTickets(id: string, title: string, keys: string[], patch: Partial<D
 }
 
 test('templateText renders paragraphs, ticket lines and today', () => {
-  const seo = withTickets('seo', 'SEO-текст на страницах матчей', ['APP-9355', 'WEB-5586'], {
+  const seo = withTickets('seo', 'SEO-текст на страницах товаров', ['APP-7301', 'WEB-4410'], {
     status: 'waiting',
     waitingFor: 'бэк (Олег Петров)',
     events: [event('s1', iso(4, 14), 'Олег Петров подтвердил: бэк не отдаёт данные'), event('s2', iso(4, 14, 5), 'Статус: Жду · бэк (Олег Петров)', 'status')],
@@ -333,21 +333,21 @@ test('templateText renders paragraphs, ticket lines and today', () => {
     waitingFor: 'девопсы',
     events: [event('r1', iso(4, 16), 'Создал задачу девопсам через их дашборд')],
   });
-  const stores = withTickets('st', 'Браузерные сторы', ['APP-9618', 'WEB-5742'], { events: [event('b1', iso(5, 9), 'Статус: В работе', 'status')] });
+  const stores = withTickets('st', 'Браузерные сторы', ['APP-6120', 'WEB-3380'], { events: [event('b1', iso(5, 9), 'Статус: В работе', 'status')] });
   const captcha = dir('cap', { title: 'Капча-2', order: 1 });
   const todos = [todo('t', { text: 'Завести задачу бэку', requestedBy: 'Олега', due: '2026-11-05' })];
   const digest = periodDigest(state({ directions: [seo, redirect, stores, captcha], todos }), iso(4, 11, 30), null, '2026-11-05');
   assert.equal(
     templateText(digest),
     [
-      'Касаемо задачи «SEO-текст на страницах матчей»: Олег Петров подтвердил: бэк не отдаёт данные. Жду: бэк (Олег Петров).',
-      '1. APP-9355  2. WEB-5586',
+      'Касаемо задачи «SEO-текст на страницах товаров»: Олег Петров подтвердил: бэк не отдаёт данные. Жду: бэк (Олег Петров).',
+      '1. APP-7301  2. WEB-4410',
       '',
       'Касаемо задачи «Редирект по user-agent»: Создал задачу девопсам через их дашборд.',
       '1. SHOP-8221  2. INFRA-4601',
       '',
       'Взял в работу задачу «Браузерные сторы».',
-      '1. APP-9618  2. WEB-5742',
+      '1. APP-6120  2. WEB-3380',
       '',
       'Сегодня: продолжаю задачу «Капча-2»; завести задачу бэку (от Олега).',
     ].join('\n'),
@@ -419,7 +419,7 @@ test('findAiMentions ignores a word after a hyphen', () => {
 test('ticketKeysIn finds keys in titles, query strings and branch names, each once', () => {
   assert.deepEqual(ticketKeysIn('[APP-8962] Унификация · APP-8962, WEB-5296'), ['APP-8962', 'WEB-5296']);
   assert.deepEqual(ticketKeysIn('https://jira.example.com/secure/RapidBoard.jspa?selectedIssue=WEB-5686'), ['WEB-5686']);
-  assert.deepEqual(ticketKeysIn('https://git.example.com/app/-/tree/feature/APP-9355_WEB-5586'), ['APP-9355', 'WEB-5586']);
+  assert.deepEqual(ticketKeysIn('https://git.example.com/app/-/tree/feature/APP-7301_WEB-4410'), ['APP-7301', 'WEB-4410']);
 });
 
 test('ticketKeysIn skips lower-case and glued keys', () => {
@@ -466,25 +466,25 @@ import { activeRuns, agentContext, agentPrompt, agentRunTitle, baseBranch, direc
 
 test('directionBranch joins one key per project in the profile order', () => {
   const keys = (...list: string[]) => list.map(key => ticketFromKey(key, TEST_PROFILE));
-  assert.equal(directionBranch(keys('WEB-5586', 'APP-9355'), TEST_PROFILE), 'feature/APP-9355_WEB-5586');
-  assert.equal(directionBranch(keys('CORE-580', 'APP-9618', 'WEB-5742'), TEST_PROFILE), 'feature/APP-9618_WEB-5742');
+  assert.equal(directionBranch(keys('WEB-4410', 'APP-7301'), TEST_PROFILE), 'feature/APP-7301_WEB-4410');
+  assert.equal(directionBranch(keys('CORE-580', 'APP-6120', 'WEB-3380'), TEST_PROFILE), 'feature/APP-6120_WEB-3380');
   assert.equal(directionBranch(keys('WEB-5489'), TEST_PROFILE), 'feature/WEB-5489');
   assert.equal(directionBranch(keys('APP-8260', 'APP-8259'), TEST_PROFILE), 'feature/APP-8260');
-  assert.equal(directionBranch(keys('CRM-4082'), TEST_PROFILE), null);
+  assert.equal(directionBranch(keys('CRM-1190'), TEST_PROFILE), null);
   assert.equal(directionBranch([], TEST_PROFILE), null);
 });
 
 test('suggestBranch takes the profile order, one key alone, other tickets never make a branch', () => {
   const keys = (...list: string[]) => list.map(key => ticketFromKey(key, TEST_PROFILE));
-  assert.equal(suggestBranch(keys('WEB-5586', 'APP-9355'), 'execute', TEST_PROFILE), 'feature/APP-9355_WEB-5586');
-  assert.equal(suggestBranch(keys('CORE-580', 'APP-9618', 'WEB-5742'), 'decompose', TEST_PROFILE), 'feature/APP-9618_WEB-5742');
+  assert.equal(suggestBranch(keys('WEB-4410', 'APP-7301'), 'execute', TEST_PROFILE), 'feature/APP-7301_WEB-4410');
+  assert.equal(suggestBranch(keys('CORE-580', 'APP-6120', 'WEB-3380'), 'decompose', TEST_PROFILE), 'feature/APP-6120_WEB-3380');
   assert.equal(suggestBranch(keys('WEB-5489'), 'execute', TEST_PROFILE), 'feature/WEB-5489');
   assert.equal(suggestBranch(keys('CORE-580', 'CORE-581'), 'custom', TEST_PROFILE), 'dev');
   assert.equal(suggestBranch([], 'execute', TEST_PROFILE), 'dev');
 });
 
 test('suggestBranch keeps questions and reading docs on dev', () => {
-  const tickets = [ticketFromKey('APP-9355', TEST_PROFILE)];
+  const tickets = [ticketFromKey('APP-7301', TEST_PROFILE)];
   assert.equal(suggestBranch(tickets, 'question', TEST_PROFILE), 'dev');
   assert.equal(suggestBranch(tickets, 'docs', TEST_PROFILE), 'dev');
 });
@@ -501,7 +501,7 @@ test('suggestBranch falls back to main without a profile', () => {
 });
 
 test('isBranchName accepts feature branches and refuses what a shell or git would choke on', () => {
-  for (const name of ['dev', 'feature/APP-9355_WEB-5586', 'release/1.2']) assert.equal(isBranchName(name), true, name);
+  for (const name of ['dev', 'feature/APP-7301_WEB-4410', 'release/1.2']) assert.equal(isBranchName(name), true, name);
   for (const name of ['', '-x', 'a b', 'a;rm', 'a..b', 'a//b', 'a/', 'a.', 'a.lock', '$(x)', "a'b"]) assert.equal(isBranchName(name), false, name);
 });
 
@@ -527,7 +527,7 @@ function agentState(): WorklogState {
     title: 'Браузерные сторы',
     status: 'waiting',
     waitingFor: 'аналитика',
-    tickets: [ticketFromKey('APP-9618', TEST_PROFILE), ticketFromKey('WEB-5742', TEST_PROFILE)],
+    tickets: [ticketFromKey('APP-6120', TEST_PROFILE), ticketFromKey('WEB-3380', TEST_PROFILE)],
     links: [{ title: 'Теханализ', url: 'https://wiki.example.com/x', kind: 'confluence', description: 'что решили\nи почему' }],
     events: [events[3], events[0], events[6], events[1], events[5], events[2], events[4]],
   });
@@ -591,17 +591,17 @@ test('agentRunTitle names the todo or the direction and the template', () => {
 const ALL_PARTS: AgentRequest['include'] = ['tickets', 'links', 'events', 'todos', 'notes'];
 
 test('agentPrompt holds the task, the chosen context, the extra text and the rules with the run id', () => {
-  const prompt = agentPrompt(agentState(), { template: 'decompose', directionId: 'd1', include: ALL_PARTS, extra: '  без кода  ', branch: 'feature/APP-9618_WEB-5742' }, 'run1', TEST_PROFILE);
+  const prompt = agentPrompt(agentState(), { template: 'decompose', directionId: 'd1', include: ALL_PARTS, extra: '  без кода  ', branch: 'feature/APP-6120_WEB-3380' }, 'run1', TEST_PROFILE);
   assert.match(prompt, /^# Задание\nДекомпозируй задачу на дела/);
   assert.match(prompt, /Направление в Worklog: «Браузерные сторы» \(id d1\), статус «Жду», жду: аналитика, этап «В работе»\./);
-  assert.match(prompt, /- APP-9618 \(App\): https:\/\/jira\.example\.com\/browse\/APP-9618/);
+  assert.match(prompt, /- APP-6120 \(App\): https:\/\/jira\.example\.com\/browse\/APP-6120/);
   assert.match(prompt, /- Теханализ: https:\/\/wiki\.example\.com\/x\n {2}что решили\n {2}и почему/);
   assert.match(prompt, /событие 6/);
   assert.doesNotMatch(prompt, /событие 1/);
   assert.match(prompt, /- «Разобрать обёртки» \(просил Олега\)/);
   assert.match(prompt, /### Ключи app\.\*\nобщий origin у US\nСсылки: libs\/x\.ts:4/);
   assert.match(prompt, /## Дополнительный контекст\nбез кода\n/);
-  assert.match(prompt, /переключись на ветку `feature\/APP-9618_WEB-5742`; если её нет ни локально, ни в origin — `git fetch origin dev` и создай её от `origin\/dev`/);
+  assert.match(prompt, /переключись на ветку `feature\/APP-6120_WEB-3380`; если её нет ни локально, ни в origin — `git fetch origin dev` и создай её от `origin\/dev`/);
   assert.match(prompt, /незакоммиченные изменения, остановись и спроси меня/);
   assert.match(prompt, /`~\/.local\/bin\/worklog note list --dir d1`/);
   assert.match(prompt, /`--dir d1`/);

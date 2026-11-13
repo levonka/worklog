@@ -127,13 +127,13 @@ function direction(id: string, keys: string[], links: string[] = []): Direction 
 test('matchTabs finds ticket keys, their directions and already saved URLs', () => {
   const state: WorklogState = {
     ...EMPTY_STATE,
-    directions: [direction('seo', ['APP-9355', 'WEB-5586'], ['https://wiki.test/brd']), direction('uni', ['APP-8962'])],
+    directions: [direction('seo', ['APP-7301', 'WEB-4410'], ['https://wiki.test/brd']), direction('uni', ['APP-8962'])],
     linkGroups: [{ id: 'g', title: 'Каждый день', links: [{ title: 'Почта', url: 'https://mail.test/' }] }],
   };
   const tab = (title: string, url: string) => ({ window: 1, index: 0, title, url });
   const matched = matchTabs(
     [
-      tab('Ветка', 'https://git.test/-/tree/feature/APP-9355_WEB-5586'),
+      tab('Ветка', 'https://git.test/-/tree/feature/APP-7301_WEB-4410'),
       tab('[APP-8962] Унификация', 'https://jira.example.com/browse/APP-8962'),
       tab('BRD', 'https://wiki.test/brd#section'),
       tab('Figma REG-3425', 'https://wiki.test/brd'),
@@ -145,7 +145,7 @@ test('matchTabs finds ticket keys, their directions and already saved URLs', () 
   assert.deepEqual(
     matched.map(m => ({ keys: m.keys, directions: m.directions.map(d => d.id), saved: m.saved })),
     [
-      { keys: ['APP-9355', 'WEB-5586'], directions: ['seo'], saved: false },
+      { keys: ['APP-7301', 'WEB-4410'], directions: ['seo'], saved: false },
       { keys: ['APP-8962'], directions: ['uni'], saved: true },
       { keys: [], directions: ['seo'], saved: true },
       { keys: ['REG-3425'], directions: ['seo'], saved: true },

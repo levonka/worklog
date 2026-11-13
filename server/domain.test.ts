@@ -60,12 +60,12 @@ test('createDirection ignores waitingFor unless the status is waiting', async t 
 
 test('createDirection normalizes ticket keys and rejects invalid ones', async t => {
   const store = await tempStore(t);
-  const created = await store.createDirection({ title: 'Сторы', ticketKeys: ['app-9355', 'WEB-5586', 'APP-9355'] });
+  const created = await store.createDirection({ title: 'Сторы', ticketKeys: ['app-7301', 'WEB-4410', 'APP-7301'] });
   assert.deepEqual(
     created.tickets.map(ticket => [ticket.key, ticket.platform]),
     [
-      ['APP-9355', 'App'],
-      ['WEB-5586', 'Web'],
+      ['APP-7301', 'App'],
+      ['WEB-4410', 'Web'],
     ],
   );
   await assert.rejects(store.createDirection({ title: 'X', ticketKeys: ['не ключ'] }), ValidationError);
@@ -218,12 +218,12 @@ test('addEvent appends a note and rejects empty text', async t => {
   await assert.rejects(store.addEvent('nope', 'x', 'claude'), NotFoundError);
 });
 
-test('addTicket normalizes "app-9355" and ignores duplicates', async t => {
+test('addTicket normalizes "app-7301" and ignores duplicates', async t => {
   const store = await tempStore(t);
   const created = await store.createDirection({ title: 'Д' });
-  const ticket = await store.addTicket(created.id, 'app-9355');
-  assert.deepEqual(ticket, { key: 'APP-9355', platform: 'App', url: 'https://jira.example.com/browse/APP-9355' });
-  const duplicate = await store.addTicket(created.id, ' APP-9355 ');
+  const ticket = await store.addTicket(created.id, 'app-7301');
+  assert.deepEqual(ticket, { key: 'APP-7301', platform: 'App', url: 'https://jira.example.com/browse/APP-7301' });
+  const duplicate = await store.addTicket(created.id, ' APP-7301 ');
   assert.deepEqual(duplicate, ticket);
   assert.equal((await store.read()).directions[0].tickets.length, 1);
   await assert.rejects(store.addTicket(created.id, 'oops'), ValidationError);

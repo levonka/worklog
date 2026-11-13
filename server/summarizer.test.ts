@@ -26,14 +26,14 @@ function session(id: string, patch: Partial<PreparedSession> = {}): PreparedSess
     firstAt: at(5, 9),
     lastAt: at(5, 10, 15),
     messages: [
-      { at: at(5, 9), role: 'user', text: 'почему нет seo_site3?' },
+      { at: at(5, 9), role: 'user', text: 'почему нет seo_block?' },
       { at: at(5, 10, 15), role: 'assistant', text: 'Бэк не отдаёт поле.' },
     ],
     ...patch,
   };
 }
 
-const seo = direction('seo', 'SEO-текст на страницах матчей', ['APP-9355', 'WEB-5586'], {
+const seo = direction('seo', 'SEO-текст на страницах товаров', ['APP-7301', 'WEB-4410'], {
   status: 'waiting',
   waitingFor: 'бэк',
   events: [{ id: 'e', at: at(4, 14), text: 'Олег подтвердил баг бэка', source: 'manual', kind: 'note' } satisfies WorkEvent],
@@ -45,18 +45,18 @@ test('buildSummaryPrompt starts with the marker and lists sessions, directions, 
   const prompt = buildSummaryPrompt({
     periodStart: at(4, 11, 30),
     periodEnd: at(5, 11),
-    sessions: [session('s1', { branches: ['feature/APP-9355_WEB-5586'] })],
+    sessions: [session('s1', { branches: ['feature/APP-7301_WEB-4410'] })],
     directions: state.directions,
     digest: periodDigest(state, at(4, 11, 30), null, '2026-11-05'),
   });
   assert.ok(prompt.startsWith(`${SUMMARY_MARKER}\n`));
   assert.ok(prompt.includes('за период 04.11 11:30 — 05.11 11:00'));
-  assert.ok(prompt.includes('- id=seo · «SEO-текст на страницах матчей» · Жду · жду: бэк · задачи: APP-9355, WEB-5586'));
+  assert.ok(prompt.includes('- id=seo · «SEO-текст на страницах товаров» · Жду · жду: бэк · задачи: APP-7301, WEB-4410'));
   assert.ok(!prompt.includes('«Старое»'));
-  assert.ok(prompt.includes('- «SEO-текст на страницах матчей» · 04.11 14:00 · Олег подтвердил баг бэка'));
+  assert.ok(prompt.includes('- «SEO-текст на страницах товаров» · 04.11 14:00 · Олег подтвердил баг бэка'));
   assert.ok(prompt.includes('На сегодня:\n- нет'));
-  assert.ok(prompt.includes('=== sessionId=s1 · 05.11 09:00–05.11 10:15 · ветки: feature/APP-9355_WEB-5586 · подсказка: «SEO-текст на страницах матчей» ==='));
-  assert.ok(prompt.includes('[он] почему нет seo_site3?\n[помощник] Бэк не отдаёт поле.'));
+  assert.ok(prompt.includes('=== sessionId=s1 · 05.11 09:00–05.11 10:15 · ветки: feature/APP-7301_WEB-4410 · подсказка: «SEO-текст на страницах товаров» ==='));
+  assert.ok(prompt.includes('[он] почему нет seo_block?\n[помощник] Бэк не отдаёт поле.'));
   assert.ok(prompt.includes('Касаемо задачи по поиску - была проблема'));
   assert.ok(prompt.includes('без «мы»: «договорился», «завёл», а не «договорились», «заведём»'));
 });
@@ -70,16 +70,16 @@ test('buildSummaryPrompt marks Jira events and gives their neutral phrase', () =
   const prompt = buildSummaryPrompt({ periodStart: at(4, 11, 30), periodEnd: at(5, 11), sessions: [], directions: state.directions, digest: periodDigest(state, at(4, 11, 30), null, '2026-11-05') });
   assert.ok(prompt.includes('- «Унификация» · 04.11 15:00 · [Jira] Ушла в тестирование'));
   assert.ok(!prompt.includes('Статус: Тестирование'));
-  assert.ok(prompt.includes('- «SEO-текст на страницах матчей» · 04.11 14:00 · Олег подтвердил баг бэка'));
+  assert.ok(prompt.includes('- «SEO-текст на страницах товаров» · 04.11 14:00 · Олег подтвердил баг бэка'));
   assert.ok(prompt.includes('с пометкой [Jira] сделал не он'));
 });
 
 test('directionHints finds ticket keys in branches and messages', () => {
-  const stores = direction('st', 'Сторы', ['APP-9618']);
-  assert.deepEqual(directionHints(session('s', { branches: ['feature/APP-9355_WEB-5586'] }), [seo, stores]).map(d => d.id), ['seo']);
-  const mention = session('s', { messages: [{ at: at(5, 9), role: 'user', text: 'посмотри app-9618' }] });
+  const stores = direction('st', 'Сторы', ['APP-6120']);
+  assert.deepEqual(directionHints(session('s', { branches: ['feature/APP-7301_WEB-4410'] }), [seo, stores]).map(d => d.id), ['seo']);
+  const mention = session('s', { messages: [{ at: at(5, 9), role: 'user', text: 'посмотри app-6120' }] });
   assert.deepEqual(directionHints(mention, [seo, stores]).map(d => d.id), ['st']);
-  const lookalike = session('s', { messages: [{ at: at(5, 9), role: 'user', text: 'APP-96180' }] });
+  const lookalike = session('s', { messages: [{ at: at(5, 9), role: 'user', text: 'APP-61200' }] });
   assert.deepEqual(directionHints(lookalike, [stores]), []);
 });
 

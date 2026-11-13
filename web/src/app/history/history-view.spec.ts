@@ -19,7 +19,7 @@ const EVENTS: WorkEvent[] = Array.from({ length: 20 }, (_, i) => ({ id: `e${i}`,
 
 const STATE: WorklogState = {
   directions: [
-    direction('seo', 'SEO-текст', { tickets: [ticketFromKey('APP-9355', TEST_PROFILE)], events: EVENTS }),
+    direction('seo', 'SEO-текст', { tickets: [ticketFromKey('APP-7301', TEST_PROFILE)], events: EVENTS }),
     direction('cap', 'Капча', { status: 'done', events: [{ id: 's', at: at(3, 15), text: 'Статус: Готово', source: 'system', kind: 'status' }] }),
   ],
   todos: [],

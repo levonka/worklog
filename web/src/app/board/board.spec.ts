@@ -29,7 +29,7 @@ function todo(id: string, fields: Partial<Todo>): Todo {
 const STATE: WorklogState = {
   directions: [
     direction('unify', 'Унификация сервисов', 'in_progress', 1),
-    direction('stores', 'Браузерные сторы', 'in_progress', 0, { tickets: [ticketFromKey('APP-9618', TEST_PROFILE), ticketFromKey('WEB-5742', TEST_PROFILE)] }),
+    direction('stores', 'Браузерные сторы', 'in_progress', 0, { tickets: [ticketFromKey('APP-6120', TEST_PROFILE), ticketFromKey('WEB-3380', TEST_PROFILE)] }),
     direction('redirect', 'Редирект по UA', 'waiting', 0, { waitingFor: 'девопсы', tickets: [ticketFromKey('SHOP-8221', TEST_PROFILE)] }),
     direction('push', 'US пуши', 'testing', 0, { stage: 'testing', stageFromJira: true }),
     direction('toggles', 'Удаление тоглов', 'awaiting_release', 0),
@@ -282,7 +282,7 @@ describe('Board', () => {
     expect(text(waiting.querySelector('.dc__badge'))).toBe('2 дела · от Олега');
 
     const working = query('[data-direction-id="stores"]', HTMLElement);
-    expect(Array.from(working.querySelectorAll('.dc__meta .dc__key')).map(text)).toEqual(['APP-9618', 'WEB-5742']);
+    expect(Array.from(working.querySelectorAll('.dc__meta .dc__key')).map(text)).toEqual(['APP-6120', 'WEB-3380']);
     expect(working.querySelector('.dc__wait')).toBeNull();
     expect(working.querySelector('.dc__badge')).toBeNull();
     expect(text(query('[data-direction-id="unify"] .dc__badge', HTMLElement))).toBe('1 дело');

@@ -22,7 +22,7 @@ function direction(id: string, title: string, keys: string[] = []): Direction {
 
 const directions = [
   direction('abc123', 'Браузерные сторы'),
-  direction('def456', 'Сео-текст на матчах', ['APP-9355']),
+  direction('def456', 'Сео-текст на товарах', ['APP-7301']),
   direction('ghi789', 'Сео-ссылки'),
 ];
 
@@ -31,7 +31,7 @@ test('resolves by exact id', () => {
 });
 
 test('resolves by ticket key, case-insensitively', () => {
-  assert.equal(resolveDirection(directions, 'app-9355').id, 'def456');
+  assert.equal(resolveDirection(directions, 'app-7301').id, 'def456');
 });
 
 test('resolves a single title substring ignoring case', () => {
@@ -44,7 +44,7 @@ test('ambiguous title substring lists every candidate', () => {
     () => resolveDirection(directions, 'сео'),
     error =>
       error instanceof ValidationError &&
-      error.message === 'Неоднозначно: сео — Сео-текст на матчах (def456); Сео-ссылки (ghi789)',
+      error.message === 'Неоднозначно: сео — Сео-текст на товарах (def456); Сео-ссылки (ghi789)',
   );
 });
 
@@ -74,7 +74,7 @@ test('a ticket-shaped ref without a matching ticket falls back to titles then no
 
 test('trims spaces around an id and a ticket key', () => {
   assert.equal(resolveDirection(directions, '  def456 ').id, 'def456');
-  assert.equal(resolveDirection(directions, ' app-9355  ').id, 'def456');
+  assert.equal(resolveDirection(directions, ' app-7301  ').id, 'def456');
 });
 
 test('an empty ref is not found', () => {

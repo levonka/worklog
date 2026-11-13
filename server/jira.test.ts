@@ -88,13 +88,13 @@ test('jiraConfig takes url and segment field from the profile', () => {
 test('parseSearch reads status and Segment values', () => {
   const body = {
     issues: [
-      { key: 'APP-9355', fields: { status: { name: 'In CodeReview' }, [FIELD]: [{ value: 'EU' }, { value: 'ZZ' }] } },
+      { key: 'APP-7301', fields: { status: { name: 'In CodeReview' }, [FIELD]: [{ value: 'EU' }, { value: 'ZZ' }] } },
       { key: 'WEB-1', fields: { status: { name: 'Open' }, [FIELD]: null } },
       { key: 'WEB-2', fields: { [FIELD]: [] } },
     ],
   };
   assert.deepEqual(parseSearch(body, FIELD), [
-    { key: 'APP-9355', status: 'In CodeReview', segments: ['EU', 'ZZ'] },
+    { key: 'APP-7301', status: 'In CodeReview', segments: ['EU', 'ZZ'] },
     { key: 'WEB-1', status: 'Open', segments: [] },
   ]);
   assert.throws(() => parseSearch('nope', FIELD), JiraError);

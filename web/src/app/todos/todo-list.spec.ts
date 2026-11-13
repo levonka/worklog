@@ -661,14 +661,14 @@ describe('TodoList', () => {
 
     const running: WorklogState = {
       ...STATE,
-      runs: [{ id: 'r1', template: 'execute', todoId: 't4', directionId: 'seo', branch: 'feature/APP-9355', title: 'x', startedAt: new Date(2026, 10, 5, 14, 20).toISOString() }],
+      runs: [{ id: 'r1', template: 'execute', todoId: 't4', directionId: 'seo', branch: 'feature/APP-7301', title: 'x', startedAt: new Date(2026, 10, 5, 14, 20).toISOString() }],
     };
     const loading = TestBed.inject(WorklogStore).refresh();
     http.expectOne({ method: 'GET', url: '/api/state' }).flush(running);
     await loading;
     await fixture.whenStable();
     const tag = query('.tr__agent', HTMLElement, row(SEO_ADMIN));
-    expect([text(tag), tag.title]).toEqual(['✦ с 14:20', 'Агент работает · ветка feature/APP-9355']);
+    expect([text(tag), tag.title]).toEqual(['✦ с 14:20', 'Агент работает · ветка feature/APP-7301']);
 
     await openMenu(row(SEO_ADMIN), 'Снять отметку агента');
     http.expectOne({ method: 'POST', url: '/api/agent/runs/r1/finish' }).flush({});

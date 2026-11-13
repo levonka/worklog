@@ -43,7 +43,7 @@ function state(draftValue: DailyDraft | null): WorklogState {
       direction('seo', 'SEO-текст', {
         status: 'waiting',
         waitingFor: 'бэк',
-        tickets: [ticketFromKey('APP-9355', TEST_PROFILE)],
+        tickets: [ticketFromKey('APP-7301', TEST_PROFILE)],
         events: [event('e1', at(4, 14), 'Олег подтвердил баг бэка'), event('e2', at(4, 14, 5), 'Статус: Жду · бэк', 'status')],
       }),
       direction('red', 'Редирект', { status: 'waiting', waitingFor: 'девопсы', events: [event('r', at(3, 10), 'Статус: Жду · девопсы', 'status')] }),

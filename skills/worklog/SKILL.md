@@ -14,14 +14,14 @@ Run the CLI exactly as `~/.local/bin/worklog <command>`, one command per Bash ca
 ## Steps
 
 1. **Collect the session's results** from the conversation (after a compaction — from its summary). If the work was in a git repository, `git log --oneline` of the commits made in this session fills gaps. Text after `/worklog` is extra facts or a focus from the user: take it as given.
-2. **Map to directions**: run `state`, then `dir show <ref>` for each direction the session touched — by ticket key in the conversation or in the branch name (`feature/APP-9355_WEB-5586`), or by topic. Its recent events and todos show what is already recorded: drop anything already there, including what was recorded earlier in this session. If `/worklog` already ran in this conversation, start after that point.
+2. **Map to directions**: run `state`, then `dir show <ref>` for each direction the session touched — by ticket key in the conversation or in the branch name (`feature/APP-7301_WEB-4410`), or by topic. Its recent events and todos show what is already recorded: drop anything already there, including what was recorded earlier in this session. If `/worklog` already ran in this conversation, start after that point.
 3. **Show one numbered list**, grouped by direction, each item the text that will be written:
 
    ```
-   SEO-текст на страницах матчей
+   SEO-текст на страницах товаров
    1. событие: «Вывел новый баннер на главную, MR !3901»
    2. жду: Олега (ревью)
-   3. дело: «Завести задачу бэку на суффикс в SEO-админке» (от Олега)
+   3. дело: «Завести задачу бэку на подпись в SEO-админке» (от Олега)
    Без направления
    4. новое направление «Лимиты ставок» (APP-9700), статус В работе
    В базу знаний

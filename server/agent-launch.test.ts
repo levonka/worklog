@@ -51,19 +51,19 @@ async function setup(t: TestContext, opts: { fails?: boolean; terminal?: Termina
     osascriptBin: osascript.bin,
   };
   const store = new Store(dataDir, { profile: TEST_PROFILE });
-  const direction = await store.createDirection({ title: 'Сторы "App"', ticketKeys: ['APP-9618'] });
+  const direction = await store.createDirection({ title: 'Сторы "App"', ticketKeys: ['APP-6120'] });
   return { store, config, direction, calls: open.calls, osascriptCalls: osascript.calls };
 }
 
 test('launchAgent records the run, writes the prompt and the tab config, and opens it in Warp', async t => {
   const { store, config, direction, calls } = await setup(t);
-  const run = await launchAgent(store, config, { template: 'execute', directionId: direction.id, include: ['tickets'], extra: '', branch: 'feature/APP-9618' });
+  const run = await launchAgent(store, config, { template: 'execute', directionId: direction.id, include: ['tickets'], extra: '', branch: 'feature/APP-6120' });
 
   assert.equal(run.directionId, direction.id);
-  assert.equal(run.branch, 'feature/APP-9618');
+  assert.equal(run.branch, 'feature/APP-6120');
   assert.equal(run.title, 'Сторы "App" · выполнить задачу');
   assert.deepEqual((await store.read()).runs, [run]);
-  assert.match(await readFile(promptFile(config, run.id), 'utf8'), /APP-9618 \(App\)/);
+  assert.match(await readFile(promptFile(config, run.id), 'utf8'), /APP-6120 \(App\)/);
   assert.equal(await readFile(tabFile(config, run.id), 'utf8'), tabConfig(config, run));
   assert.equal(await readFile(calls, 'utf8'), `warp://tab_config/worklog-run-${run.id}\n`);
 });

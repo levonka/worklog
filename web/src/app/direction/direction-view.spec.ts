@@ -16,8 +16,8 @@ import { TEST_PROFILE } from '@worklog/test-profile';
 const AT = '2026-11-01T09:00:00.000Z';
 const NOW = new Date(2026, 10, 5, 15, 0);
 
-const BRANCH_URL = 'https://git.example.com/app/-/tree/feature/APP-9355_WEB-5586';
-const SRS_URL = 'https://wiki.example.com/pages/viewpage.action?pageId=4700';
+const BRANCH_URL = 'https://git.example.com/app/-/tree/feature/APP-7301_WEB-4410';
+const SRS_URL = 'https://wiki.example.com/pages/viewpage.action?pageId=2050';
 
 function direction(id: string, title: string, status: Status, order: number, fields: Partial<Direction> = {}): Direction {
   return { id, title, status, tickets: [], links: [], events: [], order, createdAt: AT, updatedAt: AT, ...fields };
@@ -31,11 +31,11 @@ function todo(id: string, text: string, fields: Partial<Todo> = {}): Todo {
   return { id, text, done: false, createdAt: AT, ...fields };
 }
 
-const SEO = direction('seo', 'SEO-текст на страницах матчей', 'waiting', 0, {
+const SEO = direction('seo', 'SEO-текст на страницах товаров', 'waiting', 0, {
   waitingFor: 'бэк',
-  tickets: [ticketFromKey('APP-9355', TEST_PROFILE), ticketFromKey('WEB-5586', TEST_PROFILE), ticketFromKey('SHOP-8221', TEST_PROFILE)],
+  tickets: [ticketFromKey('APP-7301', TEST_PROFILE), ticketFromKey('WEB-4410', TEST_PROFILE), ticketFromKey('SHOP-8221', TEST_PROFILE)],
   links: [
-    { title: 'feature/APP-9355_WEB-5586', url: BRANCH_URL, kind: 'branch' },
+    { title: 'feature/APP-7301_WEB-4410', url: BRANCH_URL, kind: 'branch' },
     { title: 'SRS', url: SRS_URL, kind: 'confluence' },
   ],
   // stored oldest first, as the server appends them
@@ -150,19 +150,19 @@ describe('DirectionView', () => {
   it('renders tickets with platform and jira links', async () => {
     const tickets = Array.from(host.querySelectorAll('.dv__ticket')).filter(ticket => ticket instanceof HTMLAnchorElement);
     expect(tickets.map(ticket => [text(ticket), ticket.href, ticket.target, ticket.rel])).toEqual([
-      ['APP-9355 App', 'https://jira.example.com/browse/APP-9355', '_blank', 'noopener'],
-      ['WEB-5586 Web', 'https://jira.example.com/browse/WEB-5586', '_blank', 'noopener'],
+      ['APP-7301 App', 'https://jira.example.com/browse/APP-7301', '_blank', 'noopener'],
+      ['WEB-4410 Web', 'https://jira.example.com/browse/WEB-4410', '_blank', 'noopener'],
       ['SHOP-8221', 'https://jira.example.com/browse/SHOP-8221', '_blank', 'noopener'],
     ]);
 
     expect(tickets.map(ticket => ticket.querySelector('img.fv__img')?.getAttribute('src'))).toEqual([
-      '/api/favicon?url=https%3A%2F%2Fjira.example.com%2Fbrowse%2FAPP-9355',
-      '/api/favicon?url=https%3A%2F%2Fjira.example.com%2Fbrowse%2FWEB-5586',
+      '/api/favicon?url=https%3A%2F%2Fjira.example.com%2Fbrowse%2FAPP-7301',
+      '/api/favicon?url=https%3A%2F%2Fjira.example.com%2Fbrowse%2FWEB-4410',
       '/api/favicon?url=https%3A%2F%2Fjira.example.com%2Fbrowse%2FSHOP-8221',
     ]);
 
-    query('button[aria-label="Убрать WEB-5586"]', HTMLButtonElement).click();
-    http.expectOne({ method: 'DELETE', url: '/api/directions/seo/tickets/WEB-5586' }).flush(null);
+    query('button[aria-label="Убрать WEB-4410"]', HTMLButtonElement).click();
+    http.expectOne({ method: 'DELETE', url: '/api/directions/seo/tickets/WEB-4410' }).flush(null);
     await answerRefresh();
   });
 
@@ -194,7 +194,7 @@ describe('DirectionView', () => {
     expect(labels.length).toBe(1);
     expect(text(labels[0])).toBe('In Review');
     expect(labels[0].classList.contains('wl-jira-status_yellow')).toBe(true);
-    expect(text(labels[0].closest('.dv__chip'))).toContain('APP-9355');
+    expect(text(labels[0].closest('.dv__chip'))).toContain('APP-7301');
   });
 
   it('shows the MRs next to the tickets instead of among the links; ✕ removes every link of one', async () => {
@@ -211,7 +211,7 @@ describe('DirectionView', () => {
       ['MR !4022', mr, mr, '_blank', 'noopener', 'false'],
     ]);
     expect(chips[0].querySelector('img.fv__img')?.getAttribute('src')).toBe(`/api/favicon?url=${encodeURIComponent(mr)}`);
-    expect(Array.from(host.querySelectorAll('.dl__text')).map(text)).toEqual(['feature/APP-9355_WEB-5586', 'SRS']);
+    expect(Array.from(host.querySelectorAll('.dl__text')).map(text)).toEqual(['feature/APP-7301_WEB-4410', 'SRS']);
 
     query('button[aria-label="Убрать MR !4022"]', HTMLButtonElement).click();
     for (const url of [mr, `${mr}/diffs`]) {
@@ -258,15 +258,15 @@ describe('DirectionView', () => {
     const writeText = vi.fn().mockResolvedValue(undefined);
     Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
 
-    expect(text(host.querySelector('wl-branch-line .bl__name'))).toBe('feature/APP-9355_WEB-5586');
+    expect(text(host.querySelector('wl-branch-line .bl__name'))).toBe('feature/APP-7301_WEB-4410');
     expect(host.querySelector('wl-env-links')).not.toBeNull();
     query('button[aria-label="Скопировать ветку"]', HTMLButtonElement).click();
     await settle();
-    expect(writeText).toHaveBeenCalledWith('feature/APP-9355_WEB-5586');
+    expect(writeText).toHaveBeenCalledWith('feature/APP-7301_WEB-4410');
   });
 
   it('no branch and no stands without tickets of the profile projects', async () => {
-    await loadState(withSeo({ tickets: [ticketFromKey('CRM-4082', TEST_PROFILE)] }));
+    await loadState(withSeo({ tickets: [ticketFromKey('CRM-1190', TEST_PROFILE)] }));
 
     expect(host.querySelector('wl-branch-line')).toBeNull();
     expect(host.querySelector('wl-env-links')).toBeNull();
@@ -390,12 +390,12 @@ describe('DirectionView', () => {
   });
 
   it('marks Jira events in the feed', async () => {
-    const jiraEvent: WorkEvent = { id: 'j1', at: new Date(2026, 10, 5, 14, 40).toISOString(), text: 'WEB-5586: In CodeReview → Ready For QA', source: 'jira', kind: 'jira-status' };
+    const jiraEvent: WorkEvent = { id: 'j1', at: new Date(2026, 10, 5, 14, 40).toISOString(), text: 'WEB-4410: In CodeReview → Ready For QA', source: 'jira', kind: 'jira-status' };
     await loadState(withSeo({ events: [...SEO.events, jiraEvent] }));
 
     const events = Array.from(host.querySelectorAll('.ef__event'));
     expect(text(events[0].querySelector('.ef__source'))).toBe('Jira');
-    expect(text(events[0].querySelector('.ef__text'))).toBe('WEB-5586: In CodeReview → Ready For QA');
+    expect(text(events[0].querySelector('.ef__text'))).toBe('WEB-4410: In CodeReview → Ready For QA');
     expect(events.slice(1).every(item => item.querySelector('.ef__source') === null)).toBe(true);
   });
 
@@ -516,20 +516,20 @@ describe('DirectionView', () => {
     await fixture.whenStable();
     const editor = input('Название направления');
     expect(document.activeElement).toBe(editor);
-    expect(editor.value).toBe('SEO-текст на страницах матчей');
+    expect(editor.value).toBe('SEO-текст на страницах товаров');
 
-    editor.value = 'SEO-текст на матчах';
+    editor.value = 'SEO-текст на товарах';
     press(editor, 'Escape');
     await fixture.whenStable();
-    expect(text(host.querySelector('.dv__title'))).toBe('SEO-текст на страницах матчей');
+    expect(text(host.querySelector('.dv__title'))).toBe('SEO-текст на страницах товаров');
     http.expectNone({ method: 'PATCH', url: '/api/directions/seo' });
 
     query('.dv__title', HTMLElement).dispatchEvent(new MouseEvent('click', { bubbles: true }));
     await fixture.whenStable();
     const again = input('Название направления');
-    again.value = '  SEO-текст на матчах ';
+    again.value = '  SEO-текст на товарах ';
     press(again, 'Enter');
-    await expectPatch({ title: 'SEO-текст на матчах' });
+    await expectPatch({ title: 'SEO-текст на товарах' });
   });
 
   it('a click that ends selecting part of the title keeps the selection instead of renaming', async () => {
@@ -557,7 +557,7 @@ describe('DirectionView', () => {
         return [text(link.querySelector('.dl__icon')), text(link.querySelector('.dl__text')), anchor.href, anchor.target, anchor.rel];
       }),
     ).toEqual([
-      ['🌿', 'feature/APP-9355_WEB-5586', BRANCH_URL, '_blank', 'noopener'],
+      ['🌿', 'feature/APP-7301_WEB-4410', BRANCH_URL, '_blank', 'noopener'],
       ['📄', 'SRS', SRS_URL, '_blank', 'noopener'],
     ]);
 
@@ -612,7 +612,7 @@ describe('DirectionView', () => {
     host.remove();
     button('.dm__item', 'Удалить направление').click();
     await fixture.whenStable();
-    expect(text(host.querySelector('.dm__confirm'))).toContain('Удалить «SEO-текст на страницах матчей»?');
+    expect(text(host.querySelector('.dm__confirm'))).toContain('Удалить «SEO-текст на страницах товаров»?');
     http.expectNone({ method: 'DELETE', url: '/api/directions/seo' });
 
     button('.dm__btn', 'Отмена').click();
@@ -647,11 +647,11 @@ describe('DirectionView', () => {
     query('button[aria-label="Описание SRS"]', HTMLButtonElement).click();
     await fixture.whenStable();
     const field = query('.dl__desc textarea', HTMLTextAreaElement);
-    field.value = 'Требования к SEO-тексту, `seo_site3`';
+    field.value = 'Требования к SEO-тексту, `seo_block`';
     field.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', metaKey: true }));
     await settle();
     const request = http.expectOne({ method: 'PATCH', url: '/api/directions/seo/links' });
-    expect(request.request.body).toStrictEqual({ url: SRS_URL, description: 'Требования к SEO-тексту, `seo_site3`' });
+    expect(request.request.body).toStrictEqual({ url: SRS_URL, description: 'Требования к SEO-тексту, `seo_block`' });
     request.flush(null);
     const described = { ...STATE, directions: STATE.directions.map(d => (d.id === 'seo' ? { ...SEO, links: [SEO.links[0], { ...SEO.links[1], description: 'Требования' }] } : d)) };
     await answerRefresh(described);
@@ -672,13 +672,13 @@ describe('DirectionView', () => {
 
     const running: WorklogState = {
       ...STATE,
-      runs: [{ id: 'r1', template: 'execute', directionId: 'seo', branch: 'feature/APP-9355_WEB-5586', title: 'x', startedAt: new Date(2026, 10, 5, 14, 20).toISOString() }],
+      runs: [{ id: 'r1', template: 'execute', directionId: 'seo', branch: 'feature/APP-7301_WEB-4410', title: 'x', startedAt: new Date(2026, 10, 5, 14, 20).toISOString() }],
     };
     const loading = store.refresh();
     http.expectOne({ method: 'GET', url: '/api/state' }).flush(running);
     await loading;
     await fixture.whenStable();
-    expect(text(host.querySelector('.dv__agent-text'))).toBe('Агент работает · с 14:20 · feature/APP-9355_WEB-5586');
+    expect(text(host.querySelector('.dv__agent-text'))).toBe('Агент работает · с 14:20 · feature/APP-7301_WEB-4410');
 
     button('.dv__agent-finish', 'Снять отметку').click();
     http.expectOne({ method: 'POST', url: '/api/agent/runs/r1/finish' }).flush({});

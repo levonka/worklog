@@ -16,7 +16,7 @@ const DIRECTIONS: Direction[] = [
   direction('promo', { title: 'Промокоды в боттомшите', doneAt: on(2026, 3, 9), tickets: tickets('APP-5563', 'APP-6923', 'APP-6924') }),
   direction('traffic', { title: 'Источник трафика', doneAt: on(2026, 9, 30), tickets: tickets('APP-9352', 'WEB-5581') }),
   direction('twofa', { title: 'Развитие 2FA', doneAt: on(2026, 9, 22), tickets: tickets('APP-7098', 'WEB-4332', 'APP-9438') }),
-  direction('stores', { title: 'Браузерные сторы', status: 'in_progress', tickets: tickets('APP-9618') }),
+  direction('stores', { title: 'Браузерные сторы', status: 'in_progress', tickets: tickets('APP-6120') }),
 ];
 
 describe('done-feed', () => {

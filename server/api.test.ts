@@ -61,10 +61,10 @@ test('health reports ok with no clients', async t => {
 
 test('created direction appears in state', async t => {
   const base = await startApp(t);
-  const created = await createDirection(base, { title: 'Сео', tickets: ['app-9355'] });
+  const created = await createDirection(base, { title: 'Сео', tickets: ['app-7301'] });
   assert.equal(created.title, 'Сео');
   assert.equal(created.status, 'in_progress');
-  assert.deepEqual(created.tickets.map(ticket => ticket.key), ['APP-9355']);
+  assert.deepEqual(created.tickets.map(ticket => ticket.key), ['APP-7301']);
 
   const state = await json<WorklogState>(await call(base, 'GET', '/api/state'));
   assert.deepEqual(state.directions.map(d => d.id), [created.id]);
@@ -332,10 +332,10 @@ test('manual event, tickets and links lifecycle', async t => {
   assert.equal(eventResponse.status, 201);
   assert.equal((await json<WorkEvent>(eventResponse)).source, 'manual');
 
-  const ticketResponse = await call(base, 'POST', `/api/directions/${id}/tickets`, { key: 'web-5586' });
+  const ticketResponse = await call(base, 'POST', `/api/directions/${id}/tickets`, { key: 'web-4410' });
   assert.equal(ticketResponse.status, 201);
-  assert.equal((await json<Ticket>(ticketResponse)).key, 'WEB-5586');
-  assert.equal((await call(base, 'DELETE', `/api/directions/${id}/tickets/WEB-5586`)).status, 204);
+  assert.equal((await json<Ticket>(ticketResponse)).key, 'WEB-4410');
+  assert.equal((await call(base, 'DELETE', `/api/directions/${id}/tickets/WEB-4410`)).status, 204);
 
   const url = 'https://git.example.com/x/-/merge_requests/1?a=b&c=d';
   const linkResponse = await call(base, 'POST', `/api/directions/${id}/links`, { url, title: 'MR' });
@@ -718,9 +718,9 @@ test('agent runs: launch opens Warp outside undo, finish is undoable, bad reques
   await chmod(openBin, 0o755);
   const agent: AgentConfig = { runsDir: path.join(tools, 'runs'), codeRoot: tools, bins: { claude: 'claude' }, defaultAgent: 'claude', terminal: 'warp', warpTabDir: path.join(tools, 'tabs'), openBin, osascriptBin: '/usr/bin/false' };
   const base = await startApp(t, { agent });
-  const direction = await createDirection(base, { title: 'Сео', tickets: ['APP-9355'] });
+  const direction = await createDirection(base, { title: 'Сео', tickets: ['APP-7301'] });
 
-  const launched = await call(base, 'POST', '/api/agent/runs', { template: 'execute', directionId: direction.id, include: ['tickets'], branch: 'feature/APP-9355' });
+  const launched = await call(base, 'POST', '/api/agent/runs', { template: 'execute', directionId: direction.id, include: ['tickets'], branch: 'feature/APP-7301' });
   assert.equal(launched.status, 201);
   const run = await json<AgentRun>(launched);
   assert.match(await readFile(calls, 'utf8'), new RegExp(`warp://tab_config/worklog-run-${run.id}`));
@@ -741,7 +741,7 @@ test('agent runs: launch opens Warp outside undo, finish is undoable, bad reques
   assert.equal(tabs.status, 201);
   assert.match(await readFile(calls, 'utf8'), new RegExp(`worklog-run-${(await json<AgentRun>(tabs)).id}`));
   assert.equal((await call(base, 'POST', '/api/agent/runs/nope/finish')).status, 404);
-  assert.deepEqual(await json(await call(base, 'GET', '/api/agent/branch?name=feature/APP-9355')), { place: 'none' });
+  assert.deepEqual(await json(await call(base, 'GET', '/api/agent/branch?name=feature/APP-7301')), { place: 'none' });
   assert.equal((await call(base, 'GET', '/api/agent/branch?name=a%20b')).status, 400);
 });
 
@@ -807,7 +807,7 @@ test('POST /api/jira/refresh polls and answers health, outside undo', async t =>
 
 test('POST /api/jira/refresh also links the merge request of the branch', async t => {
   const dataDir = await tempDir(t, 'worklog-api-data-');
-  await new Store(dataDir, { profile: TEST_PROFILE }).createDirection({ title: 'SEO', ticketKeys: ['APP-9355'] });
+  await new Store(dataDir, { profile: TEST_PROFILE }).createDirection({ title: 'SEO', ticketKeys: ['APP-7301'] });
   let calls = 0;
   const app = await createApp({
     profile: TEST_PROFILE,
@@ -820,7 +820,7 @@ test('POST /api/jira/refresh also links the merge request of the branch', async 
       pollMs: 3_600_000,
       lsRemote: async () => {
         calls++;
-        return calls === 1 ? '' : 'abc\trefs/heads/feature/APP-9355\nabc\trefs/merge-requests/4022/head\n';
+        return calls === 1 ? '' : 'abc\trefs/heads/feature/APP-7301\nabc\trefs/merge-requests/4022/head\n';
       },
     },
   });

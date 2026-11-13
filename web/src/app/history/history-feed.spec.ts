@@ -29,7 +29,7 @@ function state(): WorklogState {
   return {
     directions: [
       direction('seo', 'SEO-текст', {
-        tickets: [ticketFromKey('APP-9355', TEST_PROFILE)],
+        tickets: [ticketFromKey('APP-7301', TEST_PROFILE)],
         events: [event('e1', at(4, 14), 'Бэк не отдаёт данные'), event('e2', at(5, 9), 'Завести задачу бэку (от Олега)', { kind: 'todo-done', source: 'system', todoId: 't1' })],
       }),
       direction('red', 'Редирект', { events: [event('r1', at(5, 10), 'Создал задачу девопсам')] }),
@@ -79,7 +79,7 @@ describe('history feed', () => {
   });
 
   it('filter by ticket key finds events of that direction', () => {
-    const days = filterHistory(buildHistory(state()), ' app-9355 ');
+    const days = filterHistory(buildHistory(state()), ' app-7301 ');
     expect(days.map(d => [d.date, d.dailies.length, d.entries.map(e => e.direction?.id)])).toEqual([
       ['2026-11-05', 0, ['seo']],
       ['2026-11-04', 0, ['seo']],

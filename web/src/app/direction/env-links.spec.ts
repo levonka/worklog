@@ -8,7 +8,7 @@ import { TEST_PROFILE } from '@worklog/test-profile';
 import { ProfileStore } from '../core/profile-store';
 import { EnvLinks } from './env-links';
 
-const B = 'feature/APP-9355_WEB-5586';
+const B = 'feature/APP-7301_WEB-4410';
 
 function ticket(key: string, segments?: string[]): Ticket {
   const base = ticketFromKey(key, TEST_PROFILE);
@@ -73,7 +73,7 @@ describe('EnvLinks', () => {
   });
 
   it('shows only Segment columns', async () => {
-    await setup([ticket('APP-9355', ['EU']), ticket('WEB-5586', ['EU'])]);
+    await setup([ticket('APP-7301', ['EU']), ticket('WEB-4410', ['EU'])]);
 
     expect(columns()).toEqual(['EU']);
     expect(cells().map(cell => cell.getAttribute('href'))).toEqual([url('App', 'stand', 'EU'), url('App', 'build', 'EU'), url('Web', 'stand', 'EU')]);
@@ -86,7 +86,7 @@ describe('EnvLinks', () => {
   });
 
   it('expands to every profile segment and collapses back', async () => {
-    await setup([ticket('APP-9355', ['EU']), ticket('WEB-5586', ['EU'])]);
+    await setup([ticket('APP-7301', ['EU']), ticket('WEB-4410', ['EU'])]);
 
     await click(button('＋ US'));
     expect(columns()).toEqual(['EU', 'US']);
@@ -100,7 +100,7 @@ describe('EnvLinks', () => {
   });
 
   it('an empty cell where the group has no such segment', async () => {
-    await setup([ticket('APP-9355', ['EU', 'US']), ticket('WEB-5586', ['EU'])]);
+    await setup([ticket('APP-7301', ['EU', 'US']), ticket('WEB-4410', ['EU'])]);
 
     expect(columns()).toEqual(['EU', 'US']);
     expect(cells().map(cell => cell.getAttribute('href'))).toEqual([
@@ -122,7 +122,7 @@ describe('EnvLinks', () => {
   });
 
   it('no statuses yet means every profile segment', async () => {
-    await setup([ticket('APP-9355'), ticket('WEB-5586')]);
+    await setup([ticket('APP-7301'), ticket('WEB-4410')]);
 
     expect(columns()).toEqual(['EU', 'US']);
     expect(cells().length).toBe(6);
@@ -130,20 +130,20 @@ describe('EnvLinks', () => {
   });
 
   it('only platforms with tickets', async () => {
-    await setup([ticket('APP-9355', ['EU']), ticket('SHOP-8221')]);
+    await setup([ticket('APP-7301', ['EU']), ticket('SHOP-8221')]);
 
     expect(Array.from(host.querySelectorAll('.el__group')).map(text)).toEqual(['App ⧉']);
     expect(cells().length).toBe(2);
   });
 
   it('a platform without build templates has no build row', async () => {
-    await setup([ticket('WEB-5586', ['EU'])]);
+    await setup([ticket('WEB-4410', ['EU'])]);
 
     expect(Array.from(host.querySelectorAll('.el__row')).map(text)).toEqual(['Стенд']);
   });
 
   it('the group header copies the visible columns as plain text', async () => {
-    await setup([ticket('APP-9355', ['EU']), ticket('WEB-5586', ['EU'])]);
+    await setup([ticket('APP-7301', ['EU']), ticket('WEB-4410', ['EU'])]);
     const header = button('App ⧉');
     expect(text(header)).not.toContain('скопировать');
 
@@ -162,7 +162,7 @@ describe('EnvLinks', () => {
   });
 
   it('storybook links under the table', async () => {
-    await setup([ticket('APP-9355', ['EU'])]);
+    await setup([ticket('APP-7301', ['EU'])]);
 
     const links = Array.from(host.querySelectorAll('.el__storybook a')).filter(link => link instanceof HTMLAnchorElement);
     expect(links.map(link => ({ title: text(link), url: link.getAttribute('href') }))).toEqual(storybookLinks(B, TEST_PROFILE));
