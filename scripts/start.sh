@@ -9,8 +9,9 @@ APP_URL=http://localhost:$PORT
 HEALTH_URL=$APP_URL/api/health
 LOG=$ROOT/logs/server.log
 
+# a server that takes the connection and never answers must not keep the launch waiting
 is_up() {
-  curl -fsS "$HEALTH_URL" >/dev/null 2>&1
+  curl -fsS --max-time 2 "$HEALTH_URL" >/dev/null 2>&1
 }
 
 # the title and the message go as arguments: no quoting for AppleScript
@@ -62,6 +63,11 @@ if [[ ! -f $ROOT/web/dist/web/browser/index.html ]]; then
 fi
 
 if ! is_up; then
+  # a second server would only fail on the taken port
+  if lsof -tiTCP:$PORT -sTCP:LISTEN >/dev/null 2>&1; then
+    alert "Worklog не запустился" "Порт $PORT занят, а Worklog на нём не отвечает. Подробности: worklog doctor"
+    exit 1
+  fi
   mkdir -p "$ROOT/logs"
   log_size=$(stat -f %z "$LOG" 2>/dev/null || echo 0)
   # the app starts with a bare PATH: the server's tools (claude, the editor) may be scripts that need node
@@ -81,7 +87,7 @@ fi
 
 # every open window holds a live connection; a second window would stack on top of the first.
 # AppleScript may reach another Chrome instance (spec §5.2), so not finding the window still opens one
-health=$(curl -fsS "$HEALTH_URL" 2>/dev/null || true)
+health=$(curl -fsS --max-time 2 "$HEALTH_URL" 2>/dev/null || true)
 if [[ $health =~ '"clients":([0-9]+)' ]] && (( match[1] > 0 )) && [[ $(raise_window 2>/dev/null) == found ]]; then
   exit 0
 fi

@@ -7,6 +7,7 @@ import { chmod, copyFile, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:f
 import { get } from 'node:http';
 import type { IncomingMessage } from 'node:http';
 import { createServer } from 'node:net';
+import type { Socket } from 'node:net';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { setTimeout as sleep } from 'node:timers/promises';
@@ -231,6 +232,31 @@ test('start.sh shows an alert and opens no window when the server does not come 
   const osascript = await box.calls('osascript');
   assert.equal(osascript.length, 1);
   assert.equal(osascript[0], 'osascript - Worklog не запустился Подробности: logs/server.log');
+});
+
+test('start.sh tells at once about a port held by a server that does not answer', async t => {
+  const box = await sandbox(t);
+  // accepts the connection and never answers, as a hung Worklog does
+  const sockets = new Set<Socket>();
+  const hung = createServer(socket => {
+    sockets.add(socket);
+    socket.on('error', () => undefined);
+  });
+  hung.listen(box.port, '127.0.0.1');
+  await once(hung, 'listening');
+  t.after(() => {
+    for (const socket of sockets) socket.destroy();
+    hung.close();
+  });
+  const clone = await cloneWithDeadNode(t, '');
+  const started = Date.now();
+
+  const result = await runStart({ ...box.env, WORKLOG_NODE: clone.node }, clone.script);
+
+  assert.equal(result.code, 1);
+  assert.ok(Date.now() - started < 10_000);
+  assert.deepEqual(await box.calls('open'), []);
+  assert.deepEqual(await box.calls('osascript'), [`osascript - Worklog не запустился Порт ${box.port} занят, а Worklog на нём не отвечает. Подробности: worklog doctor`]);
 });
 
 /** start.sh in a clone of its own, so the server log it reads and writes is not this clone's */
