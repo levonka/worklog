@@ -8,6 +8,8 @@ const STATE_REQUEST = { method: 'GET', url: '/api/state' };
 const JIRA_REQUEST = { method: 'GET', url: '/api/jira' };
 const PROFILE_REQUEST = { method: 'GET', url: '/api/profile' };
 const JIRA_OK = { state: 'ok', message: null, checkedAt: null, polling: false };
+const UPDATE_REQUEST = { method: 'GET', url: '/api/update' };
+const UPDATE_NONE = { check: 'none', version: null, run: null };
 
 class FakeEventSource extends EventTarget {
   static readonly created: FakeEventSource[] = [];
@@ -67,6 +69,7 @@ describe('LiveUpdates', () => {
     expect(live.connected()).toBe(true);
     http.expectOne(STATE_REQUEST).flush(EMPTY_STATE);
     http.expectOne(JIRA_REQUEST).flush(JIRA_OK);
+    http.expectOne(UPDATE_REQUEST).flush(UPDATE_NONE);
     http.expectOne(PROFILE_REQUEST).flush({ profile: null });
   });
 
@@ -76,19 +79,22 @@ describe('LiveUpdates', () => {
     source.emit('change');
     http.expectOne(STATE_REQUEST).flush(EMPTY_STATE);
     http.expectOne(JIRA_REQUEST).flush(JIRA_OK);
+    http.expectOne(UPDATE_REQUEST).flush(UPDATE_NONE);
     expect(http.match(PROFILE_REQUEST)).toEqual([]);
 
     source.emit('open');
     http.expectOne(STATE_REQUEST).flush(EMPTY_STATE);
     http.expectOne(JIRA_REQUEST).flush(JIRA_OK);
+    http.expectOne(UPDATE_REQUEST).flush(UPDATE_NONE);
     http.expectOne(PROFILE_REQUEST).flush({ profile: null });
   });
 
-  it('a change reloads the state and the Jira health', () => {
+  it('a change reloads the state, the Jira health and the update status', () => {
     live.start();
     FakeEventSource.created[0].emit('change');
     http.expectOne(STATE_REQUEST).flush(EMPTY_STATE);
     http.expectOne(JIRA_REQUEST).flush(JIRA_OK);
+    http.expectOne(UPDATE_REQUEST).flush(UPDATE_NONE);
   });
 
   it('a stream the browser gave up on is replaced after 3 s', () => {
@@ -111,6 +117,7 @@ describe('LiveUpdates', () => {
     expect(live.connected()).toBe(true);
     http.expectOne(STATE_REQUEST).flush(EMPTY_STATE);
     http.expectOne(JIRA_REQUEST).flush(JIRA_OK);
+    http.expectOne(UPDATE_REQUEST).flush(UPDATE_NONE);
     http.expectOne(PROFILE_REQUEST).flush({ profile: null });
   });
 

@@ -3,6 +3,7 @@ import { JiraHealthStore } from './jira-health';
 import { ProfileStore } from './profile-store';
 import { WorklogStore } from './worklog-store';
 import { inBackground } from './background';
+import { UpdateStore } from '../update/update-store';
 
 const RECONNECT_MS = 3_000;
 
@@ -11,6 +12,7 @@ export class LiveUpdates {
   private readonly store = inject(WorklogStore);
   private readonly jira = inject(JiraHealthStore);
   private readonly profiles = inject(ProfileStore);
+  private readonly updates = inject(UpdateStore);
   private readonly isConnected = signal(true);
   private started = false;
 
@@ -41,8 +43,10 @@ export class LiveUpdates {
     source.addEventListener('change', () => this.reload());
   }
 
+  // the update status too: a found version comes as a change, a new server as a reconnect
   private reload(): void {
     inBackground(this.store.refresh());
     inBackground(this.jira.load());
+    inBackground(this.updates.load());
   }
 }

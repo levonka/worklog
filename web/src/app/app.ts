@@ -10,6 +10,7 @@ import { ProfileStore } from './core/profile-store';
 import { TabsStore } from './core/tabs-store';
 import { WorklogStore } from './core/worklog-store';
 import { Tour } from './onboarding/tour';
+import { UpdateStore } from './update/update-store';
 import { TourOverlay } from './onboarding/tour-overlay';
 import { Pane } from './pane/pane';
 import { Sidebar } from './sidebar/sidebar';
@@ -18,7 +19,8 @@ import { inBackground } from './core/background';
 
 interface Problem {
   text: string;
-  dismissible: boolean;
+  /** null: the problem lasts until its cause is gone */
+  dismiss: (() => void) | null;
 }
 
 @Component({
@@ -33,6 +35,7 @@ export class App implements OnInit {
   protected readonly store = inject(WorklogStore);
   private readonly profiles = inject(ProfileStore);
   private readonly live = inject(LiveUpdates);
+  private readonly updates = inject(UpdateStore);
   protected readonly tabs = inject(TabsStore);
   protected readonly hotkeys = inject(Hotkeys);
   protected readonly agentSheet = inject(AgentSheet);
@@ -42,11 +45,13 @@ export class App implements OnInit {
   protected readonly touring = computed(() => this.tour.current() !== null);
 
   protected readonly problem = computed<Problem | null>(() => {
-    if (!this.live.connected()) return { text: NO_CONNECTION, dismissible: false };
+    if (!this.live.connected()) return { text: NO_CONNECTION, dismiss: null };
     const loadError = this.store.loadError();
-    if (loadError !== null) return { text: loadError, dismissible: false };
+    if (loadError !== null) return { text: loadError, dismiss: null };
     const actionError = this.store.actionError();
-    return actionError === null ? null : { text: actionError, dismissible: true };
+    if (actionError !== null) return { text: actionError, dismiss: () => this.store.dismissProblem() };
+    const updateFailure = this.updates.failure();
+    return updateFailure === null ? null : { text: updateFailure, dismiss: () => inBackground(this.updates.dismiss()) };
   });
 
   constructor() {
@@ -59,6 +64,7 @@ export class App implements OnInit {
   ngOnInit(): void {
     inBackground(this.profiles.load());
     inBackground(this.store.refresh());
+    inBackground(this.updates.load());
     this.live.start();
   }
 

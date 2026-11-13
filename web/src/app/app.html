@@ -9,8 +9,8 @@
         <path fill="currentColor" fill-rule="evenodd" d="M8 .5 15.5 13.5H.5ZM7.1 4.6h1.8v5H7.1Zm0 6.1h1.8v1.8H7.1Z" />
       </svg>
       <span class="rt__problem-text wl-selectable">{{ problem.text }}</span>
-      @if (problem.dismissible) {
-        <button type="button" class="rt__problem-close" title="Скрыть" aria-label="Скрыть сообщение" (click)="store.dismissProblem()">✕</button>
+      @if (problem.dismiss; as dismiss) {
+        <button type="button" class="rt__problem-close" title="Скрыть" aria-label="Скрыть сообщение" (click)="dismiss()">✕</button>
       }
     </div>
   }

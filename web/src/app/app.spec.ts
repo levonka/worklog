@@ -8,8 +8,10 @@ import { App } from './app';
 import { LiveUpdates } from './core/live-updates';
 import { TabsStore } from './core/tabs-store';
 import { WorklogStore } from './core/worklog-store';
+import { UpdateStore } from './update/update-store';
 
 const STATE_REQUEST = { method: 'GET', url: '/api/state' };
+const UPDATE_REQUEST = { method: 'GET', url: '/api/update' };
 
 function settle(): Promise<void> {
   return new Promise(resolve => setTimeout(resolve));
@@ -33,6 +35,7 @@ describe('App', () => {
     fixture = TestBed.createComponent(App);
     await fixture.whenStable();
     http.expectOne({ method: 'GET', url: '/api/profile' }).flush({ profile: null });
+    http.expectOne(UPDATE_REQUEST).flush({ check: 'none', version: null, run: null });
   });
 
   afterEach(() => {
@@ -103,6 +106,21 @@ describe('App', () => {
     connected.set(true);
     await fixture.whenStable();
     closeButton()?.click();
+    await fixture.whenStable();
+    expect(strip()).toBeNull();
+  });
+
+  it('a failed update shows in the strip, and its ✕ clears the run', async () => {
+    http.expectOne(STATE_REQUEST).flush(EMPTY_STATE);
+    const loading = TestBed.inject(UpdateStore).load();
+    http.expectOne(UPDATE_REQUEST).flush({ check: 'available', version: 'aaa111', run: { phase: 'failed', startedAt: '2026-11-13T09:00:00.000Z', error: 'новая версия не запустилась' } });
+    await loading;
+    await fixture.whenStable();
+
+    expect(strip()?.querySelector('.rt__problem-text')?.textContent).toBe('Не удалось обновить Worklog: новая версия не запустилась. Осталась прежняя версия, данные не тронуты.');
+
+    closeButton()?.click();
+    http.expectOne({ method: 'DELETE', url: '/api/update/run' }).flush(null, { status: 204, statusText: 'No Content' });
     await fixture.whenStable();
     expect(strip()).toBeNull();
   });

@@ -63,6 +63,19 @@ describe('Pane', () => {
     expect(eventField().value).toBe('');
   });
 
+  it('after the reload into a new version returns to the saved scroll once', async () => {
+    expect(host.getAttribute('data-tab-id')).toBe('direction:seo');
+    sessionStorage.setItem('worklog.scroll.v1', JSON.stringify({ 'direction:unify': 30 }));
+
+    const other = TestBed.createComponent(Pane);
+    other.componentRef.setInput('tabId', 'direction:unify');
+    await other.whenStable();
+
+    expect(other.nativeElement.querySelector('.pn__body').scrollTop).toBe(30);
+    expect(sessionStorage.getItem('worklog.scroll.v1')).toBe('{}');
+    sessionStorage.clear();
+  });
+
   it('using a pane focuses its tab, for ⌘W', () => {
     const tabs = TestBed.inject(TabsStore);
     tabs.focus('direction:unify');

@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import type { Agent, AgentRequest, AgentRun, BranchPlace, Daily, DailyDraft, Direction, JiraHealth, Link, LinkKind, Note, NoteFile, NoteUrl, Onboarding, OnboardingPatch, Profile, QuickLink, QuickLinkGroup, Status, SummaryItem, Terminal, Ticket, Todo, WorkEvent, WorklogState } from '@worklog/model';
+import type { Agent, AgentRequest, AgentRun, BranchPlace, Daily, DailyDraft, Direction, JiraHealth, Link, LinkKind, Note, NoteFile, NoteUrl, Onboarding, OnboardingPatch, Profile, QuickLink, QuickLinkGroup, Status, SummaryItem, Terminal, Ticket, Todo, UpdateCheckResult, UpdateRun, UpdateStatus, WorkEvent, WorklogState } from '@worklog/model';
 import type { Observable } from 'rxjs';
 
 export interface NewDirection {
@@ -162,6 +162,22 @@ export class ApiClient {
 
   refreshJira(): Observable<JiraHealth> {
     return this.http.post<JiraHealth>('/api/jira/refresh', null);
+  }
+
+  getUpdate(): Observable<UpdateStatus> {
+    return this.http.get<UpdateStatus>('/api/update');
+  }
+
+  startUpdate(): Observable<{ run: UpdateRun }> {
+    return this.http.post<{ run: UpdateRun }>('/api/update', null);
+  }
+
+  dismissUpdateRun(): Observable<void> {
+    return this.http.delete<void>('/api/update/run');
+  }
+
+  checkUpdate(): Observable<{ result: UpdateCheckResult; status: UpdateStatus }> {
+    return this.http.post<{ result: UpdateCheckResult; status: UpdateStatus }>('/api/update/check', null);
   }
 
   finishAgent(id: string): Observable<AgentRun> {
