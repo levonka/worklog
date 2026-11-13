@@ -205,7 +205,7 @@ describe('TourOverlay', () => {
     http.expectOne({ method: 'GET', url: '/api/profile' }).flush({ profile: null });
     await reloading;
 
-    for (const id of ['board', 'direction'] as const) expect(await text(id)).not.toMatch(/Jira|стенд|сборк|ветк/);
+    for (const id of ['board', 'direction', 'safety'] as const) expect(await text(id)).not.toMatch(/Jira|стенд|сборк|ветк/);
   });
 
   it('skips a target of zero size, as one not on screen', async () => {
