@@ -104,11 +104,11 @@ async function sourceText(source: string, opts: FetchProfileOptions): Promise<st
   return gitShowFile(gitlabSshUrl(file, opts.gitlab, origin), file.ref, file.file);
 }
 
-/** checks the profile, then replaces the local copy and records where it came from; a bad one changes nothing */
+/** checks the profile, records where it came from, then replaces the local copy; a bad one changes nothing */
 export async function fetchProfile(source: string, opts: FetchProfileOptions): Promise<Profile> {
   const text = await sourceText(source, opts);
   const profile = profileFromText(text, `из ${source}`);
-  await writeTextAtomic(opts.profilePath, text);
   await setEnvValue(opts.envFile, 'WORKLOG_PROFILE_SOURCE', source);
+  await writeTextAtomic(opts.profilePath, text);
   return profile;
 }

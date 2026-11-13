@@ -56,6 +56,19 @@ test('fetchProfile saves a valid profile and records its source', async t => {
   assert.equal(await readFile(opts.envFile, 'utf8'), `WORKLOG_PROFILE_SOURCE=${source}\n`);
 });
 
+test('fetchProfile keeps the old profile when its source cannot be recorded', async t => {
+  const dir = await tempDir(t);
+  const source = path.join(dir, 'company.json');
+  await writeFile(source, `${JSON.stringify(TEST_PROFILE, null, 2)}\n`);
+  const profilePath = path.join(dir, 'profile.json');
+  await writeFile(profilePath, '{"old":true}\n');
+  const envFile = path.join(dir, 'env');
+  await mkdir(envFile);
+
+  await assert.rejects(fetchProfile(source, { profilePath, envFile }));
+  assert.equal(await readFile(profilePath, 'utf8'), '{"old":true}\n');
+});
+
 test('gitShowFile names the cause of an SSH failure, not git advice', async () => {
   await assert.rejects(gitShowFile('ssh://git@127.0.0.1:1/team/docs.git', 'main', 'p.json'), (error: unknown) => {
     assert.ok(error instanceof Error);
