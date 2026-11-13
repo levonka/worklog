@@ -51,6 +51,8 @@ export class Board {
     const count = this.columns().reduce((sum, column) => sum + column.directions.length, 0);
     return `${count} ${plural(count, { one: 'активное', few: 'активных', many: 'активных' })}`;
   });
+  /** a new user: no directions anywhere yet */
+  protected readonly empty = computed(() => this.columns().every(column => column.directions.length === 0) && this.parked().length === 0 && this.done().length === 0);
   protected readonly parkedTitles = computed(() => this.parked().map(direction => direction.title).join(', '));
 
   protected readonly adding = signal(false);

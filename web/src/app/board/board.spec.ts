@@ -195,6 +195,23 @@ describe('Board', () => {
     }
   });
 
+  it('a board with no directions at all says how to start; done ones alone are no new user', async () => {
+    expect(host.querySelector('.bd__empty')).toBeNull();
+
+    const store = TestBed.inject(WorklogStore);
+    let loading = store.refresh();
+    http.expectOne({ method: 'GET', url: '/api/state' }).flush({ ...STATE, directions: [] });
+    await loading;
+    await fixture.whenStable();
+    expect(text(host.querySelector('.bd__empty'))).toContain('«заведи направление');
+
+    loading = store.refresh();
+    http.expectOne({ method: 'GET', url: '/api/state' }).flush({ ...STATE, directions: [direction('seo', 'SEO-текст', 'done', 0)] });
+    await loading;
+    await fixture.whenStable();
+    expect(host.querySelector('.bd__empty')).toBeNull();
+  });
+
   it('card dropped on a todo of its own direction, on a done todo or on empty space changes nothing', () => {
     let remove = todoUnderPointer('t1');
     dropOutside('redirect', 'waiting', 0);

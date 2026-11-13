@@ -185,6 +185,7 @@ describe('DailyView', () => {
   it('an empty period says so', async () => {
     await setup(null, new Date(2026, 10, 9, 11, 0));
     expect(texts('.dly__empty')).toEqual(['За период ничего не записано']);
+    expect(texts('.dly__hint')[0]).toContain('«✦ Собрать из сессий»');
   });
 
   it('marks ✦ items and candidates with AI words', async () => {

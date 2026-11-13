@@ -181,6 +181,27 @@ describe('TodoList', () => {
     return found;
   }
 
+  it('an empty list says how to add a todo; with todos done today it says there are no open ones', async () => {
+    expect(host.querySelector('.tl__empty')).toBeNull();
+    const store = TestBed.inject(WorklogStore);
+
+    let loading = store.refresh();
+    http.expectOne({ method: 'GET', url: '/api/state' }).flush({ ...STATE, todos: STATE.todos.filter(item => item.id === 'd0') });
+    await loading;
+    await fixture.whenStable();
+    expect(text(host.querySelector('.tl__empty'))).toContain('Впишите дело в строку выше');
+
+    loading = store.refresh();
+    http.expectOne({ method: 'GET', url: '/api/state' }).flush({ ...STATE, todos: STATE.todos.filter(item => item.id === 'd1') });
+    await loading;
+    await fixture.whenStable();
+    expect(text(host.querySelector('.tl__empty'))).toBe('Открытых дел нет');
+
+    fixture.componentRef.setInput('directionId', 'stores');
+    await fixture.whenStable();
+    expect(host.querySelector('.tl__empty')).toBeNull();
+  });
+
   it('open rows carry data-todo-id, done rows do not', async () => {
     expect(Array.from(host.querySelectorAll('[data-todo-id]')).map(element => element.getAttribute('data-todo-id'))).toEqual(['t1', 't2', 't3', 't4']);
     host.querySelector<HTMLButtonElement>('.tl__done-toggle')?.click();

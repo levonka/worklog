@@ -33,6 +33,13 @@
   flex-direction: column;
 }
 
+.tl__empty {
+  margin: 8px 22px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--wl-text-3);
+}
+
 // the drop animation runs on the preview in <body>, out of reach of host variables
 .tl__list.cdk-drop-list-dragging .tl__row:not(.cdk-drag-placeholder),
 .tl__row.cdk-drag-animating {

@@ -22,6 +22,12 @@
   <ng-content />
 </header>
 
+@if (empty()) {
+  <p class="bd__empty">
+    Направление — это задача или тема, которую вы ведёте: тикеты, ссылки, лента событий и дела. Заведите первое кнопкой «＋» или фразой агенту в любой сессии: «заведи направление Капча по задаче PROJ-123». Дальше пишите ему по ходу работы — «по капче: бэк поправил редирект», — и всё попадёт в карточку и в дейлик.
+  </p>
+}
+
 <div class="bd__columns" cdkDropListGroup>
   @for (column of columns(); track column.status; let first = $first) {
     <section class="bd__column" [attr.aria-label]="column.label">
