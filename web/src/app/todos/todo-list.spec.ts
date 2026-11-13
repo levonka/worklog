@@ -9,6 +9,7 @@ import { AgentSheet } from '../core/agent-sheet';
 import { DragCancel } from '../core/drag-cancel';
 import { DropHint } from '../core/drop-hint';
 import { WorklogStore } from '../core/worklog-store';
+import { canReloadNow } from '../update/update-store';
 import { TodoList } from './todo-list';
 import { dueOf } from './todo-row';
 
@@ -637,6 +638,10 @@ describe('TodoList', () => {
   it('menu «Удалить» deletes the todo and Escape closes the menu', async () => {
     const translate = row(TRANSLATE);
     await openMenu(translate);
+    // the open menu holds back the reload into a new version
+    document.body.append(host);
+    expect(canReloadNow(document)).toBe(false);
+    host.remove();
     press(menuItem(translate, 'Срок'), 'Escape');
     await fixture.whenStable();
     expect(translate.querySelector('.tr__menu')).toBeNull();

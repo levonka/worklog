@@ -12,6 +12,7 @@ import { DropHint } from '../core/drop-hint';
 import { ProfileStore } from '../core/profile-store';
 import { TabsStore } from '../core/tabs-store';
 import { WorklogStore } from '../core/worklog-store';
+import { canReloadNow } from '../update/update-store';
 import { Board } from './board';
 import { TEST_PROFILE } from '@worklog/test-profile';
 
@@ -296,6 +297,10 @@ describe('Board', () => {
     await fixture.whenStable();
 
     expect(cardIds(tray)).toEqual(['captcha', 'ident']);
+    // the open tray does not hold back the reload into a new version
+    document.body.append(host);
+    expect(canReloadNow(document)).toBe(true);
+    host.remove();
   });
 
   it('clicking a card opens its tab', async () => {

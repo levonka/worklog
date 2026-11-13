@@ -9,6 +9,7 @@ import { JiraHealthStore } from '../core/jira-health';
 import { ProfileStore } from '../core/profile-store';
 import { TabsStore } from '../core/tabs-store';
 import { WorklogStore } from '../core/worklog-store';
+import { canReloadNow } from '../update/update-store';
 import { DirectionView } from './direction-view';
 import { TEST_PROFILE } from '@worklog/test-profile';
 
@@ -605,6 +606,10 @@ describe('DirectionView', () => {
 
     query('.dm__more', HTMLButtonElement).click();
     await fixture.whenStable();
+    // the open menu holds back the reload into a new version
+    document.body.append(host);
+    expect(canReloadNow(document)).toBe(false);
+    host.remove();
     button('.dm__item', 'Удалить направление').click();
     await fixture.whenStable();
     expect(text(host.querySelector('.dm__confirm'))).toContain('Удалить «SEO-текст на страницах матчей»?');

@@ -1,6 +1,6 @@
 import { DOCUMENT } from '@angular/common';
 import { computed, DestroyRef, inject, Injectable, signal } from '@angular/core';
-import type { UpdateCheckResult, UpdateStatus } from '@worklog/model';
+import type { UpdateCheckResult, UpdateRun, UpdateStatus } from '@worklog/model';
 import { updateFailureText } from '@worklog/model';
 import { firstValueFrom } from 'rxjs';
 import { ApiClient } from '../core/api';
@@ -21,10 +21,10 @@ function unsent(field: Element): boolean {
   return text.trim() !== '';
 }
 
-/** a reload now cuts nothing short: no field being typed in or left with unsent text, no task window, tour, menu or form open */
+/** a reload now cuts nothing short: no field being typed in or left with unsent text, no task window, tour or menu open; an open tray or list is fine */
 export function canReloadNow(doc: Document, typed: Iterable<Element> = []): boolean {
   if (doc.activeElement?.matches(EDITING) === true) return false;
-  if (doc.querySelector('dialog[open], [aria-modal="true"], [aria-expanded="true"]') !== null) return false;
+  if (doc.querySelector('dialog[open], [aria-modal="true"], [aria-haspopup][aria-expanded="true"]') !== null) return false;
   return !Array.from(typed).some(unsent);
 }
 
@@ -37,6 +37,8 @@ export class UpdateStore {
   // the start asks GitHub first: a few seconds before the run exists
   private readonly startingAt = signal<string | null>(null);
   private readonly refusal = signal<string | null>(null);
+  /** the run the refusal was answered with; undefined until the status after it comes */
+  private refusedWith: string | undefined;
   private readonly waiting = signal(false);
   /** the server version this window was loaded from */
   private version: string | null = null;
@@ -91,6 +93,7 @@ export class UpdateStore {
       this.current.update(status => ({ check: status?.check ?? 'available', version: status?.version ?? null, run }));
     } catch (error) {
       this.refusal.set(messageOf(error, 'Не удалось запустить обновление'));
+      this.refusedWith = undefined;
     } finally {
       this.startingAt.set(null);
     }
@@ -134,6 +137,12 @@ export class UpdateStore {
 
   private apply(status: UpdateStatus): void {
     this.current.set(status);
+    // a refusal tells about the moment of the click: another run, or the same one over, makes it stale
+    if (this.refusal() !== null) {
+      const run = runKey(status.run);
+      if (this.refusedWith === undefined) this.refusedWith = run;
+      else if (run !== this.refusedWith) this.refusal.set(null);
+    }
     if (status.version === null) return;
     if (this.version === null) {
       this.version = status.version;
@@ -158,4 +167,8 @@ export class UpdateStore {
       inBackground(this.load());
     }, UPDATE_POLL_MS);
   }
+}
+
+function runKey(run: UpdateRun | null): string {
+  return run === null ? '' : `${run.startedAt} ${run.phase}`;
 }

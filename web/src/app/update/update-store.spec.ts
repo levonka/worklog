@@ -130,7 +130,10 @@ describe('UpdateStore', () => {
     expect(canReloadNow(document)).toBe(false);
 
     dialog.remove();
-    document.body.insertAdjacentHTML('beforeend', '<button type="button" aria-expanded="true">Меню</button>');
+    // an open tray or list cuts nothing short, an open menu does
+    document.body.insertAdjacentHTML('beforeend', '<button type="button" aria-expanded="true">Отложено</button>');
+    expect(canReloadNow(document)).toBe(true);
+    document.body.insertAdjacentHTML('beforeend', '<button type="button" aria-haspopup="menu" aria-expanded="true">Действия</button>');
     expect(canReloadNow(document)).toBe(false);
   });
 
@@ -203,6 +206,40 @@ describe('UpdateStore', () => {
 
     await updates.dismiss();
     expect(updates.failure()).toBeNull();
+  });
+
+  it('forgets a refusal once the run it was answered with is over', async () => {
+    await load(status('aaa111'));
+    const starting = updates.start();
+    http.expectOne({ method: 'POST', url: '/api/update' }).flush({ error: 'Обновление уже идёт' }, { status: 409, statusText: 'Conflict' });
+    await settle();
+    http.expectOne(GET).flush(status('aaa111', RUNNING));
+    await starting;
+    expect(updates.failure()).toBe('Обновление уже идёт');
+
+    await vi.advanceTimersByTimeAsync(UPDATE_POLL_MS);
+    http.expectOne(GET).flush(status('aaa111', RUNNING));
+    await settle();
+    expect(updates.failure()).toBe('Обновление уже идёт');
+
+    await vi.advanceTimersByTimeAsync(UPDATE_POLL_MS);
+    http.expectOne(GET).flush(status('aaa111', { ...RUNNING, phase: 'failed', error: 'сборка не прошла' }));
+    await settle();
+    expect(updates.failure()).toContain('сборка не прошла');
+  });
+
+  it('forgets a refusal once another run comes', async () => {
+    await load(status('aaa111'));
+    const starting = updates.start();
+    http.expectOne({ method: 'POST', url: '/api/update' }).flush({ error: 'Новой версии нет' }, { status: 409, statusText: 'Conflict' });
+    await settle();
+    http.expectOne(GET).flush(status('aaa111', null, 'none'));
+    await starting;
+    expect(updates.failure()).toBe('Новой версии нет');
+
+    await load(status('aaa111', { phase: 'failed', startedAt: '2026-11-13T10:00:00.000Z', error: 'не удалось скачать пакеты npm' }));
+
+    expect(updates.failure()).toContain('не удалось скачать пакеты npm');
   });
 
   it('keeps the scroll of each pane across the reload', () => {
