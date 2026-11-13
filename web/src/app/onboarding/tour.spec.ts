@@ -104,6 +104,17 @@ describe('Tour', () => {
     await answerClosed(worklog({}));
   });
 
+  it('shows the tabs step right after the add step, also without directions', async () => {
+    for (const directions of [[EXAMPLE], []]) {
+      await load(worklog({ directions }));
+      tour.start();
+      const run = stepIds();
+      expect(run[run.indexOf('add') + 1]).toBe('chrome-tabs');
+      tour.close();
+      await answerClosed(worklog({}));
+    }
+  });
+
   it('opens the screen of a step and comes back to the saved layout on close', async () => {
     const state = worklog({ directions: [EXAMPLE] });
     await load(state);

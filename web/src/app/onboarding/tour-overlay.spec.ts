@@ -94,12 +94,12 @@ describe('TourOverlay', () => {
 
   /** marks every step's target on the page except the ones named */
   function targets(...missing: TourStepId[]): void {
-    const marks = ['board-columns', 'board-add', 'todo-input', 'tab-bar', 'daily-summary'];
+    const marks = ['board-columns', 'board-add', 'sidebar-tabs', 'todo-input', 'tab-bar', 'daily-summary'];
     page.innerHTML =
       marks.map(mark => `<div data-tour="${mark}"></div>`).join('') +
       '<div data-direction-id="ex"></div>' +
       '<div data-direction-view="ex"><div data-tour="direction-links"></div><input data-tour="event-input" /><button data-tour="agent-button"></button><button data-tour="direction-menu"></button></div>';
-    const of: Partial<Record<TourStepId, string>> = { board: 'board-columns', add: 'board-add', todos: 'todo-input', tabs: 'tab-bar', daily: 'daily-summary' };
+    const of: Partial<Record<TourStepId, string>> = { board: 'board-columns', add: 'board-add', 'chrome-tabs': 'sidebar-tabs', todos: 'todo-input', tabs: 'tab-bar', daily: 'daily-summary' };
     for (const id of missing) page.querySelector(`[data-tour="${of[id] ?? id}"]`)?.remove();
   }
 
@@ -147,8 +147,22 @@ describe('TourOverlay', () => {
     expect(texts('.pr__text')).toEqual(['добавь в worklog дело: завести задачу на бэк, просил аналитик', 'добавь в worklog повторяющееся дело: дейлик каждый будний день в 11:30']);
   });
 
+  it('points the tabs step at the sidebar button and gives the tabs phrase', async () => {
+    targets();
+    const button = page.querySelector('[data-tour="sidebar-tabs"]');
+    if (button === null) throw new Error('no sidebar-tabs mark');
+    const measured = vi.spyOn(button, 'getBoundingClientRect');
+    tour.show('chrome-tabs');
+    await fixture.whenStable();
+
+    expect(texts('.tu__title')).toEqual(['Ссылки из вкладок']);
+    expect(texts('.pr__text')).toEqual(['разбери вкладки chrome в worklog']);
+    expect(measured).toHaveBeenCalled();
+    expect(host.querySelector('.tu__ring')).not.toBeNull();
+  });
+
   it('skips a step whose target is not in the document', async () => {
-    targets('board', 'add');
+    targets('board', 'add', 'chrome-tabs');
     tour.start();
     await fixture.whenStable();
     expect(texts('.tu__title')).toEqual(['Это Worklog']);

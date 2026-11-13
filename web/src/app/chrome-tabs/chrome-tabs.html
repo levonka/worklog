@@ -1,0 +1,17 @@
+<button type="button" class="ct__button" data-tour="sidebar-tabs" [attr.aria-expanded]="open()" (click)="toggle()">Разобрать вкладки Chrome</button>
+
+@if (open()) {
+  <div class="ct__pop" role="dialog" aria-label="Разобрать вкладки Chrome" [style.left.px]="spot().left" [style.bottom.px]="spot().bottom">
+    <p class="ct__text">Агент прочитает открытые вкладки, предложит, какие ссылки в какие направления сложить, и запишет только после вашего «да».</p>
+    <wl-prompt [text]="phrase()" />
+    @if (canLaunch()) {
+      <div class="ct__foot">
+        <span class="ct__hint">{{ hint() }}</span>
+        <button type="button" class="ct__launch" [disabled]="sending()" (click)="launch()">Запустить агента</button>
+      </div>
+    }
+    @if (failure(); as failure) {
+      <p class="ct__failure" role="alert">{{ failure }}</p>
+    }
+  </div>
+}

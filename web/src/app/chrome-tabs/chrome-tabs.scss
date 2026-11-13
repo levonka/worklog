@@ -1,0 +1,76 @@
+:host {
+  display: block;
+  align-self: stretch;
+}
+
+// the look of the sidebar's bottom links, which this component does not know
+.ct__button {
+  padding: 0 8px;
+  border: 0;
+  font-size: 11.5px;
+  color: var(--wl-text-3);
+  background: transparent;
+}
+
+.ct__button:hover,
+.ct__button[aria-expanded='true'] {
+  color: var(--wl-text-2);
+  text-decoration: underline;
+}
+
+.ct__pop {
+  position: fixed;
+  // over the panels, under the tour
+  z-index: 950;
+  width: min(340px, calc(100vw - 240px));
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px 14px;
+  border-radius: 10px;
+  background: light-dark(rgba(255, 255, 255, 0.86), rgba(44, 44, 48, 0.86));
+  backdrop-filter: blur(24px) saturate(1.8);
+  box-shadow:
+    0 0 0 0.5px light-dark(rgba(0, 0, 0, 0.18), rgba(255, 255, 255, 0.14)),
+    0 10px 32px rgba(0, 0, 0, 0.2);
+}
+
+.ct__text {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--wl-text);
+}
+
+.ct__foot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ct__hint {
+  margin-right: auto;
+  font-size: 11.5px;
+  color: var(--wl-text-3);
+}
+
+.ct__launch {
+  flex-shrink: 0;
+  padding: 4px 14px;
+  border: 0;
+  border-radius: 7px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: #ffffff;
+  background: var(--wl-accent);
+}
+
+.ct__launch:disabled {
+  opacity: 0.45;
+}
+
+.ct__failure {
+  margin: 0;
+  font-size: 12px;
+  color: var(--wl-danger);
+}

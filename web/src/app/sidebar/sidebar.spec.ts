@@ -278,6 +278,10 @@ describe('Sidebar', () => {
     expect(host.lastElementChild?.lastElementChild?.textContent?.trim()).toBe('Как пользоваться');
   });
 
+  it('the bottom holds Разобрать вкладки Chrome, then Как пользоваться', () => {
+    expect(texts('.sb__foot button')).toEqual(['Разобрать вкладки Chrome', 'Как пользоваться']);
+  });
+
   it('Проверить обновления checks now and tells the result for two seconds', async () => {
     expect(texts('.sb__foot-link')).toEqual(['Как пользоваться']);
     vi.useFakeTimers();
@@ -286,7 +290,7 @@ describe('Sidebar', () => {
     http.expectOne({ method: 'GET', url: '/api/update' }).flush({ check: 'none', version: 'aaa111', run: null });
     await loading;
     await render();
-    const check = query('.sb__foot-link:first-child', HTMLButtonElement);
+    const check = query('.sb__foot-link', HTMLButtonElement);
     expect(check.textContent?.trim()).toBe('Проверить обновления');
 
     const answers = [
@@ -337,7 +341,7 @@ describe('Sidebar', () => {
       ...STATE,
       directions: [{ id: 'd', title: 'Капча', status: 'in_progress', tickets: [], links: [], order: 0, createdAt: '2026-11-01T09:00:00.000Z', updatedAt: '2026-11-01T09:00:00.000Z', events: [{ id: 'e', at: '2026-11-01T09:00:00.000Z', text: 'Разобрал BRD', source: 'manual', kind: 'note' }] }],
       todos: [{ id: 't', text: 'Дело', done: false, createdAt: '2026-11-01T09:00:00.000Z' }],
-      onboarding: { stepsHidden: true },
+      onboarding: { stepsHidden: true, tabsReadAt: '2026-11-01T09:00:00.000Z' },
     };
     const loading = TestBed.inject(WorklogStore).refresh();
     http.expectOne({ method: 'GET', url: '/api/state' }).flush(done);

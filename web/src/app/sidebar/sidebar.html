@@ -84,6 +84,7 @@
 
 <!-- needed only now and then: out of the sections, at the very bottom -->
 <div class="sb__foot">
+  <wl-chrome-tabs />
   @if (updates.enabled()) {
     <button type="button" class="sb__foot-link" [disabled]="checkNote() !== null" (click)="checkUpdates()">{{ checkNote() ?? 'Проверить обновления' }}</button>
   }

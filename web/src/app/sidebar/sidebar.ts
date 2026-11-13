@@ -3,6 +3,7 @@ import type { ElementRef } from '@angular/core';
 import { BOARD_STATUSES, DAILY_HOUR, DAILY_MINUTE, FIRST_STEPS, firstStepsDone, withScheme } from '@worklog/model';
 import type { UpdateCheckResult } from '@worklog/model';
 import type { TabId } from '../core/tabs-layout';
+import { ChromeTabs } from '../chrome-tabs/chrome-tabs';
 import { TabsStore } from '../core/tabs-store';
 import { WorklogStore } from '../core/worklog-store';
 import { Favicon } from '../favicon/favicon';
@@ -44,7 +45,7 @@ function iconColor(title: string): string {
 
 @Component({
   selector: 'wl-sidebar',
-  imports: [Favicon, LinkDescription],
+  imports: [ChromeTabs, Favicon, LinkDescription],
   templateUrl: './sidebar.html',
   styleUrl: './sidebar.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -1,6 +1,6 @@
 import type { OnboardingPrompts } from '@worklog/model';
 
-export const TOUR_STEP_IDS = ['welcome', 'board', 'add', 'card', 'todos', 'drag', 'direction', 'events', 'agent', 'menu', 'tabs', 'daily', 'safety'] as const;
+export const TOUR_STEP_IDS = ['welcome', 'board', 'add', 'chrome-tabs', 'card', 'todos', 'drag', 'direction', 'events', 'agent', 'menu', 'tabs', 'daily', 'safety'] as const;
 export type TourStepId = (typeof TOUR_STEP_IDS)[number];
 
 export type TourScreen = 'board' | 'todos' | 'daily' | 'direction';
@@ -43,6 +43,14 @@ export const TOUR_STEPS: readonly TourStep[] = [
     title: 'Новое направление',
     text: 'Направление — задача или тема, которую вы ведёте. Заведите его кнопкой «＋» или фразой агенту:',
     prompts: ['direction'],
+  },
+  {
+    id: 'chrome-tabs',
+    screen: null,
+    target: 'sidebar-tabs',
+    title: 'Ссылки из вкладок',
+    text: 'Ссылки, которые вы держите открытыми в Chrome, агент сам разложит по направлениям: прочитает вкладки, предложит, что куда, и запишет после вашего «да». Кнопка — внизу боковой панели, или фраза агенту:',
+    prompts: ['tabs'],
   },
   {
     id: 'card',
@@ -117,7 +125,7 @@ export const TOUR_STEPS: readonly TourStep[] = [
     screen: null,
     target: null,
     title: 'Здесь ничего не сломать',
-    text: 'Данные хранятся только на этой машине. В Jira Worklog ничего не пишет, только читает статусы. ⌘Z отменяет последние действия в окне, а раз в день сервер сохраняет снимок данных. Повторить экскурсию — «Как пользоваться» внизу боковой панели.',
+    text: 'Данные хранятся только на этой машине. В Jira Worklog ничего не пишет, только читает статусы. ⌘Z отменяет последние действия в окне, а раз в день сервер сохраняет снимок данных. Первые шаги — кнопка в правом нижнем углу, повторить экскурсию — «Как пользоваться» внизу боковой панели.',
   },
 ];
 
