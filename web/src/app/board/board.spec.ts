@@ -200,16 +200,33 @@ describe('Board', () => {
 
     const store = TestBed.inject(WorklogStore);
     let loading = store.refresh();
-    http.expectOne({ method: 'GET', url: '/api/state' }).flush({ ...STATE, directions: [] });
+    http.expectOne({ method: 'GET', url: '/api/state' }).flush({ ...STATE, directions: [], onboarding: { stepsHidden: true } });
     await loading;
     await fixture.whenStable();
     expect(text(host.querySelector('.bd__empty'))).toContain('«заведи направление');
 
     loading = store.refresh();
-    http.expectOne({ method: 'GET', url: '/api/state' }).flush({ ...STATE, directions: [direction('seo', 'SEO-текст', 'done', 0)] });
+    http.expectOne({ method: 'GET', url: '/api/state' }).flush({ ...STATE, directions: [direction('seo', 'SEO-текст', 'done', 0)], onboarding: { stepsHidden: true } });
     await loading;
     await fixture.whenStable();
     expect(host.querySelector('.bd__empty')).toBeNull();
+  });
+
+  it('the board shows the empty hint only without the first steps block', async () => {
+    const store = TestBed.inject(WorklogStore);
+    let loading = store.refresh();
+    http.expectOne({ method: 'GET', url: '/api/state' }).flush({ ...STATE, directions: [], todos: [] });
+    await loading;
+    await fixture.whenStable();
+    expect(host.querySelector('.fs__card')).not.toBeNull();
+    expect(host.querySelector('.bd__empty')).toBeNull();
+
+    loading = store.refresh();
+    http.expectOne({ method: 'GET', url: '/api/state' }).flush({ ...STATE, directions: [], todos: [], onboarding: { stepsHidden: true } });
+    await loading;
+    await fixture.whenStable();
+    expect(host.querySelector('.fs__card')).toBeNull();
+    expect(host.querySelector('.bd__empty')).not.toBeNull();
   });
 
   it('card dropped on a todo of its own direction, on a done todo or on empty space changes nothing', () => {

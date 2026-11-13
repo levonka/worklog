@@ -1,0 +1,111 @@
+:host {
+  display: block;
+  // the board's columns lie on this background
+  background: var(--wl-bg-2);
+}
+
+.fs__card {
+  max-width: 680px;
+  margin: 14px 14px 0;
+  padding: 12px 14px 14px;
+  border-radius: 10px;
+  background: var(--wl-bg);
+  box-shadow:
+    0 0 0 0.5px light-dark(rgba(0, 0, 0, 0.14), rgba(255, 255, 255, 0.12)),
+    0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.fs__head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.fs__title {
+  flex: 1;
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.fs__hide,
+.fs__show {
+  flex-shrink: 0;
+  padding: 0;
+  border: 0;
+  font-size: 12px;
+  color: var(--wl-accent);
+  background: transparent;
+}
+
+.fs__hide:hover,
+.fs__show:hover {
+  text-decoration: underline;
+}
+
+.fs__intro {
+  margin: 4px 0 10px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--wl-text-2);
+}
+
+.fs__list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.fs__item {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+}
+
+.fs__check {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 1px;
+  border: 1.5px solid var(--wl-text-3);
+  border-radius: 50%;
+  font-size: 10px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.fs__check_done {
+  border-color: var(--wl-st-awaiting_release);
+  background: var(--wl-st-awaiting_release);
+}
+
+.fs__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.fs__row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.fs__label {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.fs__label_done {
+  font-weight: 400;
+  color: var(--wl-st-awaiting_release);
+  text-decoration: line-through;
+}
