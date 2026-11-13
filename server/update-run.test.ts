@@ -249,6 +249,16 @@ test('data written by the user during the update is in the snapshot the rollback
   assert.equal(git(s.dataDir, 'log', '-1', '--format=%s'), 'Перед перезапуском Worklog');
 });
 
+test('the log ends with the outcome: done, or the failure with its reason', async t => {
+  const logs: string[] = [];
+  const log = (message: string): void => void logs.push(message);
+  await runUpdate((await setup(t, { log })).deps, STARTED);
+  assert.equal(logs.at(-1), 'Обновление прошло');
+
+  await runUpdate((await setup(t, { healthy: async () => false, log })).deps, STARTED);
+  assert.equal(logs.at(-1), 'Не удалось обновить Worklog: новая версия не запустилась. Осталась прежняя версия, данные не тронуты.');
+});
+
 test('a rollback whose old server does not start still records the failure', async t => {
   let starts = 0;
   const s = await setup(t, { healthy: async () => false });

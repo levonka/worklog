@@ -1,7 +1,7 @@
 import { access, copyFile, mkdir, rename, rm } from 'node:fs/promises';
 import path from 'node:path';
 import type { UpdateRun } from '../shared/model.ts';
-import { UPDATE_HEALTH_MS } from '../shared/model.ts';
+import { UPDATE_HEALTH_MS, updateFailureText } from '../shared/model.ts';
 import { commitData } from './data-git.ts';
 import { errorMessage } from './fs-utils.ts';
 import type { GitRun } from './update-check.ts';
@@ -49,6 +49,8 @@ export async function runUpdate(deps: UpdateDeps, startedAt: string): Promise<Up
   let profileSaved = false;
 
   const finish = async (run: UpdateRun): Promise<UpdateRun> => {
+    // logs/update.log keeps the outcome too: the run file is replaced by the next update
+    deps.log(run.phase === 'done' ? 'Обновление прошло' : updateFailureText(run));
     await deps.writeRun(run).catch(error => deps.log(`Итог обновления не записан: ${errorMessage(error)}`));
     return run;
   };
