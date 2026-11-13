@@ -92,6 +92,32 @@ body:has(.cdk-drag-preview) * {
   cursor: grabbing !important;
 }
 
+// the label of the wlTooltip directive, laid over the page from <body>
+.wl-tooltip {
+  position: fixed;
+  z-index: 1000;
+  max-width: 320px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 11.5px;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+  color: var(--wl-text);
+  background: light-dark(rgba(255, 255, 255, 0.92), rgba(44, 44, 48, 0.92));
+  backdrop-filter: blur(24px) saturate(1.8);
+  box-shadow:
+    0 0 0 0.5px light-dark(rgba(0, 0, 0, 0.18), rgba(255, 255, 255, 0.14)),
+    0 4px 14px rgba(0, 0, 0, 0.16);
+  pointer-events: none;
+  animation: wl-tooltip-in 120ms ease-out 150ms both;
+}
+
+@keyframes wl-tooltip-in {
+  from {
+    opacity: 0;
+  }
+}
+
 // Esc during a drag: the item is back in its place at once
 .wl-drag-cancelled .cdk-drag-animating {
   transition: none !important;

@@ -13,7 +13,8 @@
       <a
         class="dc__link"
         [href]="link.url"
-        [title]="link.title"
+        [wlTooltip]="link.title"
+        [attr.aria-label]="link.title"
         target="_blank"
         rel="noopener"
         draggable="false"

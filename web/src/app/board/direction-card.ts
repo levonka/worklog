@@ -8,10 +8,11 @@ import { LINK_ICONS } from '../core/link-icons';
 import { plural } from '../core/plural';
 import type { TodoStats } from '../core/worklog-store';
 import { Favicon } from '../favicon/favicon';
+import { Tooltip } from '../tooltip/tooltip';
 
 @Component({
   selector: 'wl-direction-card',
-  imports: [Favicon],
+  imports: [Favicon, Tooltip],
   templateUrl: './direction-card.html',
   styleUrl: './direction-card.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

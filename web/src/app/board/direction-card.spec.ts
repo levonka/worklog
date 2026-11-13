@@ -60,7 +60,7 @@ describe('DirectionCard', () => {
     host.addEventListener('keydown', opened);
 
     const links = Array.from(host.querySelectorAll('a.dc__link'));
-    expect(links.map(link => [link.getAttribute('href'), link.getAttribute('title'), link.getAttribute('target'), link.getAttribute('rel')])).toEqual([
+    expect(links.map(link => [link.getAttribute('href'), link.getAttribute('aria-label'), link.getAttribute('target'), link.getAttribute('rel')])).toEqual([
       ['https://wiki.example.com/pages/viewpage.action?pageId=1', 'Описание', '_blank', 'noopener'],
       ['https://git.example.com/x/-/merge_requests/1', 'MR', '_blank', 'noopener'],
     ]);
@@ -74,6 +74,17 @@ describe('DirectionCard', () => {
     links[0].dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
     links[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
     expect(opened).not.toHaveBeenCalled();
+  });
+
+  it('names a link in a tooltip instead of the slow native title', async () => {
+    await render(direction({ links: [{ title: 'Макет', url: 'https://design.example.com/file/1', kind: 'figma' }] }));
+    const link = host.querySelector('a.dc__link');
+    expect(link?.hasAttribute('title')).toBe(false);
+
+    link?.dispatchEvent(new MouseEvent('mouseenter'));
+    expect(document.body.querySelector('.wl-tooltip')?.textContent).toBe('Макет');
+    link?.dispatchEvent(new MouseEvent('mouseleave'));
+    expect(document.body.querySelector('.wl-tooltip')).toBeNull();
   });
 
   it('has no icon row without links', async () => {
