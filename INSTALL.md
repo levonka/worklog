@@ -73,7 +73,7 @@ You are an AI coding agent (Claude Code or Codex) installing Worklog for a colle
 
 **9. Launcher.** In the clone: `npm run launcher` — `Worklog.app` appears on the Desktop. It replaces only a launcher of its own; if it says another `Worklog.app` is there, show it to the colleague and ask.
 
-**10. Final check.** `open ~/Desktop/Worklog.app`; a Chrome window with Worklog opens. Then `doctor`: every check passes, `port` says `работает Worklog`, `jira` is `ok` when the profile has Jira and it is not put off. With Terminal or iTerm2 as the terminal, ask the colleague to hand one task to the agent from the window once («✦ Поручить агенту» → «Вопрос», any text): macOS asks whether Worklog may control the terminal («Автоматизация») — the answer must be «Разрешить». Close that tab afterwards. Tell the colleague what changed on their machine: the list from README «Что появляется на машине», only what this install really did, with the real paths (the clone, the skill folders it linked into). Then that «обнови worklog», «обнови профиль worklog» and «worklog не работает» work from any session, and that the end-of-session review is `/worklog` in Claude Code and `$worklog` in Codex.
+**10. Final check.** `open ~/Desktop/Worklog.app`; a Chrome window with Worklog opens. Then `doctor`: every check passes, `port` says `работает Worklog`, `jira` is `ok` when the profile has Jira and it is not put off. With Terminal or iTerm2 as the terminal, ask the colleague to hand one task to the agent from the window once («✦ Поручить агенту» → «Вопрос», any text): macOS asks whether Worklog may control the terminal («Автоматизация») — the answer must be «Разрешить». Close that tab afterwards. Tell the colleague what changed on their machine: the list from README «Что появляется на машине», only what this install really did, with the real paths (the clone, the skill folders it linked into). Then that «обнови worklog», «обнови профиль worklog», «worklog не работает» and «удали worklog» work from any session, and that the end-of-session review is `/worklog` in Claude Code and `$worklog` in Codex.
 
 ## Update Worklog («обнови worklog»)
 
@@ -88,6 +88,17 @@ You are an AI coding agent (Claude Code or Codex) installing Worklog for a colle
 ## Update the profile («обнови профиль worklog»)
 
 `~/.local/bin/worklog profile update`, then restart the server if it runs (step 5 above). Sidebar links are left alone; when the colleague asks for the missing ones, `quicklink import` adds only links whose address they do not have yet.
+
+## Uninstall («удали worklog»)
+
+Every step is the colleague's to decide: say what it removes, ask, and skip what they decline. Read `jira.url` from `~/.config/worklog/profile.json` before step 4 deletes it.
+
+1. **Data.** `~/.local/bin/worklog data commit`, then ask whether to keep the data. Offer a copy: `cp -R <clone>/data ~/Documents/worklog-data-<YYYY-MM-DD>`. The copy keeps its own git; put it in place of `data/` of a new clone to get everything back. Go on only once this is answered.
+2. **What points at the clone.** Ask the colleague to close the Worklog window, then `zsh <clone>/scripts/uninstall.sh`. It stops this clone's server and removes the skill and CLI links into the clone, `~/Desktop/Worklog.app` when it is this clone's launcher and the Warp tab files of agent runs; anything foreign stays. Show its output.
+3. **Permissions.** Remove only what the install added and keep the rest of each file: the rule `Bash(~/.local/bin/worklog:*)` in `permissions.allow` of `~/.claude/settings.json`; the `<clone>/data` path in `writable_roots` of `~/.codex/config.toml`.
+4. **Settings and secrets.** `rm -rf ~/.config/worklog` (machine settings, profile, Jira certificates), `security delete-generic-password -s worklog-jira-p12` and `security delete-generic-password -s worklog-jira-token` (a missing item is an error that changes nothing). The token itself stays valid in Jira until the colleague revokes the `worklog` token on `<jira.url>/secure/ViewProfile.jspa?selectedTab=com.atlassian.pats.pats-plugin:jira-user-personal-access-tokens`: say so.
+5. **The clone.** Only on a clear yes after step 1: `rm -rf <clone>`. It takes `data/` with it.
+6. **Report.** List what was removed, with the real paths. Say what stays for the colleague to remove by hand if they want: the «Автоматизация» permission of the terminal (System Settings → Privacy & Security → Automation) and Node, git or OpenSSL 3 if the install added them.
 
 ## Worklog does not work («worklog не работает»)
 
