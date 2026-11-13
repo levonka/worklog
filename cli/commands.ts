@@ -211,7 +211,7 @@ function stateLine(direction: Direction, state: WorklogState): string {
   if (markOf(direction.status) !== null) parts.push(`этап: ${STATUS_LABELS[directionStage(direction)]}`);
   const todos = openTodos(state, direction.id).length;
   if (todos > 0) parts.push(`дел: ${todos}`);
-  if (direction.example === true) parts.push('пример');
+  if (isExample(direction)) parts.push('пример');
   return `  ${parts.join(SEPARATOR)}`;
 }
 

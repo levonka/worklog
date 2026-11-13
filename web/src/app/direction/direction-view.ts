@@ -89,11 +89,11 @@ export class DirectionView {
     });
   }
 
-  // a click that ends selecting part of the title is for copying it
   protected removeExample(id: string): void {
-    void this.store.deleteDirection(id);
+    inBackground(this.store.deleteDirection(id));
   }
 
+  // a click that ends selecting part of the title is for copying it
   protected startRenaming(): void {
     if (this.document.getSelection()?.toString()) return;
     this.renaming.set(true);

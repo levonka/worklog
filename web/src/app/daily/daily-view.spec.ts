@@ -222,4 +222,16 @@ describe('DailyView', () => {
     const select = host.querySelector<HTMLSelectElement>('.dly__group .dly__bind');
     expect(select?.value).toBe('old');
   });
+
+  it('the example is not offered to move an item to', async () => {
+    await setup(draft());
+    const loading = TestBed.inject(WorklogStore).refresh();
+    const base = state(draft());
+    http.expectOne({ method: 'GET', url: '/api/state' }).flush({ ...base, directions: [...base.directions, direction('ex', 'Пример: капча на входе', { example: true })] });
+    await loading;
+    await fixture.whenStable();
+    const options = Array.from(host.querySelectorAll<HTMLOptionElement>('.dly__group .dly__bind option')).map(option => option.value);
+    expect(options).toContain('red');
+    expect(options).not.toContain('ex');
+  });
 });

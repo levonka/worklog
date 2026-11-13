@@ -1,7 +1,7 @@
 import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, signal } from '@angular/core';
 import type { Direction, SummaryItem, WorkEvent } from '@worklog/model';
-import { findAiMentions, STATUS_LABELS, summaryRunState, upcomingDailyAt } from '@worklog/model';
+import { findAiMentions, ownDirections, STATUS_LABELS, summaryRunState, upcomingDailyAt } from '@worklog/model';
 import { inBackground } from '../core/background';
 import { daysBetween } from '../core/clock';
 import { plural } from '../core/plural';
@@ -114,7 +114,7 @@ export class DailyView {
       return { id: direction.id, title: direction.title, label: `${who} · ${days === 0 ? 'с сегодня' : `${days} дн.`}` };
     }),
   );
-  private readonly openDirections = computed<Direction[]>(() => this.worklog.state().directions.filter(d => d.status !== 'done'));
+  private readonly openDirections = computed<Direction[]>(() => ownDirections(this.worklog.state().directions).filter(d => d.status !== 'done'));
   protected readonly empty = computed(() => this.groups().length === 0 && this.unbound().length === 0);
 
   constructor() {
