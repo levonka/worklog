@@ -1,6 +1,6 @@
 import { DOCUMENT } from '@angular/common';
 import { computed, DestroyRef, inject, Injectable, signal } from '@angular/core';
-import type { UpdateCheckResult, UpdateRun, UpdateStatus } from '@worklog/model';
+import type { UpdateCheckResult, UpdateStatus } from '@worklog/model';
 import { updateFailureText } from '@worklog/model';
 import { firstValueFrom } from 'rxjs';
 import { ApiClient } from '../core/api';
@@ -37,7 +37,7 @@ export class UpdateStore {
   // the start asks GitHub first: a few seconds before the run exists
   private readonly startingAt = signal<string | null>(null);
   private readonly refusal = signal<string | null>(null);
-  /** the run the refusal was answered with; undefined until the status after it comes */
+  /** the check and the run the refusal was answered with; undefined until the status after it comes */
   private refusedWith: string | undefined;
   private readonly waiting = signal(false);
   /** the server version this window was loaded from */
@@ -137,11 +137,11 @@ export class UpdateStore {
 
   private apply(status: UpdateStatus): void {
     this.current.set(status);
-    // a refusal tells about the moment of the click: another run, or the same one over, makes it stale
+    // a refusal tells about the moment of the click: a new check result, another run or the same one over makes it stale
     if (this.refusal() !== null) {
-      const run = runKey(status.run);
-      if (this.refusedWith === undefined) this.refusedWith = run;
-      else if (run !== this.refusedWith) this.refusal.set(null);
+      const key = statusKey(status);
+      if (this.refusedWith === undefined) this.refusedWith = key;
+      else if (key !== this.refusedWith) this.refusal.set(null);
     }
     if (status.version === null) return;
     if (this.version === null) {
@@ -169,6 +169,6 @@ export class UpdateStore {
   }
 }
 
-function runKey(run: UpdateRun | null): string {
-  return run === null ? '' : `${run.startedAt} ${run.phase}`;
+function statusKey({ check, run }: UpdateStatus): string {
+  return run === null ? check : `${check} ${run.startedAt} ${run.phase}`;
 }

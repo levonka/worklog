@@ -228,6 +228,20 @@ describe('UpdateStore', () => {
     expect(updates.failure()).toContain('сборка не прошла');
   });
 
+  it('forgets «Новой версии нет» once a later check finds one', async () => {
+    await load(status('aaa111'));
+    const starting = updates.start();
+    http.expectOne({ method: 'POST', url: '/api/update' }).flush({ error: 'Новой версии нет' }, { status: 409, statusText: 'Conflict' });
+    await settle();
+    http.expectOne(GET).flush(status('aaa111', null, 'none'));
+    await starting;
+    expect(updates.failure()).toBe('Новой версии нет');
+
+    await load(status('aaa111', null, 'available'));
+
+    expect(updates.failure()).toBeNull();
+  });
+
   it('forgets a refusal once another run comes', async () => {
     await load(status('aaa111'));
     const starting = updates.start();
