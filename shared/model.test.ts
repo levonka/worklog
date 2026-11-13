@@ -859,3 +859,83 @@ test('agentPrompt names the stage under a mark', () => {
   const plain = state({ directions: [dir('d3', { title: 'Простое', status: 'testing' })] });
   assert.match(agentPrompt(plain, { template: 'question', directionId: 'd3', include: [], extra: '', branch: 'dev' }, 'r', TEST_PROFILE), /статус «Тестирование»\.\n/);
 });
+
+import { countEventsAfter as countAfter, exampleData, firstStepsDone, jiraTicketKeys as jiraKeys, onboardingPrompts, periodDigest as digestOf } from './model.ts';
+
+const AT = '2026-11-13T09:00:00.000Z';
+
+function ownDirection(id: string, fields: Partial<Direction> = {}): Direction {
+  return { id, title: id, status: 'in_progress', tickets: [], links: [], events: [], order: 0, createdAt: AT, updatedAt: AT, ...fields };
+}
+
+function onboardingState(directions: Direction[], todos: WorklogState['todos'] = []): WorklogState {
+  return { ...EMPTY_STATE, directions, todos };
+}
+
+test('exampleData builds a marked direction with fake tickets, links, events, a todo and a note', () => {
+  let n = 0;
+  const { direction, todo, note } = exampleData(TEST_PROFILE, AT, () => `id${n++}`);
+  assert.equal(direction.example, true);
+  assert.match(direction.title, /^Пример: /);
+  assert.equal(direction.status, 'in_progress');
+  assert.deepEqual(direction.tickets.map(t => [t.key, t.platform, t.url]), [['APP-1001', 'App', ''], ['WEB-1002', 'Web', '']]);
+  assert.ok(direction.links.length >= 4);
+  for (const link of direction.links) assert.match(new URL(link.url).host, /(^|\.)(example\.com|figma\.com)$/);
+  assert.ok(direction.events.length >= 3 && direction.events.every(e => e.source === 'manual' && e.at <= AT));
+  assert.equal(todo.directionId, direction.id);
+  assert.ok(todo.requestedBy);
+  assert.deepEqual(note.directionIds, [direction.id]);
+  assert.equal(new Set([direction.id, todo.id, note.id, ...direction.events.map(e => e.id)]).size, 3 + direction.events.length);
+});
+
+test('exampleData without a profile uses neutral keys', () => {
+  let n = 0;
+  const { direction } = exampleData(null, AT, () => `x${n++}`);
+  assert.deepEqual(direction.tickets.map(t => t.key), ['PROJ-1001', 'PROJ-1002']);
+});
+
+test('firstStepsDone ignores the example', () => {
+  let n = 0;
+  const example = exampleData(TEST_PROFILE, AT, () => `e${n++}`);
+  const withExample = onboardingState([example.direction], [example.todo]);
+  assert.deepEqual(firstStepsDone(withExample), { direction: false, event: false, todo: false });
+
+  const quiet = ownDirection('own', { events: [{ id: 's', at: AT, text: 'Статус', source: 'system', kind: 'status' }, { id: 'j', at: AT, text: 'Jira', source: 'jira', kind: 'jira-status' }] });
+  assert.deepEqual(firstStepsDone(onboardingState([example.direction, quiet], [example.todo])), { direction: true, event: false, todo: false });
+
+  const told = ownDirection('own', { events: [{ id: 'c', at: AT, text: 'Сказал агенту', source: 'claude', kind: 'note' }] });
+  const todo = { id: 't', text: 'Дело', done: false, createdAt: AT };
+  assert.deepEqual(firstStepsDone(onboardingState([example.direction, told], [example.todo, todo])), { direction: true, event: true, todo: true });
+});
+
+test('onboardingPrompts take the prefixes from the profile and the name of the first own direction', () => {
+  let n = 0;
+  const example = exampleData(TEST_PROFILE, AT, () => `e${n++}`).direction;
+  const fresh = onboardingPrompts(TEST_PROFILE, [example]);
+  assert.equal(fresh.direction, 'заведи в worklog направление по задачам APP-1234 и WEB-567');
+  assert.equal(fresh.event, 'по капче: бэк поправил редирект, жду стенд');
+  assert.equal(fresh.todo, 'Олег попросил завести задачу на бэк');
+  assert.equal(fresh.repeat, 'каждый будний день в 11:30 — дейлик');
+
+  const own = onboardingPrompts(TEST_PROFILE, [example, ownDirection('theme', { title: 'Тёмная тема' }), ownDirection('old', { title: 'Старое', status: 'done', order: -1 })]);
+  assert.equal(own.event, 'по тёмная тема: бэк поправил редирект, жду стенд');
+  assert.ok(own.link.startsWith('добавь в тёмная тема ссылку'));
+
+  assert.equal(onboardingPrompts(null, []).direction, 'заведи в worklog направление по задачам PROJ-1234 и PROJ-567');
+});
+
+test('periodDigest, countEventsAfter and jiraTicketKeys leave the example out', () => {
+  let n = 0;
+  const { direction, todo } = exampleData(TEST_PROFILE, AT, () => `e${n++}`);
+  const waiting = { ...direction, id: 'waiting-example', status: 'waiting' as const, waitingFor: 'дизайнер' };
+  const due = { ...todo, due: '2026-11-13' };
+  const state = onboardingState([direction, waiting], [due]);
+  const digest = digestOf(state, '2026-11-01T00:00:00.000Z', null, '2026-11-13');
+  assert.deepEqual(digest.groups, []);
+  assert.deepEqual(digest.waiting, []);
+  assert.deepEqual(digest.today.directions, []);
+  assert.deepEqual(digest.today.todos, []);
+  assert.equal(digest.eventCount, 0);
+  assert.equal(countAfter(state, '2026-11-01T00:00:00.000Z', '2026-11-01T00:00:00.000Z'), 0);
+  assert.deepEqual(jiraKeys(state.directions), []);
+});

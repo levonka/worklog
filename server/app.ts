@@ -53,6 +53,8 @@ export interface AppOptions {
   mergeRequests?: { codeRoot: string; pollMs: number; lsRemote?: LsRemote };
   /** the company profile; none, no Jira, branches, stands or platforms */
   profile?: Profile | null;
+  /** put the onboarding example into empty data on start: the real app does, tests ask for it */
+  seedExample?: boolean;
 }
 
 export interface App {
@@ -62,7 +64,9 @@ export interface App {
 
 export async function createApp(opts: AppOptions): Promise<App> {
   // before the store that records undo history: this conversion is not the user's step to undo; broken data answers 500 later, not here
-  await new Store(opts.dataDir, { profile: opts.profile ?? null }).releaseJiraStages().catch(() => 0);
+  const setup = new Store(opts.dataDir, { profile: opts.profile ?? null });
+  await setup.releaseJiraStages().catch(() => 0);
+  if (opts.seedExample === true) await setup.seedExample().catch(() => false);
   const live = createLiveHub({ dataDir: opts.dataDir, idleMs: opts.idleMs, onIdle: opts.onIdle ?? (() => {}) });
   const history = new History();
   const store = new Store(opts.dataDir, { onCommit: changes => history.record(changes), profile: opts.profile ?? null });

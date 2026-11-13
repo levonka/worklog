@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { setTimeout as sleep } from 'node:timers/promises';
 import type { Direction, QuickLinkGroup, Todo } from '../shared/model.ts';
-import { EMPTY_STATE } from '../shared/model.ts';
+import { EMPTY_STATE, currentPeriodStart } from '../shared/model.ts';
 import { DataError } from './fs-utils.ts';
 import type { NewDirectionInput } from './store.ts';
 import { Store, ValidationError } from './store.ts';
@@ -875,4 +875,78 @@ test('releaseJiraStages hands the stage back when the profile has no Jira', asyn
   const released = (await led.read()).directions.find(d => d.id === dir.id);
   assert.equal(released?.stageFromJira, undefined);
   await new Store(dataDir, { profile: noJira }).setStatus(dir.id, 'done');
+});
+
+test('seedExample fills empty data once and never again, even after the example is deleted', async t => {
+  const store = new Store(await tempDataDir(t), { profile: TEST_PROFILE });
+  assert.equal(await store.seedExample(), true);
+  const state = await store.read();
+  assert.equal(state.directions.length, 1);
+  const [example] = state.directions;
+  assert.equal(example.example, true);
+  assert.deepEqual(state.todos.map(item => item.directionId), [example.id]);
+  assert.deepEqual(state.notes.map(note => note.directionIds), [[example.id]]);
+  assert.ok(state.onboarding?.exampleCreatedAt);
+
+  assert.equal(await store.seedExample(), false);
+  await store.deleteDirection(example.id);
+  assert.equal(await store.seedExample(), false);
+  assert.deepEqual((await store.read()).directions, []);
+});
+
+test('seedExample leaves data with only todos, notes or dailies alone', async t => {
+  const withTodo = new Store(await tempDataDir(t), { profile: TEST_PROFILE });
+  await withTodo.addTodo({ text: 'Дело' });
+  const withNote = new Store(await tempDataDir(t), { profile: TEST_PROFILE });
+  await withNote.createNote({ title: 'Заметка' });
+  const withDaily = new Store(await tempDataDir(t), { profile: TEST_PROFILE });
+  await withDaily.holdDaily({ periodStart: currentPeriodStart(new Date(), []), text: 'Дейлик' });
+
+  for (const store of [withTodo, withNote, withDaily]) {
+    assert.equal(await store.seedExample(), false);
+    assert.deepEqual((await store.read()).directions, []);
+  }
+});
+
+test('setOnboarding writes onboarding.json and an empty one is not written', async t => {
+  const dir = await tempDataDir(t);
+  const store = new Store(dir);
+  const closed = await store.setOnboarding({ tourClosed: true, stepsHidden: true });
+  assert.match(closed.tourClosedAt ?? '', /^\d{4}-\d{2}-\d{2}T/);
+  assert.equal(closed.stepsHidden, true);
+  assert.deepEqual((await store.read()).onboarding, closed);
+
+  await store.setOnboarding({ tourClosed: false, stepsHidden: false });
+  await assert.rejects(access(path.join(dir, 'onboarding.json')));
+  assert.equal((await store.read()).onboarding, undefined);
+});
+
+test('startRun refuses the example and a todo of the example', async t => {
+  const store = new Store(await tempDataDir(t), { profile: TEST_PROFILE });
+  await store.seedExample();
+  const { directions, todos } = await store.read();
+  const request = { template: 'question' as const, include: [], extra: 'вопрос', branch: 'dev' };
+  await assert.rejects(store.startRun({ ...request, directionId: directions[0].id }), /В примере агент не запускается/);
+  await assert.rejects(store.startRun({ ...request, todoId: todos[0].id }), /В примере агент не запускается/);
+  assert.deepEqual((await store.read()).runs, []);
+});
+
+test('deleting the example deletes its todo and note; deleting an own direction only unlinks them', async t => {
+  const store = new Store(await tempDataDir(t), { profile: TEST_PROFILE });
+  await store.seedExample();
+  const own = await store.createDirection({ title: 'Своё' });
+  await store.addTodo({ text: 'Своё дело', directionId: own.id });
+  await store.createNote({ title: 'Своя заметка', directionIds: [own.id] });
+  const example = (await store.read()).directions.find(d => d.example === true);
+  assert.ok(example);
+
+  await store.deleteDirection(example.id);
+  let state = await store.read();
+  assert.deepEqual(state.todos.map(item => item.text), ['Своё дело']);
+  assert.deepEqual(state.notes.map(note => note.title), ['Своя заметка']);
+
+  await store.deleteDirection(own.id);
+  state = await store.read();
+  assert.deepEqual(state.todos.map(item => [item.text, item.directionId]), [['Своё дело', undefined]]);
+  assert.deepEqual(state.notes.map(note => note.directionIds), [[]]);
 });

@@ -36,6 +36,7 @@ const profileJira = profile?.jira;
 try {
   const app = await createApp({
     profile,
+    seedExample: true,
     dataDir: DATA_DIR,
     port: PORT,
     staticDir: STATIC_DIR,

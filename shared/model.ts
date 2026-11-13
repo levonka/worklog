@@ -115,6 +115,8 @@ export interface Direction {
   updatedAt: string;
   /** when it became done, ISO */
   doneAt?: string;
+  /** the onboarding example: kept out of the daily, Jira, MR lookups and agent runs */
+  example?: true;
 }
 
 export interface Todo {
@@ -342,6 +344,18 @@ export interface AgentRequest {
   branch: string;
 }
 
+export interface Onboarding {
+  /** when the tour was finished or closed */
+  tourClosedAt?: string;
+  stepsHidden?: true;
+  exampleCreatedAt?: string;
+}
+
+export interface OnboardingPatch {
+  tourClosed?: boolean;
+  stepsHidden?: boolean;
+}
+
 export interface WorklogState {
   directions: Direction[];
   todos: Todo[];
@@ -351,6 +365,8 @@ export interface WorklogState {
   draft: DailyDraft | null;
   notes: Note[];
   runs: AgentRun[];
+  /** none in data written before onboarding: read it as {} */
+  onboarding?: Onboarding;
 }
 
 // frozen: it is the shared placeholder, a consumer pushing into it would change every later default
@@ -799,7 +815,104 @@ export function dropIntent(direction: Direction, target: Status): DropIntent | n
 
 /** the tickets Jira is asked about: those of unfinished directions, each once */
 export function jiraTicketKeys(directions: readonly Direction[]): string[] {
-  return [...new Set(directions.filter(d => d.status !== 'done').flatMap(d => d.tickets.map(t => t.key)))];
+  return [...new Set(ownDirections(directions).filter(d => d.status !== 'done').flatMap(d => d.tickets.map(t => t.key)))];
+}
+
+export function isExample(direction: Direction): boolean {
+  return direction.example === true;
+}
+
+/** the user's own directions: without the onboarding example */
+export function ownDirections(directions: readonly Direction[]): Direction[] {
+  return directions.filter(direction => !isExample(direction));
+}
+
+const DAY_MS = 86_400_000;
+
+/** the onboarding example: invented work with fake tickets, links, events, a todo and a note */
+export function exampleData(profile: Profile | null, at: string, newId: () => string): { direction: Direction; todo: Todo; note: Note } {
+  const before = (days: number): string => new Date(Date.parse(at) - days * DAY_MS).toISOString();
+  const projects = profile?.projects ?? [];
+  const first = projects[0]?.prefix ?? 'PROJ-';
+  const second = projects[1]?.prefix ?? first;
+  // no url: a fake key must not open Jira
+  const tickets = [`${first}1001`, `${second}1002`].map(key => ({ ...ticketFromKey(key, profile), url: '' }));
+  const id = newId();
+  const event = (days: number, text: string): WorkEvent => ({ id: newId(), at: before(days), text, source: 'manual', kind: 'note' });
+  const direction: Direction = {
+    id,
+    title: 'Пример: капча на входе',
+    status: 'in_progress',
+    stage: 'in_progress',
+    example: true,
+    tickets,
+    links: [
+      { title: 'Макет', url: 'https://www.figma.com/design/example/captcha', kind: 'figma', description: 'Экраны капчи для всех платформ' },
+      { title: 'BRD', url: 'https://wiki.example.com/pages/viewpage.action?pageId=1001', kind: 'confluence', description: 'Требования: капча после трёх неудачных входов' },
+      { title: 'Swagger', url: 'https://api.example.com/swagger', kind: 'other' },
+      { title: 'MR !1', url: 'https://git.example.com/team/app/-/merge_requests/1', kind: 'mr' },
+    ],
+    events: [
+      event(3, 'Разобрал BRD, задал аналитику вопросы по лимиту попыток входа'),
+      event(2, 'Сверстал виджет капчи, жду от дизайнера текст ошибки'),
+      event(1, 'Так выглядит лента: сюда попадает всё, что вы рассказываете агенту, например «по капче: бэк поправил редирект»'),
+    ],
+    order: 0,
+    createdAt: before(3),
+    updatedAt: at,
+  };
+  const todo: Todo = { id: newId(), text: 'Уточнить у дизайнера текст ошибки капчи', directionId: id, requestedBy: 'Ани', done: false, createdAt: before(2) };
+  const note: Note = {
+    id: newId(),
+    title: 'Ключ капчи на стендах',
+    body: 'На стендах ключ сайта берётся из конфига стенда, на проде — из переменной окружения.',
+    directionIds: [id],
+    files: [],
+    urls: [{ url: 'https://wiki.example.com/pages/viewpage.action?pageId=1002', title: 'Настройки капчи' }],
+    createdAt: before(1),
+    updatedAt: before(1),
+  };
+  return { direction, todo, note };
+}
+
+export const FIRST_STEPS = ['direction', 'event', 'todo'] as const;
+export type FirstStep = (typeof FIRST_STEPS)[number];
+
+/** what the user has done of the first steps; the example does not count */
+export function firstStepsDone(state: WorklogState): Record<FirstStep, boolean> {
+  const own = ownDirections(state.directions);
+  const examples = new Set(state.directions.filter(isExample).map(direction => direction.id));
+  return {
+    direction: own.length > 0,
+    event: own.some(direction => direction.events.some(e => e.source === 'manual' || e.source === 'claude')),
+    todo: state.todos.some(todo => todo.directionId === undefined || !examples.has(todo.directionId)),
+  };
+}
+
+export interface OnboardingPrompts {
+  direction: string;
+  event: string;
+  link: string;
+  todo: string;
+  repeat: string;
+}
+
+/** phrases to hand the agent, with the company's ticket prefixes and the user's own direction when there is one */
+export function onboardingPrompts(profile: Profile | null, directions: readonly Direction[]): OnboardingPrompts {
+  const projects = profile?.projects ?? [];
+  const first = projects[0]?.prefix ?? 'PROJ-';
+  const second = projects[1]?.prefix ?? first;
+  const named = ownDirections(directions)
+    .filter(direction => direction.status !== 'done')
+    .sort((a, b) => a.order - b.order)[0];
+  const name = named?.title.toLowerCase();
+  return {
+    direction: `заведи в worklog направление по задачам ${first}1234 и ${second}567`,
+    event: `по ${name ?? 'капче'}: бэк поправил редирект, жду стенд`,
+    link: `добавь в ${name ?? 'капчу'} ссылку на макет <ссылка>`,
+    todo: 'Олег попросил завести задачу на бэк',
+    repeat: 'каждый будний день в 11:30 — дейлик',
+  };
 }
 
 const MERGE_REQUEST_NUMBER = /\/merge_requests\/(\d+)(?:[/?#]|$)/;
@@ -1007,11 +1120,14 @@ function waitingSince(direction: Direction): string {
 
 /** `today` is the local date, YYYY-MM-DD */
 export function periodDigest(state: WorklogState, periodStart: string, summary: SessionSummary | null, today: string): PeriodDigest {
-  const known = new Set(state.directions.map(d => d.id));
+  // the onboarding example never reaches the daily
+  const directions = ownDirections(state.directions);
+  const examples = new Set(state.directions.filter(isExample).map(d => d.id));
+  const known = new Set(directions.map(d => d.id));
   const items = summary?.items ?? [];
   const groups: DigestGroup[] = [];
   let eventCount = 0;
-  for (const direction of state.directions) {
+  for (const direction of directions) {
     const events = direction.events.filter(e => e.at >= periodStart).sort(byTime);
     const own = items.filter(item => item.directionId === direction.id).sort(byTime);
     eventCount += events.length;
@@ -1019,7 +1135,7 @@ export function periodDigest(state: WorklogState, periodStart: string, summary: 
   }
   groups.sort((a, b) => compareText(firstActivity(a), firstActivity(b)));
   const grouped = new Set(groups.map(g => g.direction.id));
-  const waiting = state.directions
+  const waiting = directions
     .filter(d => d.status === 'waiting')
     .map(direction => ({ direction, since: waitingSince(direction) }))
     .sort((a, b) => compareText(a.since, b.since));
@@ -1028,9 +1144,9 @@ export function periodDigest(state: WorklogState, periodStart: string, summary: 
     unbound: items.filter(item => item.directionId === null || !known.has(item.directionId)),
     waiting,
     today: {
-      directions: state.directions.filter(d => d.status === 'in_progress' && !grouped.has(d.id)).sort((a, b) => a.order - b.order),
+      directions: directions.filter(d => d.status === 'in_progress' && !grouped.has(d.id)).sort((a, b) => a.order - b.order),
       // repeating todos are routine, not news for the daily
-      todos: state.todos.filter(t => !t.done && t.repeatId === undefined && t.due !== undefined && t.due <= today),
+      todos: state.todos.filter(t => !t.done && t.repeatId === undefined && t.due !== undefined && t.due <= today && (t.directionId === undefined || !examples.has(t.directionId))),
     },
     eventCount,
   };
@@ -1049,7 +1165,7 @@ export function dailyItems(digest: PeriodDigest): DailyItem[] {
 
 export function countEventsAfter(state: WorklogState, periodStart: string, after: string): number {
   let count = 0;
-  for (const direction of state.directions) {
+  for (const direction of ownDirections(state.directions)) {
     for (const e of direction.events) if (e.at >= periodStart && e.at > after) count++;
   }
   return count;

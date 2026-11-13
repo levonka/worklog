@@ -30,6 +30,8 @@ import type {
   TodoCandidate,
   WorkEvent,
   WorklogState,
+  Onboarding,
+  OnboardingPatch,
 } from '../shared/model.ts';
 import {
   AGENT_TEMPLATES,
@@ -56,6 +58,8 @@ import {
   directionBranch,
   directionStage,
   dueRepeats,
+  exampleData,
+  isExample,
   isBranchName,
   isJiraLed,
   jiraStage,
@@ -88,6 +92,7 @@ const REPEATS_FILE = 'repeats.json';
 const LINKS_FILE = 'links.json';
 const DAILIES_DIR = 'dailies';
 export const DRAFT_FILE = 'daily-draft.json';
+const ONBOARDING_FILE = 'onboarding.json';
 const JSON_EXT = '.json';
 const NOTES_DIR = 'notes';
 const NOTE_EXT = '.md';
@@ -436,9 +441,40 @@ export class Store {
     });
   }
 
+  /** the onboarding example, once, into data that has nothing yet; sidebar links from the profile do not count */
+  async seedExample(now: Date = new Date()): Promise<boolean> {
+    return this.mutate(s => {
+      const onboarding = s.onboarding ?? {};
+      if (onboarding.exampleCreatedAt !== undefined || s.directions.length > 0 || s.todos.length > 0 || s.notes.length > 0 || s.dailies.length > 0) return false;
+      const at = now.toISOString();
+      const { direction, todo, note } = exampleData(this.profile, at, () => newId());
+      s.directions.push(direction);
+      s.todos.push(todo);
+      s.notes.push(note);
+      s.onboarding = { ...onboarding, exampleCreatedAt: at };
+      return true;
+    });
+  }
+
+  async setOnboarding(patch: OnboardingPatch, now: Date = new Date()): Promise<Onboarding> {
+    return this.mutate(s => {
+      const next: Onboarding = { ...(s.onboarding ?? {}) };
+      if (patch.tourClosed === true) next.tourClosedAt = now.toISOString();
+      else if (patch.tourClosed === false) delete next.tourClosedAt;
+      if (patch.stepsHidden === true) next.stepsHidden = true;
+      else if (patch.stepsHidden === false) delete next.stepsHidden;
+      s.onboarding = next;
+      return next;
+    });
+  }
+
   async deleteDirection(id: string): Promise<void> {
     return this.mutate(s => {
-      findDirection(s, id);
+      // the example takes its own todo and note with it: they mean nothing without it
+      if (isExample(findDirection(s, id))) {
+        s.todos = s.todos.filter(todo => todo.directionId !== id);
+        s.notes = s.notes.filter(note => !note.directionIds.includes(id));
+      }
       s.directions = s.directions.filter(d => d.id !== id);
       for (const note of s.notes) {
         if (note.directionIds.includes(id)) note.directionIds = note.directionIds.filter(d => d !== id);
@@ -797,6 +833,7 @@ export class Store {
       if (request.todoId !== undefined) findTodo(s, request.todoId);
       else if (request.directionId !== undefined) findDirection(s, request.directionId);
       const context = agentContext(s, request);
+      if (context.direction !== undefined && isExample(context.direction)) throw new ValidationError('В примере агент не запускается');
       const run: AgentRun = {
         id: newId(),
         ...(request.agent === undefined ? {} : { agent: request.agent }),
@@ -1143,7 +1180,7 @@ function assignOptional(target: Partial<Record<TodoOptionalField, string>>, fiel
 }
 
 async function readState(dataDir: string): Promise<WorklogState> {
-  const [directions, todos, repeats, linkGroups, dailies, draft, notes, runs] = await Promise.all([
+  const [directions, todos, repeats, linkGroups, dailies, draft, notes, runs, onboarding] = await Promise.all([
     readRecords(path.join(dataDir, DIRECTIONS_DIR), JSON_EXT, jsonRecord(isDirection)),
     readTodos(dataDir),
     readRepeats(dataDir),
@@ -1152,9 +1189,11 @@ async function readState(dataDir: string): Promise<WorklogState> {
     readJsonFile<DailyDraft | null>(path.join(dataDir, DRAFT_FILE), null, isDailyDraft),
     readRecords(path.join(dataDir, NOTES_DIR), NOTE_EXT, parseNote),
     readRecords(path.join(dataDir, RUNS_DIR), JSON_EXT, jsonRecord(isAgentRun)),
+    readJsonFile<Onboarding>(path.join(dataDir, ONBOARDING_FILE), {}, isOnboarding),
   ]);
   dailies.sort((a, b) => compareText(a.heldAt, b.heldAt));
-  return { directions, todos, repeats, linkGroups, dailies, draft, notes, runs };
+  // no onboarding yet reads as the state did before it existed
+  return { directions, todos, repeats, linkGroups, dailies, draft, notes, runs, ...(Object.keys(onboarding).length > 0 ? { onboarding } : {}) };
 }
 
 function readTodos(dataDir: string): Promise<Todo[]> {
@@ -1216,6 +1255,7 @@ function fileTexts(dataDir: string, state: WorklogState): Map<string, string> {
   if (state.draft !== null) texts.set(path.join(dataDir, DRAFT_FILE), JSON.stringify(state.draft));
   for (const run of state.runs) record(RUNS_DIR, run);
   for (const note of state.notes) texts.set(path.join(dataDir, NOTES_DIR, `${note.id}${NOTE_EXT}`), serializeNote(note));
+  if (state.onboarding !== undefined && Object.keys(state.onboarding).length > 0) texts.set(path.join(dataDir, ONBOARDING_FILE), JSON.stringify(state.onboarding));
   return texts;
 }
 
@@ -1265,6 +1305,10 @@ function isWorkEvent(v: unknown): v is WorkEvent {
   );
 }
 
+function isOnboarding(v: unknown): v is Onboarding {
+  return isRecord(v) && isOptionalString(v.tourClosedAt) && (v.stepsHidden === undefined || v.stepsHidden === true) && isOptionalString(v.exampleCreatedAt);
+}
+
 function isDirection(v: unknown): v is Direction {
   return (
     isRecord(v) &&
@@ -1280,7 +1324,8 @@ function isDirection(v: unknown): v is Direction {
     typeof v.order === 'number' &&
     isString(v.createdAt) &&
     isString(v.updatedAt) &&
-    isOptionalString(v.doneAt)
+    isOptionalString(v.doneAt) &&
+    (v.example === undefined || v.example === true)
   );
 }
 
