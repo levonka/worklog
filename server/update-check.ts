@@ -7,6 +7,8 @@ import { quietGitEnv } from './git-env.ts';
 const run = promisify(execFile);
 // a fetch that hangs on a dead network must not keep the check, or the update, waiting forever
 const GIT_TIMEOUT_MS = 120_000;
+// a server started by the update finds its run still going: a commit pushed meanwhile should not wait for the timer
+const BUSY_RETRY_MS = 60_000;
 
 export type GitRun = (args: string[]) => Promise<string>;
 
@@ -82,6 +84,7 @@ export function createUpdateChecker(opts: { facts: () => Promise<UpdateFacts | n
   let current: UpdateCheck = 'none';
   let running: Promise<UpdateCheckResult> | null = null;
   let timer: NodeJS.Timeout | undefined;
+  let retry: NodeJS.Timeout | undefined;
 
   const ask = async (): Promise<UpdateCheckResult> => {
     let result: UpdateCheckResult;
@@ -108,7 +111,12 @@ export function createUpdateChecker(opts: { facts: () => Promise<UpdateFacts | n
 
   // git in the clone while the update pulls or resets it could collide on its lock
   const timed = async (): Promise<void> => {
-    if ((await opts.busy?.()) === true) return;
+    if ((await opts.busy?.()) === true) {
+      clearTimeout(retry);
+      retry = setTimeout(() => void timed(), BUSY_RETRY_MS);
+      retry.unref();
+      return;
+    }
     await refresh();
   };
 
@@ -123,6 +131,7 @@ export function createUpdateChecker(opts: { facts: () => Promise<UpdateFacts | n
     },
     close() {
       clearInterval(timer);
+      clearTimeout(retry);
     },
   };
 }

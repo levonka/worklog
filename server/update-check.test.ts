@@ -121,6 +121,34 @@ test('the checks on start and on the timer wait while an update runs', async t =
   assert.ok(asked > 0);
 });
 
+test('a check skipped for a running update comes again in a minute, not hours later', async t => {
+  t.mock.timers.enable({ apis: ['setTimeout', 'setInterval'] });
+  const settle = (): Promise<void> => new Promise(resolve => setImmediate(resolve));
+  let asked = 0;
+  let busy = true;
+  const checker = createUpdateChecker({
+    facts: async () => {
+      asked++;
+      return null;
+    },
+    intervalMs: 6 * 60 * 60_000,
+    onChange: () => {},
+    busy: async () => busy,
+  });
+  t.after(() => checker.close());
+
+  checker.start();
+  await settle();
+  busy = false;
+  t.mock.timers.tick(59_000);
+  await settle();
+  assert.equal(asked, 0);
+
+  t.mock.timers.tick(1_000);
+  await settle();
+  assert.equal(asked, 1);
+});
+
 test('refresh reports unreachable when fetch fails and keeps the check at none', async () => {
   let fail = false;
   const checker = createUpdateChecker({
