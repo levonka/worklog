@@ -101,6 +101,18 @@ describe('TabsStore', () => {
     expect(saved()).toEqual({ tabs: ['direction:a', 'todos'], active: 'todos', split: null, ratio: 0.4, sidebarHidden: true });
   });
 
+  it('replaceLayout puts a layout taken earlier back and saves it', () => {
+    const tabs = TestBed.inject(TabsStore);
+    const before = tabs.layout();
+    tabs.openTab('daily');
+    tabs.openTab('direction:a');
+
+    tabs.replaceLayout(before);
+
+    expect(tabs.layout()).toEqual(before);
+    expect(saved()).toEqual({ ...before, sidebarHidden: false });
+  });
+
   it('drops tabs of deleted directions once the state has loaded, not before', async () => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ tabs: ['board', 'direction:a', 'direction:b'], active: 'direction:b', split: 'direction:a', ratio: 0.5 }));
     const tabs = TestBed.inject(TabsStore);

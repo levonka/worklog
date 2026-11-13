@@ -1,4 +1,4 @@
-<span class="dc__title">{{ direction().title }}</span>
+<span class="dc__title">{{ direction().title }}@if (example()) {<span class="dc__example">пример</span>}</span>
 @if (direction().tickets.length > 0) {
   <span class="dc__meta">
     @for (ticket of direction().tickets; track ticket.key) {

@@ -278,6 +278,23 @@ describe('DirectionView', () => {
     expect(text(host.querySelector('span.dv__ticket'))).toBe('APP-1 App');
   });
 
+  it('the example is marked, says it is safe, shows fake tickets as text and deletes itself', async () => {
+    await loadState(withSeo({ example: true, tickets: [{ key: 'APP-1001', platform: 'App', url: '' }] }));
+
+    expect(text(host.querySelector('.dv__example'))).toBe('пример');
+    expect(text(host.querySelector('.dv__example-note'))).toContain('Это пример');
+    expect(host.querySelector('span.dv__ticket')?.getAttribute('title')).toBe('в примере тикет ненастоящий');
+
+    button('.dv__example-remove', 'Удалить пример').click();
+    http.expectOne({ method: 'DELETE', url: '/api/directions/seo' }).flush(null);
+    await answerRefresh();
+  });
+
+  it('an own direction has no example mark', () => {
+    expect(host.querySelector('.dv__example')).toBeNull();
+    expect(host.querySelector('.dv__example-note')).toBeNull();
+  });
+
   it('without a profile old tickets keep their link and there is no branch or stands', async () => {
     const profile = TestBed.inject(ProfileStore).load();
     http.expectOne({ method: 'GET', url: '/api/profile' }).flush({ profile: null });

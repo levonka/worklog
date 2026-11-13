@@ -87,6 +87,13 @@ describe('DirectionCard', () => {
     expect(document.body.querySelector('.wl-tooltip')).toBeNull();
   });
 
+  it('marks the example card', async () => {
+    await render(direction({ example: true }));
+    expect(host.querySelector('.dc__example')?.textContent).toBe('пример');
+    await render(direction());
+    expect(host.querySelector('.dc__example')).toBeNull();
+  });
+
   it('has no icon row without links', async () => {
     await render(direction());
     expect(host.querySelector('.dc__links')).toBeNull();

@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import type { Agent, AgentRequest, AgentRun, BranchPlace, Daily, DailyDraft, Direction, JiraHealth, Link, LinkKind, Note, NoteFile, NoteUrl, Profile, QuickLink, QuickLinkGroup, Status, SummaryItem, Terminal, Ticket, Todo, WorkEvent, WorklogState } from '@worklog/model';
+import type { Agent, AgentRequest, AgentRun, BranchPlace, Daily, DailyDraft, Direction, JiraHealth, Link, LinkKind, Note, NoteFile, NoteUrl, Onboarding, OnboardingPatch, Profile, QuickLink, QuickLinkGroup, Status, SummaryItem, Terminal, Ticket, Todo, WorkEvent, WorklogState } from '@worklog/model';
 import type { Observable } from 'rxjs';
 
 export interface NewDirection {
@@ -110,6 +110,10 @@ export class ApiClient {
 
   deleteDirection(id: string): Observable<void> {
     return this.http.delete<void>(directionUrl(id));
+  }
+
+  setOnboarding(patch: OnboardingPatch): Observable<Onboarding> {
+    return this.http.patch<Onboarding>('/api/onboarding', patch);
   }
 
   addEvent(id: string, text: string): Observable<WorkEvent> {

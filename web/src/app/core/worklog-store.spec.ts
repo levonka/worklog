@@ -93,6 +93,25 @@ describe('WorklogStore', () => {
     expect(store.directionById('missing')).toBeUndefined();
   });
 
+  it('setOnboarding sends the patch and reads the state again', async () => {
+    await load(worklog({}));
+    const saving = store.setOnboarding({ stepsHidden: true });
+    const request = http.expectOne({ method: 'PATCH', url: '/api/onboarding' });
+    expect(request.request.body).toEqual({ stepsHidden: true });
+    request.flush({ stepsHidden: true });
+    await answerRefresh(worklog({ onboarding: { stepsHidden: true } }));
+    await saving;
+    expect(store.onboarding()).toEqual({ stepsHidden: true });
+  });
+
+  it('onboarding is empty for data without it, and the example is neither done work nor an own direction', async () => {
+    const example: Direction = { ...direction('example', 'done', 0), example: true };
+    await load(worklog({ directions: [example, direction('own', 'done', 1)] }));
+    expect(store.onboarding()).toEqual({});
+    expect(ids(store.doneDirections())).toEqual(['own']);
+    expect(ids(store.ownDirections())).toEqual(['own']);
+  });
+
   it('todoStats counts open todos and unique requesters', async () => {
     await load(
       worklog({

@@ -58,6 +58,11 @@ export class TabsStore {
     this.lastFocused.set(id);
   }
 
+  /** puts back a layout taken earlier, as the tour does when it ends */
+  replaceLayout(layout: Layout): void {
+    this.apply(() => layout);
+  }
+
   closeTab(id: TabId): void {
     if (!this.layout().tabs.includes(id)) return;
     const earlier = this.closed.indexOf(id);

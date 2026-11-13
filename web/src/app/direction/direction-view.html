@@ -15,6 +15,9 @@
     } @else {
       <h1 class="dv__title wl-selectable" title="Нажмите, чтобы переименовать" (click)="startRenaming()">{{ direction.title }}</h1>
     }
+    @if (direction.example) {
+      <span class="dv__example">пример</span>
+    }
   }
   <span class="dv__spacer"></span>
 
@@ -28,6 +31,12 @@
 
 @if (direction(); as direction) {
   <div class="dv__body">
+    @if (direction.example) {
+      <p class="dv__example-note">
+        Это пример. Нажимайте что угодно — он ни на что не влияет: не попадает в дейлик, не ходит в Jira и не запускает агента.
+        <button type="button" class="dv__example-remove" (click)="removeExample(direction.id)">Удалить пример</button>
+      </p>
+    }
     <div class="dv__controls">
       <div class="dv__statuses" role="group" aria-label="Этап">
         @for (item of stages; track item.stage) {
@@ -99,7 +108,7 @@
               <ng-container [ngTemplateOutlet]="ticketText" [ngTemplateOutletContext]="{ $implicit: ticket }" />
             </a>
           } @else {
-            <span class="dv__ticket">
+            <span class="dv__ticket" [attr.title]="direction.example ? 'в примере тикет ненастоящий' : null">
               <ng-container [ngTemplateOutlet]="ticketText" [ngTemplateOutletContext]="{ $implicit: ticket }" />
             </span>
           }

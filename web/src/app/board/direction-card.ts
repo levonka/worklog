@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
 import type { AgentRun, Direction } from '@worklog/model';
-import { directionStage, markOf, STATUS_LABELS } from '@worklog/model';
+import { directionStage, isExample, markOf, STATUS_LABELS } from '@worklog/model';
 import { runSince } from '../agent/run-since';
 import { Clock } from '../core/clock';
 import { DropHint } from '../core/drop-hint';
@@ -41,6 +41,7 @@ export class DirectionCard {
     const target = this.dropHint.target();
     return target?.kind === 'direction' && target.directionId === this.direction().id;
   });
+  protected readonly example = computed(() => isExample(this.direction()));
   protected readonly links = computed(() => this.direction().links.map(link => ({ ...link, icon: LINK_ICONS[link.kind].icon })));
   protected readonly waitingFor = computed(() => {
     const direction = this.direction();

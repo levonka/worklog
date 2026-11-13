@@ -129,6 +129,15 @@ describe('AgentSheetView', () => {
     expect(text(host.querySelector('.as__hint'))).toBe('Откроется новая вкладка iTerm2, ~/Projects/app');
   });
 
+  it('does not launch an agent for the example', async () => {
+    const loading = TestBed.inject(WorklogStore).refresh();
+    http.expectOne({ method: 'GET', url: '/api/state' }).flush({ ...STATE, directions: STATE.directions.map(item => ({ ...item, example: true as const })) });
+    await loading;
+    await open({ directionId: 'd1' });
+    expect(text(host.querySelector('.as__hint'))).toBe('в примере агент не запускается');
+    expect(button('Запустить ⌘↩').disabled).toBe(true);
+  });
+
   it('without a profile the agent branch is main', async () => {
     await open({ directionId: 'd1' });
     expect(field('input[aria-label="Ветка"]', HTMLInputElement).value).toBe('main');

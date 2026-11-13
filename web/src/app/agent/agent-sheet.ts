@@ -1,6 +1,6 @@
 import { afterNextRender, ChangeDetectionStrategy, Component, computed, DestroyRef, effect, ElementRef, inject, input, signal, viewChild } from '@angular/core';
 import type { Agent, AgentContext, AgentContextPart, AgentTemplate, BranchPlace } from '@worklog/model';
-import { AGENT_CONTEXT_PARTS, AGENT_LABELS, AGENT_TEMPLATE_LABELS, AGENTS, AGENT_TEMPLATES, AGENT_TEMPLATES_NEEDING_EXTRA, agentContext, baseBranch, isBranchName, suggestBranch, TERMINAL_OPEN_LABELS } from '@worklog/model';
+import { AGENT_CONTEXT_PARTS, AGENT_LABELS, AGENT_TEMPLATE_LABELS, AGENTS, AGENT_TEMPLATES, AGENT_TEMPLATES_NEEDING_EXTRA, agentContext, baseBranch, isBranchName, isExample, suggestBranch, TERMINAL_OPEN_LABELS } from '@worklog/model';
 import { firstValueFrom } from 'rxjs';
 import type { AgentTarget } from '../core/agent-sheet';
 import { AgentSheet } from '../core/agent-sheet';
@@ -114,7 +114,13 @@ export class AgentSheetView {
     const picked = this.pickedAgent();
     return picked !== null && launcher.agents.includes(picked) ? picked : launcher.defaultAgent;
   });
+  /** the onboarding example shows the window but runs nothing */
+  protected readonly forExample = computed(() => {
+    const direction = this.context().direction;
+    return direction !== undefined && isExample(direction);
+  });
   protected readonly launchHint = computed(() => {
+    if (this.forExample()) return 'в примере агент не запускается';
     const launcher = this.launcher();
     return launcher === null ? null : `Откроется ${TERMINAL_OPEN_LABELS[launcher.terminal]}, ${launcher.codeRoot}`;
   });
@@ -129,7 +135,7 @@ export class AgentSheetView {
   protected readonly needsExtra = computed(() => AGENT_TEMPLATES_NEEDING_EXTRA.includes(this.template()));
   protected readonly placeholder = computed(() => EXTRA_PLACEHOLDERS[this.template()]);
   protected readonly canLaunch = computed(
-    () => !this.sending() && !this.gone() && this.branchValid() && (!this.needsExtra() || this.extra().trim() !== ''),
+    () => !this.forExample() && !this.sending() && !this.gone() && this.branchValid() && (!this.needsExtra() || this.extra().trim() !== ''),
   );
 
   constructor() {

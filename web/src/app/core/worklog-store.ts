@@ -1,8 +1,10 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
-import type { AgentRequest, AgentRun, BoardStatus, DailyDraft, Direction, Note, NoteFile, PeriodDigest, Status, WorklogState } from '@worklog/model';
+import type { AgentRequest, AgentRun, BoardStatus, DailyDraft, Direction, Note, NoteFile, Onboarding, OnboardingPatch, PeriodDigest, Status, WorklogState } from '@worklog/model';
 import {
   activeDraft,
   activeRuns,
+  isExample,
+  ownDirections,
   clampIndex,
   compareText,
   countEventsAfter,
@@ -60,7 +62,10 @@ export class WorklogStore {
     awaiting_release: this.withStatus('awaiting_release'),
   }));
   readonly parked = computed(() => this.withStatus('parked'));
-  readonly doneDirections = computed(() => this.withStatus('done'));
+  // the onboarding example is no work done
+  readonly doneDirections = computed(() => this.withStatus('done').filter(direction => !isExample(direction)));
+  readonly ownDirections = computed(() => ownDirections(this.byOrder()));
+  readonly onboarding = computed<Onboarding>(() => this.state().onboarding ?? {});
 
   readonly openTodos = computed(() => this.state().todos.filter(todo => !todo.done));
   readonly doneToday = computed(() => {
@@ -164,6 +169,10 @@ export class WorklogStore {
 
   deleteDirection(id: string): Promise<void> {
     return this.send(this.api.deleteDirection(id));
+  }
+
+  setOnboarding(patch: OnboardingPatch): Promise<void> {
+    return this.send(this.api.setOnboarding(patch));
   }
 
   addEvent(id: string, text: string): Promise<void> {
