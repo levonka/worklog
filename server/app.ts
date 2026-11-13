@@ -20,6 +20,8 @@ import { createLiveHub } from './live.ts';
 import type { LiveHub } from './live.ts';
 import { serveStatic } from './static.ts';
 import { Store } from './store.ts';
+import type { UpdateFacts } from '../shared/model.ts';
+import { createUpdateChecker } from './update-check.ts';
 
 const HOST = '127.0.0.1';
 const API_PREFIX = '/api/';
@@ -55,6 +57,17 @@ export interface AppOptions {
   profile?: Profile | null;
   /** put the onboarding example into empty data on start: the real app does, tests ask for it */
   seedExample?: boolean;
+  /** the look at GitHub for a newer Worklog and the update by the button; none, both are off */
+  update?: {
+    facts: () => Promise<UpdateFacts | null>;
+    intervalMs: number;
+    version: string | null;
+    runFile: string;
+    /** starts server/update-main.ts; throws when it could not */
+    launch: (startedAt: string) => void;
+    alive?: (pid: number) => boolean;
+    now?: () => Date;
+  };
 }
 
 export interface App {
@@ -82,7 +95,10 @@ export async function createApp(opts: AppOptions): Promise<App> {
           });
           return mrRunning;
         };
-  const routes = createApiRoutes(store, history, live.clientCount, { summary: opts.summary, code: opts.code, agent: opts.agent, jira, mergeRequests: checkMergeRequests });
+  // a change of what the check found reaches the windows like a change of data
+  const checker = opts.update === undefined ? undefined : createUpdateChecker({ facts: opts.update.facts, intervalMs: opts.update.intervalMs, onChange: live.notify });
+  const update = opts.update === undefined || checker === undefined ? undefined : { ...opts.update, checker };
+  const routes = createApiRoutes(store, history, live.clientCount, { summary: opts.summary, code: opts.code, agent: opts.agent, jira, mergeRequests: checkMergeRequests, update });
   const favicons = createFavicons({ profileDir: opts.chromeProfileDir ?? null, snapshotMs: FAVICON_SNAPSHOT_MS });
   let port = 0;
   const server = createServer((req, res) => {
@@ -127,6 +143,7 @@ export async function createApp(opts: AppOptions): Promise<App> {
   const snapshotTimer = setInterval(snapshot, opts.snapshotCheckMs ?? SNAPSHOT_CHECK_MS);
   snapshotTimer.unref();
   jira?.start();
+  checker?.start();
   let mrTimer: NodeJS.Timeout | undefined;
   if (mr !== undefined && checkMergeRequests !== undefined) {
     void checkMergeRequests();
@@ -140,6 +157,7 @@ export async function createApp(opts: AppOptions): Promise<App> {
       clearInterval(repeatTimer);
       clearInterval(snapshotTimer);
       jira?.close();
+      checker?.close();
       clearInterval(mrTimer);
       await new Promise<void>((resolve, reject) => {
         live.close();

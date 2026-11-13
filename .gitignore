@@ -1,6 +1,8 @@
 .superpowers/
 node_modules/
 web/dist/
+web/dist-next/
+web/dist-prev/
 web/.angular/
 logs/
 data/

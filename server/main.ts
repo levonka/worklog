@@ -1,5 +1,8 @@
 import { createApp } from './app.ts';
+import { spawn } from 'node:child_process';
+import { closeSync, mkdirSync, openSync } from 'node:fs';
 import path from 'node:path';
+import { UPDATE_CHECK_MS } from '../shared/model.ts';
 import {
   CHROME_DIR,
   AGENT_SETUP,
@@ -21,6 +24,8 @@ import {
   SUMMARY_MODEL,
   SUMMARY_TIMEOUT_MS,
   TERMINAL,
+  UPDATE_CHECK_ON,
+  UPDATE_RUN_FILE,
   WARP_TAB_DIR,
 } from './config.ts';
 import { chromeProfileDir } from './favicons.ts';
@@ -28,10 +33,29 @@ import { isErrorCode } from './fs-utils.ts';
 import { createJiraFetch, jiraConfig } from './jira.ts';
 import { loadProfile } from './profile.ts';
 import { stopSummaryRuns } from './summarizer.ts';
+import { currentVersion, gitIn, updateFacts } from './update-check.ts';
 
 const { profile, error: profileError } = await loadProfile(PROFILE_PATH);
 if (profileError !== null) console.error(profileError);
 const profileJira = profile?.jira;
+const clone = gitIn(ROOT_DIR);
+
+/** server/update-main.ts, detached: it outlives this server, stops it and starts the new version */
+function launchUpdate(startedAt: string): void {
+  const logs = path.join(ROOT_DIR, 'logs');
+  mkdirSync(logs, { recursive: true });
+  const out = openSync(path.join(logs, 'update.log'), 'a');
+  try {
+    const args = [path.join(ROOT_DIR, 'server', 'update-main.ts'), '--pid', String(process.pid), '--started-at', startedAt];
+    const child = spawn(process.execPath, args, { cwd: ROOT_DIR, env: process.env, detached: true, stdio: ['ignore', out, out] });
+    // a node binary removed by an upgrade fails the spawn: the live server must not crash on it
+    child.on('error', error => console.error('Обновление не запустилось:', error.message));
+    if (child.pid === undefined) throw new Error('процесс обновления не запустился');
+    child.unref();
+  } finally {
+    closeSync(out);
+  }
+}
 
 try {
   const app = await createApp({
@@ -69,6 +93,7 @@ try {
           ...(profile?.gitlab?.mergeRequestsUrl === undefined ? {} : { mergeRequests: { codeRoot: CODE_ROOT, pollMs: JIRA_POLL_MS } }),
         }),
     jira: profileJira === undefined || !JIRA_ON ? undefined : { connect: () => createJiraFetch(jiraConfig(profileJira, JIRA_FILES)), pollMs: JIRA_POLL_MS },
+    update: UPDATE_CHECK_ON ? { facts: () => updateFacts(clone), intervalMs: UPDATE_CHECK_MS, version: await currentVersion(clone), runFile: UPDATE_RUN_FILE, launch: launchUpdate } : undefined,
   });
   console.log(`Worklog: http://localhost:${new URL(app.url).port}`);
 } catch (error) {

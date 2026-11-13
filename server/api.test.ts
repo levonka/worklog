@@ -8,10 +8,11 @@ import { setTimeout as sleep } from 'node:timers/promises';
 import { homedir, tmpdir } from 'node:os';
 import path from 'node:path';
 import { localDate } from '../shared/model.ts';
-import type { AgentRun, Direction, Link, Note, Profile, QuickLink, QuickLinkGroup, Ticket, Todo, WorkEvent, WorklogState } from '../shared/model.ts';
+import type { AgentRun, Direction, Link, Note, Profile, QuickLink, QuickLinkGroup, Ticket, Todo, UpdateFacts, UpdateStatus, WorkEvent, WorklogState } from '../shared/model.ts';
 import type { AgentConfig } from './agent-launch.ts';
 import type { CodeConfig } from './code-files.ts';
 import { createApp } from './app.ts';
+import type { AppOptions } from './app.ts';
 import { initDataRepo } from './data-git.ts';
 import { png, writeFaviconsDb } from './favicons.fixture.ts';
 import { Store } from './store.ts';
@@ -541,7 +542,7 @@ function period(): string {
   return currentPeriodStart(new Date(), []);
 }
 
-async function startDailyApp(t: TestContext): Promise<string> {
+async function startDailyApp(t: TestContext, extra: Partial<AppOptions> = {}): Promise<string> {
   const dir = await tempDir(t, 'worklog-api-daily-');
   const projectsDir = path.join(dir, 'projects');
   await mkdir(path.join(projectsDir, 'p'), { recursive: true });
@@ -557,6 +558,7 @@ async function startDailyApp(t: TestContext): Promise<string> {
     staticDir: path.join(dir, 'missing'),
     idleMs: IDLE_MS,
     summary: { claudeProjectsDir: projectsDir, agent: { agent: 'claude', bin, model: 'sonnet', cwd: dir, timeoutMs: 5000 } },
+    ...extra,
   });
   t.after(() => app.close());
   return app.url;
@@ -821,4 +823,204 @@ test('POST /api/jira/refresh also links the merge request of the branch', async 
   assert.equal(calls, 2);
   const state = await json<WorklogState>(await call(app.url, 'GET', '/api/state'));
   assert.equal(state.directions[0].links[0]?.title, 'MR !4022');
+});
+
+interface UpdateApp {
+  base: string;
+  runFile: string;
+  launches: () => number;
+  setFacts: (facts: () => Promise<UpdateFacts | null>) => void;
+}
+
+const BEHIND: UpdateFacts = { ahead: 0, behind: 1, dirty: false };
+
+/** a server with the update by the button: facts and the launch are stand-ins, nothing reaches GitHub */
+async function startUpdateApp(
+  t: TestContext,
+  facts: () => Promise<UpdateFacts | null>,
+  daily = false,
+  extra: Partial<NonNullable<AppOptions['update']>> = {},
+): Promise<UpdateApp> {
+  const dir = await tempDir(t, 'worklog-api-update-');
+  const runFile = path.join(dir, 'logs', 'update.json');
+  let current = facts;
+  let launches = 0;
+  const update: AppOptions['update'] = {
+    facts: () => current(),
+    intervalMs: 60_000,
+    version: 'abc1234',
+    runFile,
+    launch: () => {
+      launches++;
+      return 4242;
+    },
+    alive: () => true,
+    ...extra,
+  };
+  const base = daily ? await startDailyApp(t, { update }) : await startAppWith(t, dir, update);
+  return { base, runFile, launches: () => launches, setFacts: next => (current = next) };
+}
+
+async function startAppWith(t: TestContext, dir: string, update: AppOptions['update']): Promise<string> {
+  const app = await createApp({ dataDir: path.join(dir, 'data'), port: 0, staticDir: path.join(dir, 'missing'), idleMs: IDLE_MS, update });
+  t.after(() => app.close());
+  return app.url;
+}
+
+async function updateStatus(base: string): Promise<UpdateStatus> {
+  return json<UpdateStatus>(await call(base, 'GET', '/api/update'));
+}
+
+async function waitForCheck(base: string, check: UpdateStatus['check']): Promise<void> {
+  for (let i = 0; i < 100 && (await updateStatus(base)).check !== check; i++) await sleep(10);
+  assert.equal((await updateStatus(base)).check, check);
+}
+
+async function errorOf(response: Response): Promise<[number, string]> {
+  return [response.status, (await json<{ error: string }>(response)).error];
+}
+
+test('GET /api/update shows the check, the version and the last run', async t => {
+  const app = await startUpdateApp(t, async () => BEHIND);
+  await waitForCheck(app.base, 'available');
+  assert.deepEqual(await updateStatus(app.base), { check: 'available', version: 'abc1234', run: null });
+
+  const run = { phase: 'failed', startedAt: new Date().toISOString(), error: 'не удалось собрать окно' };
+  await mkdir(path.dirname(app.runFile), { recursive: true });
+  await writeFile(app.runFile, JSON.stringify(run));
+  assert.deepEqual((await updateStatus(app.base)).run, run);
+});
+
+test('POST /api/update starts once and refuses a second click', async t => {
+  const app = await startUpdateApp(t, async () => BEHIND);
+  await waitForCheck(app.base, 'available');
+
+  const answers = await Promise.all([call(app.base, 'POST', '/api/update'), call(app.base, 'POST', '/api/update')]);
+
+  assert.deepEqual(answers.map(answer => answer.status).sort(), [202, 409]);
+  assert.equal(app.launches(), 1);
+  assert.equal((await updateStatus(app.base)).run?.phase, 'running');
+  assert.deepEqual(await errorOf(await call(app.base, 'POST', '/api/update')), [409, 'Обновление уже идёт']);
+});
+
+test('POST /api/update refuses without a new version, with local changes and during a summary', async t => {
+  const none = await startUpdateApp(t, async () => null);
+  await waitForCheck(none.base, 'none');
+  assert.deepEqual(await errorOf(await call(none.base, 'POST', '/api/update')), [409, 'Новой версии нет']);
+
+  const own = await startUpdateApp(t, async () => ({ ahead: 1, behind: 1, dirty: false }));
+  await waitForCheck(own.base, 'local-changes');
+  assert.deepEqual(await errorOf(await call(own.base, 'POST', '/api/update')), [409, 'В папке Worklog есть свои правки — обновите её через git']);
+
+  const daily = await startUpdateApp(t, async () => BEHIND, true);
+  await waitForCheck(daily.base, 'available');
+  assert.equal((await call(daily.base, 'POST', '/api/daily/summary')).status, 202);
+  assert.deepEqual(await errorOf(await call(daily.base, 'POST', '/api/update')), [409, 'Идёт сборка дейлика из сессий — обновите после неё']);
+  assert.equal(daily.launches(), 0);
+  await waitForRunEnd(daily.base);
+});
+
+test('a running update older than 15 minutes reads as interrupted and can be started again', async t => {
+  const app = await startUpdateApp(t, async () => BEHIND);
+  await waitForCheck(app.base, 'available');
+  const startedAt = new Date(Date.now() - 16 * 60_000).toISOString();
+  await mkdir(path.dirname(app.runFile), { recursive: true });
+  await writeFile(app.runFile, JSON.stringify({ phase: 'running', startedAt }));
+
+  assert.deepEqual((await updateStatus(app.base)).run, { phase: 'failed', startedAt, error: 'обновление прервалось' });
+  assert.equal((await call(app.base, 'POST', '/api/update')).status, 202);
+});
+
+test('DELETE /api/update/run clears a failed run; the summary waits for a running update', async t => {
+  const app = await startUpdateApp(t, async () => BEHIND, true);
+  await waitForCheck(app.base, 'available');
+  assert.equal((await call(app.base, 'POST', '/api/update')).status, 202);
+
+  assert.deepEqual(await errorOf(await call(app.base, 'POST', '/api/daily/summary')), [409, 'Идёт обновление Worklog']);
+  assert.equal((await call(app.base, 'DELETE', '/api/update/run')).status, 204);
+  assert.equal((await updateStatus(app.base)).run?.phase, 'running');
+
+  await writeFile(app.runFile, JSON.stringify({ phase: 'failed', startedAt: new Date().toISOString(), error: 'не удалось скачать пакеты npm' }));
+  assert.equal((await call(app.base, 'DELETE', '/api/update/run')).status, 204);
+  assert.equal((await updateStatus(app.base)).run, null);
+});
+
+test('POST /api/update/check checks now and reports the result', async t => {
+  const app = await startUpdateApp(t, async () => null);
+  await waitForCheck(app.base, 'none');
+
+  app.setFacts(async () => BEHIND);
+  const found = await json<{ result: string; status: UpdateStatus }>(await call(app.base, 'POST', '/api/update/check'));
+  assert.equal(found.result, 'available');
+  assert.equal(found.status.check, 'available');
+
+  app.setFacts(async () => {
+    throw new Error('нет сети');
+  });
+  const failed = await json<{ result: string; status: UpdateStatus }>(await call(app.base, 'POST', '/api/update/check'));
+  assert.equal(failed.result, 'unreachable');
+  assert.equal(failed.status.check, 'none');
+});
+
+test('POST /api/undo does not take back an update request', async t => {
+  const app = await startUpdateApp(t, async () => BEHIND);
+  await waitForCheck(app.base, 'available');
+  assert.equal((await call(app.base, 'POST', '/api/update')).status, 202);
+
+  assert.deepEqual(await json(await call(app.base, 'POST', '/api/undo')), { applied: false });
+  assert.equal((await updateStatus(app.base)).run?.phase, 'running');
+});
+
+test('without update options the server answers none and 503', async t => {
+  const base = await startApp(t);
+  assert.deepEqual(await updateStatus(base), { check: 'none', version: null, run: null });
+  assert.deepEqual(await errorOf(await call(base, 'POST', '/api/update')), [503, 'Обновление по кнопке выключено']);
+  assert.equal((await call(base, 'POST', '/api/update/check')).status, 503);
+  assert.equal((await call(base, 'DELETE', '/api/update/run')).status, 204);
+});
+
+test('POST /api/update asks GitHub again before starting', async t => {
+  const app = await startUpdateApp(t, async () => BEHIND);
+  await waitForCheck(app.base, 'available');
+
+  app.setFacts(async () => ({ ahead: 0, behind: 1, dirty: true }));
+  assert.deepEqual(await errorOf(await call(app.base, 'POST', '/api/update')), [409, 'В папке Worklog есть свои правки — обновите её через git']);
+  app.setFacts(async () => {
+    throw new Error('нет сети');
+  });
+  assert.deepEqual(await errorOf(await call(app.base, 'POST', '/api/update')), [409, 'Нет связи с GitHub — попробуйте позже']);
+  assert.equal(app.launches(), 0);
+});
+
+test('a corrupt run file reads as no run and can be cleared', async t => {
+  const app = await startUpdateApp(t, async () => BEHIND);
+  await mkdir(path.dirname(app.runFile), { recursive: true });
+  await writeFile(app.runFile, '{');
+
+  assert.equal((await updateStatus(app.base)).run, null);
+  assert.equal((await call(app.base, 'DELETE', '/api/update/run')).status, 204);
+});
+
+test('a running update is judged by its process: gone reads as interrupted, alive stays running however long', async t => {
+  let alive = false;
+  const app = await startUpdateApp(t, async () => BEHIND, false, { alive: () => alive });
+  await mkdir(path.dirname(app.runFile), { recursive: true });
+  const startedAt = new Date(Date.now() - 20 * 60_000).toISOString();
+  await writeFile(app.runFile, JSON.stringify({ phase: 'running', startedAt, pid: 99 }));
+
+  assert.equal((await updateStatus(app.base)).run?.phase, 'failed');
+  alive = true;
+  assert.deepEqual((await updateStatus(app.base)).run, { phase: 'running', startedAt, pid: 99 });
+});
+
+test('a launch that fails answers 500 and records nothing', async t => {
+  const app = await startUpdateApp(t, async () => BEHIND, false, {
+    launch: () => {
+      throw new Error('нет node');
+    },
+  });
+  await waitForCheck(app.base, 'available');
+
+  assert.deepEqual(await errorOf(await call(app.base, 'POST', '/api/update')), [500, 'Не удалось запустить обновление']);
+  assert.equal((await updateStatus(app.base)).run, null);
 });

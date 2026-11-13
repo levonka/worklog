@@ -1,6 +1,6 @@
 import { homedir } from 'node:os';
 import type { Agent, JiraHealth } from '../shared/model.ts';
-import { AGENT_CONTEXT_PARTS, AGENT_TEMPLATES, AGENTS, LINK_KINDS, STATUSES } from '../shared/model.ts';
+import { AGENT_CONTEXT_PARTS, AGENT_TEMPLATES, AGENTS, LINK_KINDS, STATUSES, summaryRunState } from '../shared/model.ts';
 import type { AgentConfig } from './agent-launch.ts';
 import { installedAgents } from './agents.ts';
 import { branchPlace, launchAgent } from './agent-launch.ts';
@@ -15,6 +15,8 @@ import { HttpError } from './http.ts';
 import type { Route, RouteContext, RouteResult } from './http.ts';
 import type { NotePatch, TodoPatch } from './store.ts';
 import { Store, ValidationError } from './store.ts';
+import type { UpdateOptions } from './update-routes.ts';
+import { createUpdateRoutes, updateRunning } from './update-routes.ts';
 
 const OK = 200;
 const CREATED = 201;
@@ -35,9 +37,11 @@ export interface ApiOptions {
   jira?: JiraPoller;
   /** links the merge requests of the branches; run along with the Jira refresh */
   mergeRequests?: () => Promise<void>;
+  /** the update by the button; none, it is off */
+  update?: UpdateOptions;
 }
 
-export function createApiRoutes(store: Store, history: History, clientCount: () => number, { summary, code, agent, jira, mergeRequests }: ApiOptions = {}): Route[] {
+export function createApiRoutes(store: Store, history: History, clientCount: () => number, { summary, code, agent, jira, mergeRequests, update }: ApiOptions = {}): Route[] {
   const routes = [
     route('GET', /^\/api\/health$/, async () => ({ status: OK, body: { ok: true, clients: clientCount() } })),
     route('GET', /^\/api\/state$/, async () => ({ status: OK, body: await store.read() })),
@@ -208,9 +212,12 @@ export function createApiRoutes(store: Store, history: History, clientCount: () 
     // outside history: undo must not take back the «running» mark of a run still in progress
     route('POST', /^\/api\/daily\/summary$/, async () => {
       if (summary === undefined) throw new HttpError(UNAVAILABLE, 'Выжимка из сессий не настроена');
+      // the restart at the end of an update would cut the agent off
+      if (await updateRunning(update)) throw new HttpError(CONFLICT, 'Идёт обновление Worklog');
       await startSummary(store, summary);
       return { status: ACCEPTED, body: { started: true } };
     }),
+    ...createUpdateRoutes(update, async () => summaryRunState((await store.read()).draft?.run ?? null, new Date()) === 'running'),
     // outside history as well: undo must not bring the tour back
     route('PATCH', /^\/api\/onboarding$/, async ctx => {
       const body = await readObject(ctx);
