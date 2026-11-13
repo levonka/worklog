@@ -261,6 +261,11 @@ describe('Sidebar', () => {
     await answerRefresh();
   });
 
+  it('Как пользоваться sits at the very bottom, under the link groups, not among the sections', () => {
+    expect(host.querySelector('.sb__nav .sb__help')).toBeNull();
+    expect(host.lastElementChild?.classList).toContain('sb__help');
+  });
+
   it('Как пользоваться starts the tour and brings hidden first steps back while something is left', async () => {
     const start = vi.spyOn(TestBed.inject(Tour), 'start').mockImplementation(() => undefined);
     const help = query('.sb__help', HTMLButtonElement);
