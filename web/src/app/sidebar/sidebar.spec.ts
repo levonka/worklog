@@ -335,6 +335,18 @@ describe('Sidebar', () => {
     await answerRefresh();
   });
 
+  it('Как пользоваться leaves the first steps alone once they were all done', async () => {
+    vi.spyOn(TestBed.inject(Tour), 'start').mockImplementation(() => undefined);
+    const store = TestBed.inject(WorklogStore);
+    const loading = store.refresh();
+    http.expectOne({ method: 'GET', url: '/api/state' }).flush({ ...STATE, onboarding: { stepsHidden: true, stepsDoneAt: '2026-11-13T09:00:00.000Z' } });
+    await loading;
+
+    query('.sb__foot-link:last-child', HTMLButtonElement).click();
+
+    http.expectNone({ method: 'PATCH', url: '/api/onboarding' });
+  });
+
   it('Как пользоваться leaves first steps hidden when all of them are done', async () => {
     vi.spyOn(TestBed.inject(Tour), 'start').mockImplementation(() => undefined);
     const done: WorklogState = {

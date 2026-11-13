@@ -96,10 +96,11 @@ export class Sidebar {
     afterRenderEffect(() => this.titleInput()?.nativeElement.focus());
   }
 
-  /** the tour again, and the first steps back while something in them is left */
+  /** the tour again, and the first steps back while something in them is left and they were never all done */
   protected startTour(): void {
+    const onboarding = this.worklog.onboarding();
     const done = firstStepsDone(this.worklog.state());
-    if (this.worklog.onboarding().stepsHidden === true && FIRST_STEPS.some(step => !done[step])) {
+    if (onboarding.stepsHidden === true && onboarding.stepsDoneAt === undefined && FIRST_STEPS.some(step => !done[step])) {
       inBackground(this.worklog.setOnboarding({ stepsHidden: false }));
     }
     this.tour.start();
