@@ -138,6 +138,36 @@ describe('Tour', () => {
     expect(await answerClosed(state)).toEqual({ tourClosed: true });
   });
 
+  it('forgets the direction deleted mid-tour: its tab closes and the next direction step does not open it again', async () => {
+    await load(worklog({ directions: [EXAMPLE] }));
+    tour.start();
+    goTo('events');
+    expect(tabs.layout().tabs).toContain('direction:ex');
+
+    await load(worklog({}));
+
+    expect(tabs.layout().tabs).not.toContain('direction:ex');
+    expect(tour.directionId()).toBeNull();
+    tour.next();
+    expect(tour.current()?.step.id).toBe('agent');
+    expect(tabs.layout().tabs).not.toContain('direction:ex');
+    tour.close();
+    await answerClosed(worklog({}));
+  });
+
+  it('shows the board where it is open for the drag step, also in the right pane behind other tabs', async () => {
+    const state = worklog({ directions: [EXAMPLE] });
+    await load(state);
+    tabs.replaceLayout({ tabs: ['daily', 'board'], active: 'daily', split: 'board', ratio: 0.5 });
+
+    tour.start();
+    goTo('drag');
+
+    expect(tabs.layout()).toMatchObject({ active: 'todos', split: 'board' });
+    tour.close();
+    await answerClosed(state);
+  });
+
   it('keeps the saved layout from before the tour while it runs, so a reload mid-tour does not take the tour layout', async () => {
     const state = worklog({ directions: [EXAMPLE] });
     await load(state);
@@ -195,6 +225,17 @@ describe('Tour', () => {
     expect(tour.current()).toBeNull();
     expect(tabs.layout()).toEqual(shown);
     http.expectNone(ONBOARDING_REQUEST);
+  });
+
+  it('show of the tabs step brings back the hidden sidebar, where its button is', async () => {
+    await load(worklog({ directions: [EXAMPLE] }));
+    tabs.toggleSidebar();
+    expect(tabs.sidebarHidden()).toBe(true);
+
+    tour.show('chrome-tabs');
+
+    expect(tabs.sidebarHidden()).toBe(false);
+    expect(tour.current()?.step.id).toBe('chrome-tabs');
   });
 
   it('next past the last step closes the tour', async () => {

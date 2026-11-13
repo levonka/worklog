@@ -1,4 +1,4 @@
-import { computed, inject, Injectable, signal } from '@angular/core';
+import { computed, effect, inject, Injectable, signal, untracked } from '@angular/core';
 import { BOARD_STATUSES, EMPTY_STATE, isExample } from '@worklog/model';
 import type { Direction } from '@worklog/model';
 import { inBackground } from '../core/background';
@@ -40,6 +40,18 @@ export class Tour {
     return run === null ? null : { step: run.steps[run.index], index: run.index, total: run.steps.length, single: run.single };
   });
   readonly directionId = computed(() => this.run()?.directionId ?? null);
+
+  constructor() {
+    // its tab is closed by TabsStore; the steps about it lose their target and are skipped
+    effect(() => {
+      const state = this.worklog.state();
+      untracked(() => {
+        const run = this.run();
+        if (run === null || run.directionId === null || state === EMPTY_STATE) return;
+        if (!state.directions.some(direction => direction.id === run.directionId)) this.run.set({ ...run, directionId: null });
+      });
+    });
+  }
 
   start(): void {
     const running = this.run();
@@ -114,6 +126,7 @@ export class Tour {
   private openScreen(step: TourStep, directionId: string | null): void {
     switch (step.screen) {
       case null:
+        if (step.target === 'sidebar-tabs' && this.tabs.sidebarHidden()) this.tabs.toggleSidebar();
         return;
       case 'board':
         if (step.demo === 'todo-card') this.sideBySide('board', 'todos');
@@ -128,6 +141,11 @@ export class Tour {
   }
 
   private sideBySide(left: TabId, right: TabId): void {
+    // already in the right pane: it stays there, the other one takes the left
+    if (this.tabs.layout().split === left) {
+      this.tabs.openTab(right);
+      return;
+    }
     this.tabs.openTab(right);
     this.tabs.openTab(left);
     this.tabs.splitRight(right);

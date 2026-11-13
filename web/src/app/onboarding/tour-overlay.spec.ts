@@ -92,7 +92,7 @@ describe('TourOverlay', () => {
     }
   });
 
-  /** marks every step's target on the page except the ones named */
+  /** marks every step's target on the page except the ones named; each has a box, as on screen */
   function targets(...missing: TourStepId[]): void {
     const marks = ['board-columns', 'board-add', 'sidebar-tabs', 'todo-input', 'tab-bar', 'daily-summary'];
     page.innerHTML =
@@ -101,6 +101,12 @@ describe('TourOverlay', () => {
       '<div data-direction-view="ex"><div data-tour="direction-links"></div><input data-tour="event-input" /><button data-tour="agent-button"></button><button data-tour="direction-menu"></button></div>';
     const of: Partial<Record<TourStepId, string>> = { board: 'board-columns', add: 'board-add', 'chrome-tabs': 'sidebar-tabs', todos: 'todo-input', tabs: 'tab-bar', daily: 'daily-summary' };
     for (const id of missing) page.querySelector(`[data-tour="${of[id] ?? id}"]`)?.remove();
+    page.querySelectorAll<HTMLElement>('[data-tour], [data-direction-id]').forEach((element, index) => sized(element, new DOMRect(20, 20 + index * 40, 160, 32)));
+  }
+
+  function sized(element: Element | null, box: DOMRect): void {
+    if (element === null) throw new Error('no element to size');
+    vi.spyOn(element, 'getBoundingClientRect').mockReturnValue(box);
   }
 
   function texts(selector: string): string[] {
@@ -181,6 +187,59 @@ describe('TourOverlay', () => {
     expect(tour.current()?.step.id).toBe('safety');
     expect(host.querySelector('.tu__ring')).toBeNull();
     expect(host.querySelector('.tu__dim')).not.toBeNull();
+  });
+
+  it('tells the board and direction steps without Jira, stands and builds when there is no profile', async () => {
+    targets();
+    const text = async (id: TourStepId): Promise<string> => {
+      tour.show(id);
+      await fixture.whenStable();
+      const shown = texts('.tu__text')[0];
+      tour.next();
+      return shown;
+    };
+    expect(await text('board')).toMatch(/Jira/);
+    expect(await text('direction')).toMatch(/стенды/);
+
+    const reloading = TestBed.inject(ProfileStore).load();
+    http.expectOne({ method: 'GET', url: '/api/profile' }).flush({ profile: null });
+    await reloading;
+
+    for (const id of ['board', 'direction'] as const) expect(await text(id)).not.toMatch(/Jira|стенд|сборк|ветк/);
+  });
+
+  it('skips a target of zero size, as one not on screen', async () => {
+    targets();
+    sized(page.querySelector('[data-tour="board-columns"]'), new DOMRect(0, 0, 0, 0));
+    tour.start();
+    await fixture.whenStable();
+
+    tour.next();
+    await fixture.whenStable();
+
+    expect(tour.current()?.step.id).toBe('add');
+    tour.close();
+    await answerClosed();
+  });
+
+  it('leaves the steps of a direction deleted mid-tour, even with another direction open beside', async () => {
+    targets();
+    tour.start();
+    for (let view = tour.current(); view !== null && view.step.id !== 'events'; view = tour.current()) tour.next();
+    await fixture.whenStable();
+    expect(host.querySelector('.tu__bubble_placed')).not.toBeNull();
+
+    page.querySelector('[data-direction-view="ex"]')?.remove();
+    page.insertAdjacentHTML('beforeend', '<div data-direction-view="own"><input data-tour="event-input" /><button data-tour="agent-button"></button><button data-tour="direction-menu"></button></div>');
+    page.querySelectorAll('[data-direction-view="own"] [data-tour]').forEach(element => sized(element, new DOMRect(300, 300, 160, 32)));
+    const loading = TestBed.inject(WorklogStore).refresh();
+    http.expectOne({ method: 'GET', url: '/api/state' }).flush({ ...STATE, directions: [{ ...EXAMPLE, id: 'own', example: false }] });
+    await loading;
+    await fixture.whenStable();
+
+    expect(tour.current()?.step.id).toBe('tabs');
+    tour.close();
+    await answerClosed();
   });
 
   it('Esc closes; Enter goes on; ← goes back; shortcuts of the window wait', async () => {

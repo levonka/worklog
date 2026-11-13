@@ -17,6 +17,8 @@ export interface TourStep {
   target: string | null;
   title: string;
   text: string;
+  /** the text without a company profile: no Jira, branches, stands or builds */
+  plainText?: string;
   prompts?: readonly (keyof OnboardingPrompts)[];
   demo?: TourDemoKind;
 }
@@ -35,6 +37,7 @@ export const TOUR_STEPS: readonly TourStep[] = [
     target: 'board-columns',
     title: 'Доска',
     text: 'Колонки — этапы направлений. Если у направления есть тикеты Jira, этап приходит оттуда сам. «Жду» и «Отложено» — пометки поверх этапа, их ставите вы, перетащив карточку.',
+    plainText: 'Колонки — этапы направлений, карточку переносят между ними перетаскиванием. «Жду» и «Отложено» — пометки поверх этапа, их тоже ставят, перетащив карточку.',
   },
   {
     id: 'add',
@@ -81,6 +84,7 @@ export const TOUR_STEPS: readonly TourStep[] = [
     target: 'direction-links',
     title: 'Направление',
     text: 'Внутри — тикеты, ветка и стенды, ссылки, заметки и дела направления. Ссылку проще всего добавить фразой агенту:',
+    plainText: 'Внутри — тикеты, ссылки, заметки и дела направления. Ссылку проще всего добавить фразой агенту:',
     prompts: ['link'],
   },
   {

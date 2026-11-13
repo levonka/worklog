@@ -40,6 +40,11 @@ export class TourOverlay {
   protected readonly view = this.tour.current;
   protected readonly ring = signal<Rect | null>(null);
   protected readonly place = signal<BubblePlace | null>(null);
+  protected readonly text = computed(() => {
+    const step = this.view()?.step;
+    if (step === undefined) return '';
+    return step.plainText !== undefined && this.profiles.profile() === null ? step.plainText : step.text;
+  });
   protected readonly prompts = computed(() => {
     const keys = this.view()?.step.prompts ?? [];
     if (keys.length === 0) return [];
@@ -104,10 +109,13 @@ export class TourOverlay {
     if (selector === null) return null;
     const directionId = this.tour.directionId();
     // a direction's own controls are looked for in its view: another direction may stand in the other pane
-    const root = step.screen === 'direction' && directionId !== null ? this.directionView(directionId) : this.document;
+    const root = step.screen !== 'direction' ? this.document : directionId === null ? null : this.directionView(directionId);
     if (root === null) return null;
-    const found = Array.from(root.querySelectorAll<HTMLElement>(selector));
-    return found.find(element => element.getBoundingClientRect().width > 0) ?? found[0] ?? null;
+    // a hidden copy, as in a pane out of sight, has no size
+    return Array.from(root.querySelectorAll<HTMLElement>(selector)).find(element => {
+      const box = element.getBoundingClientRect();
+      return box.width > 0 && box.height > 0;
+    }) ?? null;
   }
 
   private directionView(directionId: string): HTMLElement | null {

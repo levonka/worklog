@@ -36,7 +36,7 @@
       }
       <button type="button" class="tu__close" title="Закрыть" aria-label="Закрыть экскурсию" (click)="tour.close()">✕</button>
       <h2 id="tu-title" class="tu__title">{{ view.step.title }}</h2>
-      <p class="tu__text">{{ view.step.text }}</p>
+      <p class="tu__text">{{ text() }}</p>
       @for (prompt of prompts(); track prompt) {
         <wl-prompt class="tu__prompt" [text]="prompt" />
       }
