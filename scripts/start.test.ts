@@ -221,14 +221,10 @@ test('start.sh shows an alert when node is not found', async t => {
 
 test('start.sh shows an alert and opens no window when the server does not come up', async t => {
   const box = await sandbox(t);
-  const nodeDir = await mkdtemp(path.join(tmpdir(), 'worklog-node-'));
-  t.after(() => rm(nodeDir, { recursive: true, force: true }));
-  // exits at once and prints nothing, so logs/server.log stays clean
-  const deadNode = path.join(nodeDir, 'node');
-  await writeFile(deadNode, '#!/bin/sh\nexit 0\n');
-  await chmod(deadNode, 0o755);
+  // prints nothing: the alert has no reason, and the line left in the log from before is not taken
+  const clone = await cloneWithDeadNode(t, '');
 
-  const result = await runStart({ ...box.env, WORKLOG_NODE: deadNode });
+  const result = await runStart({ ...box.env, WORKLOG_NODE: clone.node }, clone.script);
 
   assert.equal(result.code, 1);
   assert.deepEqual(await box.calls('open'), []);
