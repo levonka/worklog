@@ -29,7 +29,7 @@ const STATE: WorklogState = {
   dailies: [],
   draft: null,
   notes: [
-    note('old', 'Капча: дока API', '2026-11-01T09:00:00.000Z', { urls: [{ url: 'https://wiki.test/captcha' }] }),
+    note('old', 'Карта: дока API', '2026-11-01T09:00:00.000Z', { urls: [{ url: 'https://wiki.test/captcha' }] }),
     note('new', 'Общий origin', '2026-11-05T09:00:00.000Z', {
       body: 'Ключи `app.*`',
       directionIds: ['by'],
@@ -105,7 +105,7 @@ describe('KnowledgeView', () => {
   });
 
   it('lists notes newest first with links, marks a missing file and opens its direction', async () => {
-    expect(titles()).toEqual(['Общий origin', 'Капча: дока API']);
+    expect(titles()).toEqual(['Общий origin', 'Карта: дока API']);
     const files = Array.from(host.querySelectorAll('.nc__file'));
     expect(files.map(f => [f.textContent, f.classList.contains('nc__file_missing')])).toEqual([
       ['local-storage/README.md', false],
@@ -122,7 +122,7 @@ describe('KnowledgeView', () => {
     for (const [text, expected] of [
       ['app-9508', ['Общий origin']],
       ['push-token', ['Общий origin']],
-      ['капча', ['Капча: дока API']],
+      ['карта', ['Карта: дока API']],
       ['нет такого', []],
     ] as const) {
       search.value = text;

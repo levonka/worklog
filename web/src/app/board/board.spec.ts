@@ -28,13 +28,13 @@ function todo(id: string, fields: Partial<Todo>): Todo {
 
 const STATE: WorklogState = {
   directions: [
-    direction('unify', 'Унификация сервисов', 'in_progress', 1),
-    direction('stores', 'Браузерные сторы', 'in_progress', 0, { tickets: [ticketFromKey('APP-6120', TEST_PROFILE), ticketFromKey('WEB-3380', TEST_PROFILE)] }),
-    direction('redirect', 'Редирект по UA', 'waiting', 0, { waitingFor: 'девопсы', tickets: [ticketFromKey('SHOP-8221', TEST_PROFILE)] }),
+    direction('unify', 'Переезд сервисов', 'in_progress', 1),
+    direction('stores', 'Фильтры каталога', 'in_progress', 0, { tickets: [ticketFromKey('APP-6120', TEST_PROFILE), ticketFromKey('WEB-3380', TEST_PROFILE)] }),
+    direction('redirect', 'Сертификат для стенда', 'waiting', 0, { waitingFor: 'девопсы', tickets: [ticketFromKey('SHOP-5233', TEST_PROFILE)] }),
     direction('push', 'US пуши', 'testing', 0, { stage: 'testing', stageFromJira: true }),
     direction('toggles', 'Удаление тоглов', 'awaiting_release', 0),
-    direction('captcha', 'Капча', 'parked', 0),
-    direction('ident', 'Идентификация', 'parked', 1),
+    direction('captcha', 'Карта', 'parked', 0),
+    direction('ident', 'Подписки', 'parked', 1),
     direction('seo', 'SEO-текст', 'done', 0),
   ],
   todos: [
@@ -276,8 +276,8 @@ describe('Board', () => {
 
   it('card shows жду: девопсы and badge "2 дела · от Олега"', () => {
     const waiting = query('[data-direction-id="redirect"]', HTMLElement);
-    expect(text(waiting.querySelector('.dc__title'))).toBe('Редирект по UA');
-    expect(text(waiting.querySelector('.dc__meta'))).toBe('SHOP-8221');
+    expect(text(waiting.querySelector('.dc__title'))).toBe('Сертификат для стенда');
+    expect(text(waiting.querySelector('.dc__meta'))).toBe('SHOP-5233');
     expect(text(waiting.querySelector('.dc__wait'))).toBe('жду: девопсы');
     expect(text(waiting.querySelector('.dc__badge'))).toBe('2 дела · от Олега');
 
@@ -290,7 +290,7 @@ describe('Board', () => {
 
   it('parked tray lists parked titles', async () => {
     const tray = query('.bd__column:first-child .bd__tray', HTMLElement);
-    expect(text(query('.bd__tray-head', HTMLButtonElement, tray))).toBe('Отложено · Капча, Идентификация');
+    expect(text(query('.bd__tray-head', HTMLButtonElement, tray))).toBe('Отложено · Карта, Подписки');
     expect(cardIds(tray)).toEqual([]);
 
     query('.bd__tray-head', HTMLButtonElement, tray).click();
@@ -332,7 +332,7 @@ describe('Board', () => {
   it('a Jira-led card dragged out of Жду into any stage column clears the mark', async () => {
     const store = TestBed.inject(WorklogStore);
     const loading = store.refresh();
-    const redirect = direction('redirect', 'Редирект по UA', 'waiting', 0, { waitingFor: 'девопсы', stage: 'testing', stageFromJira: true });
+    const redirect = direction('redirect', 'Сертификат для стенда', 'waiting', 0, { waitingFor: 'девопсы', stage: 'testing', stageFromJira: true });
     http.expectOne({ method: 'GET', url: '/api/state' }).flush({ ...STATE, directions: STATE.directions.map(d => (d.id === 'redirect' ? redirect : d)) });
     await loading;
     await fixture.whenStable();
@@ -416,7 +416,7 @@ describe('Board', () => {
     drop('push', 'testing', 'parked', 0, 0);
     await fixture.whenStable();
 
-    expect(text(query('.bd__tray-head', HTMLButtonElement))).toBe('Отложено · Капча, Идентификация, US пуши');
+    expect(text(query('.bd__tray-head', HTMLButtonElement))).toBe('Отложено · Карта, Подписки, US пуши');
     const request = http.expectOne({ method: 'POST', url: '/api/directions/push/status' });
     expect(request.request.body).toEqual({ status: 'parked', index: 2 });
     request.flush({});
@@ -429,12 +429,12 @@ describe('Board', () => {
     const [title, tickets] = Array.from(host.querySelectorAll('.wl-new-direction-form input')).filter(input => input instanceof HTMLInputElement);
     expect(document.activeElement).toBe(title);
 
-    title.value = '  Капча v2 ';
+    title.value = '  Карта v2 ';
     tickets.value = 'app-6758  WEB-4023 ';
     press(tickets, 'Enter');
 
     const request = http.expectOne({ method: 'POST', url: '/api/directions' });
-    expect(request.request.body).toEqual({ title: 'Капча v2', tickets: ['APP-6758', 'WEB-4023'] });
+    expect(request.request.body).toEqual({ title: 'Карта v2', tickets: ['APP-6758', 'WEB-4023'] });
     request.flush({});
     await answerRefresh();
     await fixture.whenStable();
@@ -456,7 +456,7 @@ describe('Board', () => {
     query('.bd__add', HTMLButtonElement).click();
     await fixture.whenStable();
     const title = query('.wl-new-direction-form input', HTMLInputElement);
-    title.value = 'Капча';
+    title.value = 'Карта';
     press(title, 'Enter');
 
     http.expectOne({ method: 'POST', url: '/api/directions' }).flush({ error: 'Данные заняты' }, { status: 409, statusText: 'Conflict' });
@@ -473,12 +473,12 @@ describe('Board', () => {
     await fixture.whenStable();
     const [title, tickets] = Array.from(host.querySelectorAll('.wl-new-direction-form input')).filter(input => input instanceof HTMLInputElement);
 
-    title.value = 'Капча';
-    tickets.value = 'APP-6758 капча';
+    title.value = 'Карта';
+    tickets.value = 'APP-6758 карта';
     press(title, 'Enter');
     await fixture.whenStable();
 
-    expect(text(host.querySelector('.ndf__error'))).toBe('Не похоже на ключ задачи: капча');
+    expect(text(host.querySelector('.ndf__error'))).toBe('Не похоже на ключ задачи: карта');
     http.expectNone({ method: 'POST', url: '/api/directions' });
 
     press(tickets, 'Escape');

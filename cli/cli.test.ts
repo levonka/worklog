@@ -36,16 +36,16 @@ async function snapshot(dir: string): Promise<Record<string, string>> {
 
 test('dir add with tickets then state lists it under В работе', async t => {
   const dataDir = await tempDir(t);
-  const added = await runCli(['dir', 'add', 'Сторы', '--ticket', 'app-7301', '--ticket', 'WEB-4410'], { dataDir });
+  const added = await runCli(['dir', 'add', 'Фильтры', '--ticket', 'app-7301', '--ticket', 'WEB-4410'], { dataDir });
   assert.equal(added.code, 0);
   assert.match(added.stdout.trim(), /^[0-9a-z]+$/);
 
   const state = await runCli(['state'], { dataDir });
   assert.equal(state.code, 0);
-  assert.match(state.stdout, /● В работе \(1\)\n {2}Сторы · APP-7301 WEB-4410\n/);
+  assert.match(state.stdout, /● В работе \(1\)\n {2}Фильтры · APP-7301 WEB-4410\n/);
 
   const json = await runCli(['state', '--json'], { dataDir });
-  assert.equal(parsed<WorklogState>(json.stdout).directions[0].title, 'Сторы');
+  assert.equal(parsed<WorklogState>(json.stdout).directions[0].title, 'Фильтры');
 });
 
 test('state shows waiting, open todo count, parked and open todos', async t => {
@@ -65,16 +65,16 @@ test('state marks the example', async t => {
   const dataDir = await tempDir(t);
   await new Store(dataDir, { profile: TEST_PROFILE }).seedExample();
   const { stdout } = await runCli(['state'], { dataDir });
-  assert.match(stdout, /Пример: капча на входе · APP-1001 WEB-1002 · дел: 1 · пример\n/);
+  assert.match(stdout, /Пример: карта пунктов выдачи · APP-1001 WEB-1002 · дел: 1 · пример\n/);
 });
 
 test('note list and search mark the note of the example', async t => {
   const dataDir = await tempDir(t);
   await new Store(dataDir, { profile: TEST_PROFILE }).seedExample();
   const listed = await runCli(['note', 'list'], { dataDir });
-  assert.match(listed.stdout, /Ключ капчи на стендах · пример\n/);
-  const found = await runCli(['note', 'list', '--search', 'капч'], { dataDir });
-  assert.match(found.stdout, /Ключ капчи на стендах · пример\n/);
+  assert.match(listed.stdout, /Ключ карты на стендах · пример\n/);
+  const found = await runCli(['note', 'list', '--search', 'карт'], { dataDir });
+  assert.match(found.stdout, /Ключ карты на стендах · пример\n/);
 });
 
 test('dir status wait --waiting shows Жду · who in dir show', async t => {
@@ -118,9 +118,9 @@ test('dir unmark clears Жду', async t => {
 test('dir show prints the stage and where it comes from', async t => {
   const dataDir = await tempDir(t);
   await jiraLedDirection(dataDir, 'Сео');
-  await new Store(dataDir, { profile: TEST_PROFILE }).createDirection({ title: 'Редирект' });
+  await new Store(dataDir, { profile: TEST_PROFILE }).createDirection({ title: 'Сертификат' });
   assert.ok((await runCli(['dir', 'show', 'сео'], { dataDir })).stdout.includes('\nЭтап: В мерж реквесте (Jira)\n'));
-  assert.ok((await runCli(['dir', 'show', 'редирект'], { dataDir })).stdout.includes('\nЭтап: В работе (вручную)'));
+  assert.ok((await runCli(['dir', 'show', 'сертификат'], { dataDir })).stdout.includes('\nЭтап: В работе (вручную)'));
 });
 
 test('dir done-at sets the done date of a done direction', async t => {
@@ -133,8 +133,8 @@ test('dir done-at sets the done date of a done direction', async t => {
   assert.ok(direction.doneAt !== undefined);
   assert.equal(new Date(direction.doneAt).getMonth(), 3);
 
-  await runCli(['dir', 'add', 'Сторы'], { dataDir });
-  const notDone = await runCli(['dir', 'done-at', 'сторы', '2026-04-09'], { dataDir });
+  await runCli(['dir', 'add', 'Фильтры'], { dataDir });
+  const notDone = await runCli(['dir', 'done-at', 'фильтры', '2026-04-09'], { dataDir });
   assert.notEqual(notDone.code, 0);
   assert.match(notDone.stderr, /Направление не в статусе «Готово»/);
 });
@@ -163,21 +163,21 @@ test('dir rename and dir rm', async t => {
 
 test('event by ticket key lands in the direction with that ticket', async t => {
   const dataDir = await tempDir(t);
-  await runCli(['dir', 'add', 'Сторы', '--ticket', 'APP-7301'], { dataDir });
+  await runCli(['dir', 'add', 'Фильтры', '--ticket', 'APP-7301'], { dataDir });
   await runCli(['dir', 'add', 'Другое', '--ticket', 'APP-1'], { dataDir });
 
   const result = await runCli(['event', 'app-7301', 'Олег подтвердил баг бэка'], { dataDir });
   assert.equal(result.code, 0);
 
   const { directions } = await new Store(dataDir, { profile: TEST_PROFILE }).read();
-  const target = directions.find(d => d.title === 'Сторы');
+  const target = directions.find(d => d.title === 'Фильтры');
   assert.equal(target?.events.length, 1);
   assert.equal(target?.events[0].text, 'Олег подтвердил баг бэка');
   assert.equal(target?.events[0].source, 'claude');
   assert.equal(directions.find(d => d.title === 'Другое')?.events.length, 0);
 
   await runCli(['event', 'APP-7301', 'сам записал', '--source', 'manual'], { dataDir });
-  const after = (await new Store(dataDir, { profile: TEST_PROFILE }).read()).directions.find(d => d.title === 'Сторы');
+  const after = (await new Store(dataDir, { profile: TEST_PROFILE }).read()).directions.find(d => d.title === 'Фильтры');
   assert.equal(after?.events[1].source, 'manual');
 
   const invalid = await runCli(['event', 'APP-7301', 'x', '--source', 'system'], { dataDir });
@@ -220,8 +220,8 @@ for (const argv of [
 
 test('todo add --dir --from then done writes a todo-done event', async t => {
   const dataDir = await tempDir(t);
-  const { stdout: id } = await runCli(['dir', 'add', 'Сторы', '--ticket', 'APP-7301'], { dataDir });
-  const added = await runCli(['todo', 'add', 'Проверить сторы', '--dir', 'APP-7301', '--from', 'Олег', '--due', '2026-11-10'], { dataDir });
+  const { stdout: id } = await runCli(['dir', 'add', 'Фильтры', '--ticket', 'APP-7301'], { dataDir });
+  const added = await runCli(['todo', 'add', 'Проверить фильтры', '--dir', 'APP-7301', '--from', 'Олег', '--due', '2026-11-10'], { dataDir });
   assert.equal(added.code, 0);
 
   const list = await runCli(['todo', 'list', '--json'], { dataDir });
@@ -243,26 +243,26 @@ test('todo add --dir --from then done writes a todo-done event', async t => {
   assert.deepEqual(undone.directions[0].events, []);
 
   const text = await runCli(['todo', 'list'], { dataDir });
-  assert.match(text.stdout, /\[ \] .*Проверить сторы/);
+  assert.match(text.stdout, /\[ \] .*Проверить фильтры/);
 });
 
 test('ticket and link commands', async t => {
   const dataDir = await tempDir(t);
-  await runCli(['dir', 'add', 'Сторы'], { dataDir });
-  assert.equal((await runCli(['ticket', 'add', 'сторы', 'web-4410'], { dataDir })).code, 0);
-  assert.equal((await runCli(['link', 'add', 'сторы', 'https://figma.com/file/1', '--title', 'Макет'], { dataDir })).code, 0);
-  assert.equal((await runCli(['link', 'add', 'сторы', 'https://x.test/a', '--kind', 'branch'], { dataDir })).code, 0);
+  await runCli(['dir', 'add', 'Фильтры'], { dataDir });
+  assert.equal((await runCli(['ticket', 'add', 'фильтры', 'web-4410'], { dataDir })).code, 0);
+  assert.equal((await runCli(['link', 'add', 'фильтры', 'https://figma.com/file/1', '--title', 'Макет'], { dataDir })).code, 0);
+  assert.equal((await runCli(['link', 'add', 'фильтры', 'https://x.test/a', '--kind', 'branch'], { dataDir })).code, 0);
 
   const shown = await runCli(['dir', 'show', 'WEB-4410', '--json'], { dataDir });
   const { direction } = parsed<{ direction: Direction; todos: Todo[] }>(shown.stdout);
   assert.deepEqual(direction.tickets.map(x => x.key), ['WEB-4410']);
   assert.deepEqual(direction.links.map(x => x.kind), ['figma', 'branch']);
 
-  const text = await runCli(['dir', 'show', 'сторы'], { dataDir });
+  const text = await runCli(['dir', 'show', 'фильтры'], { dataDir });
   assert.ok(text.stdout.includes('WEB-4410') && text.stdout.includes('Макет'), text.stdout);
 
-  assert.equal((await runCli(['ticket', 'rm', 'сторы', 'WEB-4410'], { dataDir })).code, 0);
-  assert.equal((await runCli(['link', 'rm', 'сторы', 'https://x.test/a'], { dataDir })).code, 0);
+  assert.equal((await runCli(['ticket', 'rm', 'фильтры', 'WEB-4410'], { dataDir })).code, 0);
+  assert.equal((await runCli(['link', 'rm', 'фильтры', 'https://x.test/a'], { dataDir })).code, 0);
   const after = (await new Store(dataDir, { profile: TEST_PROFILE }).read()).directions[0];
   assert.deepEqual(after.tickets, []);
   assert.deepEqual(after.links.map(l => l.url), ['https://figma.com/file/1']);
@@ -400,18 +400,18 @@ test('bin/worklog state runs', async t => {
 
 test('daily show prints period and template text', async t => {
   const dataDir = await tempDir(t);
-  await runCli(['dir', 'add', 'Сторы', '--ticket', 'APP-6120'], { dataDir });
+  await runCli(['dir', 'add', 'Фильтры', '--ticket', 'APP-6120'], { dataDir });
   await runCli(['event', 'APP-6120', 'Разобрал localStorage'], { dataDir });
-  await runCli(['dir', 'add', 'Редирект', '--status', 'wait', '--waiting', 'девопсы'], { dataDir });
+  await runCli(['dir', 'add', 'Сертификат', '--status', 'wait', '--waiting', 'девопсы'], { dataDir });
   const shown = await runCli(['daily', 'show'], { dataDir });
   assert.equal(shown.code, 0);
   const [head, blank, ...rest] = shown.stdout.trimEnd().split('\n');
   assert.match(head, /^Дейлик · период с \d\d\.\d\d 11:30$/);
   assert.equal(blank, '');
-  assert.deepEqual(rest, ['Касаемо задачи «Сторы»: Разобрал localStorage.', '1. APP-6120', '', 'Жду: Редирект — девопсы']);
+  assert.deepEqual(rest, ['Касаемо задачи «Фильтры»: Разобрал localStorage.', '1. APP-6120', '', 'Жду: Сертификат — девопсы']);
   const asJson = parsed<{ periodStart: string; text: string; waiting: { title: string; waitingFor: string | null }[] }>((await runCli(['daily', 'show', '--json'], { dataDir })).stdout);
-  assert.equal(asJson.text, 'Касаемо задачи «Сторы»: Разобрал localStorage.\n1. APP-6120');
-  assert.deepEqual(asJson.waiting.map(w => [w.title, w.waitingFor]), [['Редирект', 'девопсы']]);
+  assert.equal(asJson.text, 'Касаемо задачи «Фильтры»: Разобрал localStorage.\n1. APP-6120');
+  assert.deepEqual(asJson.waiting.map(w => [w.title, w.waitingFor]), [['Сертификат', 'девопсы']]);
 });
 
 async function chromeWithTabs(t: TestContext, tabs: Parameters<typeof snss>[0]): Promise<string> {
@@ -502,7 +502,7 @@ test('note add, show, list, edit and rm work by id or title part', async t => {
     [`Общий origin`, `id: ${id}`, 'Направления: US пуши', '', 'Ключи `app.*`', 'не переименовывать', '', 'Ссылки:', '  libs/README.md', '  push.ts:42 · ✗ файла нет', '  https://wiki.test/p BRD', ''].join('\n'),
   );
   assert.match((await runCli(['note', 'list', '--search', 'пуши'], env)).stdout, new RegExp(`^${id}  Общий origin · битых ссылок: 1\n$`));
-  assert.equal((await runCli(['note', 'list', '--search', 'капча'], env)).stdout, 'Заметок нет\n');
+  assert.equal((await runCli(['note', 'list', '--search', 'карта'], env)).stdout, 'Заметок нет\n');
   assert.equal((await runCli(['note', 'check'], env)).stdout, `${id}  Общий origin\n  ✗ push.ts:42\n`);
   assert.match((await runCli(['dir', 'show', 'US'], env)).stdout, new RegExp(`Заметки \\(note show <id>\\):\n  ${id}  Общий origin`));
 
@@ -533,16 +533,16 @@ test('link and quicklink descriptions are set, shown and cleared', async t => {
 test('agent list shows running agents and agent done takes the mark off', async t => {
   const dataDir = await tempDir(t);
   const store = new Store(dataDir, { profile: TEST_PROFILE });
-  const direction = await store.createDirection({ title: 'Сторы' });
+  const direction = await store.createDirection({ title: 'Фильтры' });
   const { run } = await store.startRun({ template: 'decompose', directionId: direction.id, include: [], extra: '', branch: 'feature/APP-1' });
 
   const list = await runCli(['agent', 'list'], { dataDir });
   assert.equal(list.code, 0);
-  assert.match(list.stdout, new RegExp(`^${run.id} {2}Сторы · декомпозировать · feature/APP-1 · с \\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}\n$`));
+  assert.match(list.stdout, new RegExp(`^${run.id} {2}Фильтры · декомпозировать · feature/APP-1 · с \\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}\n$`));
   assert.equal(parsed<unknown[]>((await runCli(['agent', 'list', '--json'], { dataDir })).stdout).length, 1);
 
   const done = await runCli(['agent', 'done', run.id], { dataDir });
-  assert.equal(done.stdout, 'Отметка снята: Сторы · декомпозировать\n');
+  assert.equal(done.stdout, 'Отметка снята: Фильтры · декомпозировать\n');
   assert.equal((await runCli(['agent', 'list'], { dataDir })).stdout, 'Агенты не работают\n');
   assert.equal((await runCli(['agent', 'done', 'nope'], { dataDir })).code, 1);
   assert.equal((await runCli(['agent', 'done'], { dataDir })).code, 1);

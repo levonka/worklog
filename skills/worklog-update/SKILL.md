@@ -1,6 +1,6 @@
 ---
 name: worklog-update
-description: Use when the user asks to record something in Worklog, their personal tracker of work directions — an event in a direction («по сео: Олег подтвердил баг бэка»), a link or ticket («добавь в капчу ссылку на BRD»), a new direction («заведи направление»), a status change («сео на тестировании», «жду девопсов по редиректу»), a todo or a colleague's request («аналитик попросил завести задачу на бэк»), a sidebar link, a description of a link («к КЭДО допиши, что там подписываю отпуска»), or «подготовь дейлик». Knowledge notes («запиши в базу») are the `worklog-notes` skill.
+description: Use when the user asks to record something in Worklog, their personal tracker of work directions — an event in a direction («по сео: Олег подтвердил баг бэка»), a link or ticket («добавь к карте ссылку на BRD»), a new direction («заведи направление»), a status change («сео на тестировании», «жду девопсов по сертификату»), a todo or a colleague's request («аналитик попросил завести задачу на бэк»), a sidebar link, a description of a link («к КЭДО допиши, что там подписываю отпуска»), or «подготовь дейлик». Knowledge notes («запиши в базу») are the `worklog-notes` skill.
 ---
 
 # Worklog: record by phrase
@@ -16,8 +16,8 @@ Worklog's folder is where `~/.local/bin/worklog` points (`readlink ~/.local/bin/
 ## Steps
 
 1. Run `state` once per conversation (again after the user says they changed things in the app) to see directions, statuses and open todos with their ids.
-2. Pick the direction. `<ref>` is a direction id, a ticket key, or part of the title («сео», «капч»). If the CLI says several match, use the id from `state`. If you cannot tell which direction the user means, ask one short question.
-3. Run the commands. One phrase often means several: «жду девопсов, завёл им INFRA-4601» = `ticket add`, `dir status … wait --waiting девопсы` and an `event`.
+2. Pick the direction. `<ref>` is a direction id, a ticket key, or part of the title («сео», «карт»). If the CLI says several match, use the id from `state`. If you cannot tell which direction the user means, ask one short question.
+3. Run the commands. One phrase often means several: «жду девопсов, завёл им INFRA-2208» = `ticket add`, `dir status … wait --waiting девопсы` and an `event`.
 4. Report in one line what was written. Do not ask for confirmation when the request is clear — recording must take no longer than saying the phrase.
 
 ## Phrase → command
@@ -49,7 +49,7 @@ Worklog's folder is where `~/.local/bin/worklog` points (`readlink ~/.local/bin/
 ## Event texts
 
 Events go into the daily report the user reads to their manager. Hard rules:
-- First person singular, past or present tense, as the user would say it: «Пообщался с Олегом Петровым: это баг бэка, договорились завести задачу на фикс», «Создал задачу девопсам через их дашборд (INFRA-4601), жду реакции».
+- First person singular, past or present tense, as the user would say it: «Пообщался с Олегом Соколовым: это баг бэка, договорились завести задачу на фикс», «Создал задачу девопсам через их дашборд (INFRA-2208), жду реакции».
 - Never mention AI, Claude, an agent, a session or generation — the work is the user's own.
 - One or two short sentences, no Markdown. Keep the user's own wording when it is already fine; add ticket keys when they matter.
 - Text that starts with `-` goes after `--`: `event <ref> -- "-5 багов"`.

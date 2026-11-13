@@ -41,7 +41,7 @@ test('normalizeTicketKey rejects non-keys', () => {
 test('detectLinkKind recognises hosts and paths', () => {
   assert.equal(detectLinkKind('https://www.figma.com/design/x', TEST_PROFILE), 'figma');
   assert.equal(detectLinkKind('https://wiki.example.com/pages/viewpage.action?pageId=1', TEST_PROFILE), 'confluence');
-  assert.equal(detectLinkKind('https://git.example.com/team/app/-/merge_requests/3852', TEST_PROFILE), 'mr');
+  assert.equal(detectLinkKind('https://git.example.com/team/app/-/merge_requests/2741', TEST_PROFILE), 'mr');
   assert.equal(detectLinkKind('https://ci.example.com/job/x', TEST_PROFILE), 'jenkins');
   assert.equal(detectLinkKind('https://git.example.com/team/app/-/tree/feature-x', TEST_PROFILE), 'branch');
   assert.equal(detectLinkKind('https://example.com', TEST_PROFILE), 'other');
@@ -256,7 +256,7 @@ test('periodDigest puts summary items of unknown directions into unbound', () =>
     ranAt: iso(5, 10),
     sessionCount: 2,
     items: [
-      { id: 'i1', sessionId: 's1', at: iso(5, 9), directionId: 'a', text: 'разобрал сторы' },
+      { id: 'i1', sessionId: 's1', at: iso(5, 9), directionId: 'a', text: 'разобрал фильтры' },
       { id: 'i2', sessionId: 's2', at: iso(5, 9), directionId: 'gone', text: 'что-то' },
       { id: 'i3', sessionId: 's3', at: iso(5, 9), directionId: null, text: 'без направления' },
     ],
@@ -291,7 +291,7 @@ test('periodDigest today lists idle in-progress directions and todos due by toda
 });
 
 test('dailyItems lists events, summary items and unbound items', () => {
-  const a = dir('a', { title: 'Сторы', events: [event('e', iso(5, 9), 'взял')] });
+  const a = dir('a', { title: 'Фильтры', events: [event('e', iso(5, 9), 'взял')] });
   const summary: SessionSummary = {
     ranAt: iso(5, 10),
     sessionCount: 1,
@@ -303,8 +303,8 @@ test('dailyItems lists events, summary items and unbound items', () => {
   };
   const items = dailyItems(periodDigest(state({ directions: [a] }), iso(4, 11, 30), summary, '2026-11-05'));
   assert.deepEqual(items, [
-    { directionId: 'a', directionTitle: 'Сторы', text: 'взял', origin: 'event', eventSource: 'manual' },
-    { directionId: 'a', directionTitle: 'Сторы', text: 'разобрал', origin: 'summary' },
+    { directionId: 'a', directionTitle: 'Фильтры', text: 'взял', origin: 'event', eventSource: 'manual' },
+    { directionId: 'a', directionTitle: 'Фильтры', text: 'разобрал', origin: 'summary' },
     { directionId: null, directionTitle: null, text: 'вне', origin: 'summary' },
   ]);
 });
@@ -325,31 +325,31 @@ function withTickets(id: string, title: string, keys: string[], patch: Partial<D
 test('templateText renders paragraphs, ticket lines and today', () => {
   const seo = withTickets('seo', 'SEO-текст на страницах товаров', ['APP-7301', 'WEB-4410'], {
     status: 'waiting',
-    waitingFor: 'бэк (Олег Петров)',
-    events: [event('s1', iso(4, 14), 'Олег Петров подтвердил: бэк не отдаёт данные'), event('s2', iso(4, 14, 5), 'Статус: Жду · бэк (Олег Петров)', 'status')],
+    waitingFor: 'бэк (Олег Соколов)',
+    events: [event('s1', iso(4, 14), 'Олег Соколов подтвердил: бэк не отдаёт данные'), event('s2', iso(4, 14, 5), 'Статус: Жду · бэк (Олег Соколов)', 'status')],
   });
-  const redirect = withTickets('red', 'Редирект по user-agent', ['SHOP-8221', 'INFRA-4601'], {
+  const redirect = withTickets('red', 'Сертификат для стенда', ['SHOP-5233', 'INFRA-2208'], {
     status: 'waiting',
     waitingFor: 'девопсы',
     events: [event('r1', iso(4, 16), 'Создал задачу девопсам через их дашборд')],
   });
-  const stores = withTickets('st', 'Браузерные сторы', ['APP-6120', 'WEB-3380'], { events: [event('b1', iso(5, 9), 'Статус: В работе', 'status')] });
-  const captcha = dir('cap', { title: 'Капча-2', order: 1 });
+  const stores = withTickets('st', 'Фильтры каталога', ['APP-6120', 'WEB-3380'], { events: [event('b1', iso(5, 9), 'Статус: В работе', 'status')] });
+  const captcha = dir('cap', { title: 'Карта-2', order: 1 });
   const todos = [todo('t', { text: 'Завести задачу бэку', requestedBy: 'Олега', due: '2026-11-05' })];
   const digest = periodDigest(state({ directions: [seo, redirect, stores, captcha], todos }), iso(4, 11, 30), null, '2026-11-05');
   assert.equal(
     templateText(digest),
     [
-      'Касаемо задачи «SEO-текст на страницах товаров»: Олег Петров подтвердил: бэк не отдаёт данные. Жду: бэк (Олег Петров).',
+      'Касаемо задачи «SEO-текст на страницах товаров»: Олег Соколов подтвердил: бэк не отдаёт данные. Жду: бэк (Олег Соколов).',
       '1. APP-7301  2. WEB-4410',
       '',
-      'Касаемо задачи «Редирект по user-agent»: Создал задачу девопсам через их дашборд.',
-      '1. SHOP-8221  2. INFRA-4601',
+      'Касаемо задачи «Сертификат для стенда»: Создал задачу девопсам через их дашборд.',
+      '1. SHOP-5233  2. INFRA-2208',
       '',
-      'Взял в работу задачу «Браузерные сторы».',
+      'Взял в работу задачу «Фильтры каталога».',
       '1. APP-6120  2. WEB-3380',
       '',
-      'Сегодня: продолжаю задачу «Капча-2»; завести задачу бэку (от Олега).',
+      'Сегодня: продолжаю задачу «Карта-2»; завести задачу бэку (от Олега).',
     ].join('\n'),
   );
 });
@@ -371,7 +371,7 @@ test('templateText says the MR went to review for the in_review status', () => {
 });
 
 test('templateText keeps summary items of a direction and leaves unbound items out', () => {
-  const d = dir('d', { title: 'Сторы', status: 'waiting' });
+  const d = dir('d', { title: 'Фильтры', status: 'waiting' });
   const summary: SessionSummary = {
     ranAt: iso(5, 10),
     sessionCount: 2,
@@ -382,7 +382,7 @@ test('templateText keeps summary items of a direction and leaves unbound items o
     candidates: [],
   };
   const digest = periodDigest(state({ directions: [d] }), iso(4, 11, 30), summary, '2026-11-05');
-  assert.equal(templateText(digest), 'Касаемо задачи «Сторы»: Разобрал, как приложение работает с localStorage.');
+  assert.equal(templateText(digest), 'Касаемо задачи «Фильтры»: Разобрал, как приложение работает с localStorage.');
 });
 
 test('templateText of an empty digest is empty', () => {
@@ -412,12 +412,12 @@ test('upcomingDailyAt moves to the next working day once today is held', () => {
 });
 
 test('findAiMentions ignores a word after a hyphen', () => {
-  assert.deepEqual(findAiMentions('редирект по юзер-агенту'), []);
+  assert.deepEqual(findAiMentions('сертификат по юзер-агенту'), []);
   assert.deepEqual(findAiMentions('ИИ-помощник и «агент»'), ['ии', 'агент']);
 });
 
 test('ticketKeysIn finds keys in titles, query strings and branch names, each once', () => {
-  assert.deepEqual(ticketKeysIn('[APP-8962] Унификация · APP-8962, WEB-5296'), ['APP-8962', 'WEB-5296']);
+  assert.deepEqual(ticketKeysIn('[APP-1774] Переезд · APP-1774, WEB-5296'), ['APP-1774', 'WEB-5296']);
   assert.deepEqual(ticketKeysIn('https://jira.example.com/secure/RapidBoard.jspa?selectedIssue=WEB-5686'), ['WEB-5686']);
   assert.deepEqual(ticketKeysIn('https://git.example.com/app/-/tree/feature/APP-7301_WEB-4410'), ['APP-7301', 'WEB-4410']);
 });
@@ -430,7 +430,7 @@ test('ticketKeysIn skips lower-case and glued keys', () => {
 test('parseNoteLink reads files with lines, addresses with titles, and refuses paths outside the root', () => {
   assert.deepEqual(parseNoteLink('  libs/local-storage/README.md '), { file: { path: 'libs/local-storage/README.md' } });
   assert.deepEqual(parseNoteLink('./push-token.service.ts:42'), { file: { path: 'push-token.service.ts', line: 42 } });
-  assert.deepEqual(parseNoteLink('https://wiki.test/x?a=1 BRD капчи'), { url: { url: 'https://wiki.test/x?a=1', title: 'BRD капчи' } });
+  assert.deepEqual(parseNoteLink('https://wiki.test/x?a=1 BRD карты'), { url: { url: 'https://wiki.test/x?a=1', title: 'BRD карты' } });
   assert.deepEqual(parseNoteLink('https://wiki.test/x'), { url: { url: 'https://wiki.test/x' } });
   for (const bad of ['', '/etc/passwd', '../secret', 'a/../../b', '~/x', 'a b.ts', 'a.ts:0']) assert.equal(parseNoteLink(bad), null, bad);
 });
@@ -455,7 +455,7 @@ test('noteMatches looks for every word in the note and its directions', () => {
     updatedAt: '2026-11-05T00:00:00Z',
   };
   for (const query of ['', 'origin', 'LOCALSTORAGE ключи', 'push-token', 'app-9508', 'пуши']) assert.ok(noteMatches(note, query, [by]), query);
-  assert.equal(noteMatches(note, 'origin капча', [by]), false);
+  assert.equal(noteMatches(note, 'origin карта', [by]), false);
   assert.equal(noteMatches(note, 'пуши', []), false);
 });
 
@@ -524,7 +524,7 @@ test('activeRuns are the unfinished ones, oldest first', () => {
 function agentState(): WorklogState {
   const events = Array.from({ length: 7 }, (_, i) => event(`e${i}`, iso(5, 9 + i), `событие ${i}`));
   const storage = dir('d1', {
-    title: 'Браузерные сторы',
+    title: 'Фильтры каталога',
     status: 'waiting',
     waitingFor: 'аналитика',
     tickets: [ticketFromKey('APP-6120', TEST_PROFILE), ticketFromKey('WEB-3380', TEST_PROFILE)],
@@ -584,7 +584,7 @@ test('agentContext of a todo brings its direction without the todo itself; a lon
 
 test('agentRunTitle names the todo or the direction and the template', () => {
   const s = agentState();
-  assert.equal(agentRunTitle(agentContext(s, { directionId: 'd1' }), 'decompose'), 'Браузерные сторы · декомпозировать');
+  assert.equal(agentRunTitle(agentContext(s, { directionId: 'd1' }), 'decompose'), 'Фильтры каталога · декомпозировать');
   assert.equal(agentRunTitle(agentContext(s, { todoId: 't1' }), 'execute'), 'Разобрать обёртки · выполнить задачу');
 });
 
@@ -593,7 +593,7 @@ const ALL_PARTS: AgentRequest['include'] = ['tickets', 'links', 'events', 'todos
 test('agentPrompt holds the task, the chosen context, the extra text and the rules with the run id', () => {
   const prompt = agentPrompt(agentState(), { template: 'decompose', directionId: 'd1', include: ALL_PARTS, extra: '  без кода  ', branch: 'feature/APP-6120_WEB-3380' }, 'run1', TEST_PROFILE);
   assert.match(prompt, /^# Задание\nДекомпозируй задачу на дела/);
-  assert.match(prompt, /Направление в Worklog: «Браузерные сторы» \(id d1\), статус «Жду», жду: аналитика, этап «В работе»\./);
+  assert.match(prompt, /Направление в Worklog: «Фильтры каталога» \(id d1\), статус «Жду», жду: аналитика, этап «В работе»\./);
   assert.match(prompt, /- APP-6120 \(App\): https:\/\/jira\.example\.com\/browse\/APP-6120/);
   assert.match(prompt, /- Теханализ: https:\/\/wiki\.example\.com\/x\n {2}что решили\n {2}и почему/);
   assert.match(prompt, /событие 6/);
@@ -726,22 +726,22 @@ test('mergeRequestsOf: MR links in the order they were added, each MR once', () 
   const mr = (url: string) => ({ title: url, url, kind: detectLinkKind(url, TEST_PROFILE) });
   const links = [
     mr('https://wiki.example.com/pages/viewpage.action?pageId=1'),
-    mr('https://git.example.com/team/app/-/merge_requests/4022/diffs'),
+    mr('https://git.example.com/team/app/-/merge_requests/3015/diffs'),
     mr('https://git.example.com/team/app/-/merge_requests/3983'),
-    mr('https://git.example.com/team/app/-/merge_requests/4022'),
+    mr('https://git.example.com/team/app/-/merge_requests/3015'),
   ];
   assert.deepEqual(mergeRequestsOf(links), [
-    { id: 4022, url: 'https://git.example.com/team/app/-/merge_requests/4022/diffs' },
+    { id: 3015, url: 'https://git.example.com/team/app/-/merge_requests/3015/diffs' },
     { id: 3983, url: 'https://git.example.com/team/app/-/merge_requests/3983' },
   ]);
   assert.deepEqual(mergeRequestsOf([]), []);
 });
 
 test('mergeRequestUrl and mergeRequestNumber go both ways', () => {
-  assert.equal(mergeRequestUrl(4022, TEST_PROFILE), 'https://git.example.com/team/app/-/merge_requests/4022');
-  assert.equal(mergeRequestNumber('https://git.example.com/team/app/-/merge_requests/4022'), 4022);
-  assert.equal(mergeRequestNumber('https://git.example.com/team/app/-/merge_requests/4022/diffs?commit_id=1'), 4022);
-  assert.equal(mergeRequestNumber('https://git.example.com/team/app/-/merge_requests/40221'), 40221);
+  assert.equal(mergeRequestUrl(3015, TEST_PROFILE), 'https://git.example.com/team/app/-/merge_requests/3015');
+  assert.equal(mergeRequestNumber('https://git.example.com/team/app/-/merge_requests/3015'), 3015);
+  assert.equal(mergeRequestNumber('https://git.example.com/team/app/-/merge_requests/3015/diffs?commit_id=1'), 3015);
+  assert.equal(mergeRequestNumber('https://git.example.com/team/app/-/merge_requests/30151'), 30151);
   assert.equal(mergeRequestNumber('https://git.example.com/team/app/-/merge_requests'), null);
   assert.equal(mergeRequestNumber('https://jira.example.com/browse/APP-1'), null);
 });
@@ -834,11 +834,11 @@ test('markClearedText', () => {
 });
 
 test('templateText puts the neutral stage phrase before ticket lines', () => {
-  const d = withTickets('u', 'Унификация', ['APP-1'], {
+  const d = withTickets('u', 'Переезд', ['APP-1'], {
     events: [jiraEvent('1', iso(5, 9), 'Статус: В работе', 'status'), jiraEvent('2', iso(5, 9), 'APP-1: In QA → Ready For Dev', 'jira-status')],
   });
   const digest = periodDigest(state({ directions: [d] }), iso(4, 11, 30), null, '2026-11-05');
-  assert.equal(templateText(digest), 'Касаемо задачи «Унификация»: Вернулась в работу. APP-1: In QA → Ready For Dev.\n1. APP-1');
+  assert.equal(templateText(digest), 'Касаемо задачи «Переезд»: Вернулась в работу. APP-1: In QA → Ready For Dev.\n1. APP-1');
 });
 
 test('templateText: Jira stage phrases are neutral, a lone Jira «В работе» is not «Взял в работу задачу»', () => {
@@ -932,14 +932,14 @@ test('onboardingPrompts take the prefixes from the profile and the name of the f
   const example = exampleData(TEST_PROFILE, AT, () => `e${n++}`).direction;
   const fresh = onboardingPrompts(TEST_PROFILE, [example]);
   assert.equal(fresh.direction, 'заведи в worklog направление по задачам APP-1234 и WEB-567');
-  assert.equal(fresh.event, 'запиши в worklog по капче: бэк поправил редирект, жду стенд');
-  assert.equal(fresh.link, 'добавь в worklog к капче ссылку на макет: <ссылка>');
+  assert.equal(fresh.event, 'запиши в worklog по карте: бэк поправил выдачу точек, жду стенд');
+  assert.equal(fresh.link, 'добавь в worklog к карте ссылку на макет: <ссылка>');
   assert.equal(fresh.todo, 'добавь в worklog дело: завести задачу на бэк, просил аналитик');
   assert.equal(fresh.repeat, 'добавь в worklog повторяющееся дело: дейлик каждый будний день в 11:30');
   assert.equal(fresh.tabs, 'разбери вкладки chrome в worklog');
 
   const own = onboardingPrompts(TEST_PROFILE, [example, ownDirection('theme', { title: 'Тёмная тема' }), ownDirection('old', { title: 'Старое', status: 'done', order: -1 })]);
-  assert.equal(own.event, 'запиши в worklog по направлению «Тёмная тема»: бэк поправил редирект, жду стенд');
+  assert.equal(own.event, 'запиши в worklog по направлению «Тёмная тема»: бэк поправил выдачу точек, жду стенд');
   assert.equal(own.link, 'добавь в worklog к направлению «Тёмная тема» ссылку на макет: <ссылка>');
 
   assert.equal(onboardingPrompts(null, []).direction, 'заведи в worklog направление по задачам PROJ-1234 и PROJ-567');

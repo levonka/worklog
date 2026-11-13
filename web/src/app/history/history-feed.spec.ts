@@ -32,8 +32,8 @@ function state(): WorklogState {
         tickets: [ticketFromKey('APP-7301', TEST_PROFILE)],
         events: [event('e1', at(4, 14), 'Бэк не отдаёт данные'), event('e2', at(5, 9), 'Завести задачу бэку (от Олега)', { kind: 'todo-done', source: 'system', todoId: 't1' })],
       }),
-      direction('red', 'Редирект', { events: [event('r1', at(5, 10), 'Создал задачу девопсам')] }),
-      direction('old', 'Капча', { status: 'done', tickets: [ticketFromKey('APP-6758', TEST_PROFILE)] }),
+      direction('red', 'Сертификат', { events: [event('r1', at(5, 10), 'Создал задачу девопсам')] }),
+      direction('old', 'Карта', { status: 'done', tickets: [ticketFromKey('APP-6758', TEST_PROFILE)] }),
     ],
     todos: [
       todo('t1', { text: 'Завести задачу бэку', directionId: 'seo', done: true, doneAt: at(5, 9) }),
@@ -65,7 +65,7 @@ describe('history feed', () => {
   });
 
   it('leaves the onboarding example out, events and search alike', () => {
-    const example = direction('example', 'Пример: капча на входе', { example: true, events: [event('x1', at(5, 8), 'Разобрал BRD'), event('x2', at(5, 12), 'Дело примера', { kind: 'todo-done', source: 'system' })] });
+    const example = direction('example', 'Пример: карта пунктов выдачи', { example: true, events: [event('x1', at(5, 8), 'Разобрал BRD'), event('x2', at(5, 12), 'Дело примера', { kind: 'todo-done', source: 'system' })] });
     const days = buildHistory({ ...state(), directions: [...state().directions, example] });
     const texts = days.flatMap(item => item.entries.map(entry => entry.text));
     expect(texts).not.toContain('Разобрал BRD');

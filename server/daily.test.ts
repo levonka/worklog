@@ -136,13 +136,13 @@ test('the daily summary merges Claude and Codex sessions by time', async t => {
   const earlier = new Date(new Date(IN_PERIOD).getTime() - 60_000).toISOString();
   const lines = [
     { timestamp: earlier, type: 'session_meta', payload: { id: 'c1', cwd: '/m' } },
-    { timestamp: earlier, type: 'response_item', payload: { type: 'message', role: 'user', content: [{ type: 'input_text', text: 'разбери логи редиректа' }] } },
+    { timestamp: earlier, type: 'response_item', payload: { type: 'message', role: 'user', content: [{ type: 'input_text', text: 'разбери логи сертификата' }] } },
   ];
   await writeFile(path.join(day, 'rollout-c1.jsonl'), `${lines.map(line => JSON.stringify(line)).join('\n')}\n`);
   const { done } = await startSummary(store, { ...config, codexSessionsDir: codexDir }, () => NOW);
   await done;
   const prompt = await readFile(path.join(stubDir, 'stdin.txt'), 'utf8');
-  assert.ok(prompt.indexOf('разбери логи редиректа') > -1 && prompt.indexOf('разбери логи редиректа') < prompt.indexOf('почини сео'));
+  assert.ok(prompt.indexOf('разбери логи сертификата') > -1 && prompt.indexOf('разбери логи сертификата') < prompt.indexOf('почини сео'));
   assert.equal((await store.read()).draft?.summary?.sessionCount, 2);
 });
 

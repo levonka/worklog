@@ -519,18 +519,18 @@ test('applyJira updates every direction holding the key', async t => {
 
 // --- merge requests ---
 
-const MR_4022 = 'https://git.example.com/team/app/-/merge_requests/4022';
+const MR_3015 = 'https://git.example.com/team/app/-/merge_requests/3015';
 
 test('applyMergeRequests adds the MR link of the direction branch once, without an event', async t => {
   const store = new Store(await tempDataDir(t), { profile: TEST_PROFILE });
   const dir = await store.createDirection({ title: 'SEO', ticketKeys: ['APP-7301', 'WEB-4410'] });
-  const found = new Map([['feature/APP-7301_WEB-4410', 4022]]);
+  const found = new Map([['feature/APP-7301_WEB-4410', 3015]]);
 
   assert.equal(await store.applyMergeRequests(found), 1);
   assert.equal(await store.applyMergeRequests(found), 0);
 
   const saved = (await store.read()).directions[0];
-  assert.deepEqual(saved.links, [{ title: 'MR !4022', url: MR_4022, kind: 'mr' }]);
+  assert.deepEqual(saved.links, [{ title: 'MR !3015', url: MR_3015, kind: 'mr' }]);
   assert.deepEqual(saved.events, []);
   assert.equal(saved.updatedAt, dir.updatedAt);
 });
@@ -540,16 +540,16 @@ test('applyMergeRequests adds no link without a merge request url', async t => {
   const store = new Store(await tempDataDir(t), { profile: withoutGitlab });
   await store.createDirection({ title: 'SEO', ticketKeys: ['APP-7301'] });
 
-  assert.equal(await store.applyMergeRequests(new Map([['feature/APP-7301', 4022]])), 0);
+  assert.equal(await store.applyMergeRequests(new Map([['feature/APP-7301', 3015]])), 0);
   assert.deepEqual((await store.read()).directions[0].links, []);
 });
 
 test('applyMergeRequests keeps a link to the same MR the user added', async t => {
   const store = new Store(await tempDataDir(t), { profile: TEST_PROFILE });
   const dir = await store.createDirection({ title: 'SEO', ticketKeys: ['APP-7301'] });
-  await store.addLink(dir.id, { url: `${MR_4022}/diffs`, title: 'мой MR' });
+  await store.addLink(dir.id, { url: `${MR_3015}/diffs`, title: 'мой MR' });
 
-  assert.equal(await store.applyMergeRequests(new Map([['feature/APP-7301', 4022]])), 0);
+  assert.equal(await store.applyMergeRequests(new Map([['feature/APP-7301', 3015]])), 0);
   assert.equal((await store.read()).directions[0].links.length, 1);
 });
 
@@ -585,7 +585,7 @@ test('createDirection stores the stage: the status, or В работе under a m
 
 test('applyJira takes the stage from the profile project tickets without an event the first time', async t => {
   const store = new Store(await tempDataDir(t), { profile: TEST_PROFILE });
-  const created = await store.createDirection({ title: 'Унификация', status: 'testing', ticketKeys: ['APP-1', 'WEB-2'] });
+  const created = await store.createDirection({ title: 'Переезд', status: 'testing', ticketKeys: ['APP-1', 'WEB-2'] });
   await store.applyJira([{ key: 'APP-1', status: 'Open', segments: [] }, { key: 'WEB-2', status: 'Open', segments: [] }], JIRA_AT);
 
   const saved = await savedDirection(store, created.id);
@@ -598,7 +598,7 @@ test('applyJira takes the stage from the profile project tickets without an even
 test('applyJira moves a Jira-led direction back with a stage event before the ticket events', async t => {
   const store = new Store(await tempDataDir(t), { profile: TEST_PROFILE });
   await store.createDirection({ title: 'Другое' });
-  const led = await ledDirection(store, 'Унификация', [['APP-1', 'In QA']]);
+  const led = await ledDirection(store, 'Переезд', [['APP-1', 'In QA']]);
   assert.equal(led.status, 'testing');
 
   await store.applyJira([{ key: 'APP-1', status: 'Open', segments: [] }], JIRA_LATER);
@@ -643,7 +643,7 @@ test('applyJira sends a direction to done when every profile project ticket is c
 
 test('applyJira does not close a direction while a ticket status is unknown', async t => {
   const store = new Store(await tempDataDir(t), { profile: TEST_PROFILE });
-  const led = await ledDirection(store, 'Сторы', [['APP-1', 'In QA'], ['WEB-2', 'In QA']]);
+  const led = await ledDirection(store, 'Фильтры', [['APP-1', 'In QA'], ['WEB-2', 'In QA']]);
 
   await store.applyJira([{ key: 'APP-1', status: 'Closed', segments: [] }, { key: 'WEB-2', status: 'Reopened', segments: [] }], JIRA_LATER);
 
@@ -762,7 +762,7 @@ test('clearMark returns a direction to its stage column with a clearing event', 
 
 test('clearMark of a parked direction whose stage is done sends it to done with two events', async t => {
   const store = new Store(await tempDataDir(t), { profile: TEST_PROFILE });
-  const led = await ledDirection(store, 'Капча', [['APP-1', 'Closed']], { status: 'parked' });
+  const led = await ledDirection(store, 'Карта', [['APP-1', 'Closed']], { status: 'parked' });
   assert.equal(led.status, 'parked');
   assert.equal(led.stage, 'done');
 
@@ -793,7 +793,7 @@ test('a done Jira-led direction takes a mark and goes back to done when it is cl
 
 test('setStatus of a manual direction from Жду to its own stage clears the mark', async t => {
   const store = new Store(await tempDataDir(t), { profile: TEST_PROFILE });
-  const created = await store.createDirection({ title: 'Редирект', status: 'waiting', waitingFor: 'девопсы' });
+  const created = await store.createDirection({ title: 'Сертификат', status: 'waiting', waitingFor: 'девопсы' });
 
   const moved = await store.setStatus(created.id, 'in_progress');
 
@@ -816,7 +816,7 @@ test('setStatus of a manual direction from Жду to its own stage keeps the dro
   const store = new Store(await tempDataDir(t), { profile: TEST_PROFILE });
   await store.createDirection({ title: 'Первое' });
   await store.createDirection({ title: 'Второе' });
-  const waiting = await store.createDirection({ title: 'Редирект', status: 'waiting', waitingFor: 'девопсы' });
+  const waiting = await store.createDirection({ title: 'Сертификат', status: 'waiting', waitingFor: 'девопсы' });
 
   const moved = await store.setStatus(waiting.id, 'in_progress', { index: 0 });
 
@@ -865,7 +865,7 @@ test('a run without agent reads as claude', async t => {
 test('releaseJiraStages hands the stage back when the profile has no Jira', async t => {
   const dataDir = await tempDataDir(t);
   const led = new Store(dataDir, { profile: TEST_PROFILE });
-  const dir = await led.createDirection({ title: 'Сторы', ticketKeys: ['APP-1'] });
+  const dir = await led.createDirection({ title: 'Фильтры', ticketKeys: ['APP-1'] });
   await led.applyJira([{ key: 'APP-1', status: 'In QA', segments: [] }], '2026-11-09T10:00:00.000Z');
   assert.equal((await led.read()).directions[0].stageFromJira, true);
 

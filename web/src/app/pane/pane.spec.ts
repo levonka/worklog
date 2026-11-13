@@ -13,7 +13,7 @@ function direction(id: string, title: string): Direction {
   return { id, title, status: 'in_progress', tickets: [], links: [], events: [], order: 0, createdAt: AT, updatedAt: AT };
 }
 
-const STATE: WorklogState = { directions: [direction('seo', 'SEO-текст'), direction('unify', 'Унификация сервисов')], todos: [], repeats: [], linkGroups: [], dailies: [], draft: null, notes: [], runs: [] };
+const STATE: WorklogState = { directions: [direction('seo', 'SEO-текст'), direction('unify', 'Переезд сервисов')], todos: [], repeats: [], linkGroups: [], dailies: [], draft: null, notes: [], runs: [] };
 
 describe('Pane', () => {
   let fixture: ComponentFixture<Pane>;
@@ -59,7 +59,7 @@ describe('Pane', () => {
     fixture.componentRef.setInput('tabId', 'direction:unify');
     await fixture.whenStable();
 
-    expect(host.querySelector('.dv__title')?.textContent?.trim()).toBe('Унификация сервисов');
+    expect(host.querySelector('.dv__title')?.textContent?.trim()).toBe('Переезд сервисов');
     expect(eventField().value).toBe('');
   });
 

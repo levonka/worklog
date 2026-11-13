@@ -46,7 +46,7 @@ function state(draftValue: DailyDraft | null): WorklogState {
         tickets: [ticketFromKey('APP-7301', TEST_PROFILE)],
         events: [event('e1', at(4, 14), 'Олег подтвердил баг бэка'), event('e2', at(4, 14, 5), 'Статус: Жду · бэк', 'status')],
       }),
-      direction('red', 'Редирект', { status: 'waiting', waitingFor: 'девопсы', events: [event('r', at(3, 10), 'Статус: Жду · девопсы', 'status')] }),
+      direction('red', 'Сертификат', { status: 'waiting', waitingFor: 'девопсы', events: [event('r', at(3, 10), 'Статус: Жду · девопсы', 'status')] }),
     ],
     todos: [],
     repeats: [],
@@ -154,7 +154,7 @@ describe('DailyView', () => {
 
   it('waiting shows days since status change', async () => {
     await setup(draft());
-    expect(texts('.dly__waiting-item')).toEqual(['Редирект — девопсы · 2 дн.', 'SEO-текст — бэк · 1 дн.']);
+    expect(texts('.dly__waiting-item')).toEqual(['Сертификат — девопсы · 2 дн.', 'SEO-текст — бэк · 1 дн.']);
   });
 
   it('summary button starts a run', async () => {
@@ -225,11 +225,11 @@ describe('DailyView', () => {
   });
 
   it('an item bound to a done direction shows it in the select', async () => {
-    const summary: SessionSummary = { ...SUMMARY, items: [{ id: 'i1', sessionId: 's1', at: at(5, 9), directionId: 'old', text: 'Доделал капчу' }], candidates: [] };
+    const summary: SessionSummary = { ...SUMMARY, items: [{ id: 'i1', sessionId: 's1', at: at(5, 9), directionId: 'old', text: 'Доделал карту' }], candidates: [] };
     await setup(draft({ summary }));
     const loading = TestBed.inject(WorklogStore).refresh();
     const base = state(draft({ summary }));
-    http.expectOne({ method: 'GET', url: '/api/state' }).flush({ ...base, directions: [...base.directions, direction('old', 'Капча', { status: 'done' })] });
+    http.expectOne({ method: 'GET', url: '/api/state' }).flush({ ...base, directions: [...base.directions, direction('old', 'Карта', { status: 'done' })] });
     await loading;
     await fixture.whenStable();
     const select = host.querySelector<HTMLSelectElement>('.dly__group .dly__bind');
@@ -240,7 +240,7 @@ describe('DailyView', () => {
     await setup(draft());
     const loading = TestBed.inject(WorklogStore).refresh();
     const base = state(draft());
-    http.expectOne({ method: 'GET', url: '/api/state' }).flush({ ...base, directions: [...base.directions, direction('ex', 'Пример: капча на входе', { example: true })] });
+    http.expectOne({ method: 'GET', url: '/api/state' }).flush({ ...base, directions: [...base.directions, direction('ex', 'Пример: карта пунктов выдачи', { example: true })] });
     await loading;
     await fixture.whenStable();
     const options = Array.from(host.querySelectorAll<HTMLOptionElement>('.dly__group .dly__bind option')).map(option => option.value);

@@ -28,7 +28,7 @@ function summary(patch: Partial<SessionSummary> = {}): SessionSummary {
     ranAt: iso(5, 11),
     sessionCount: 2,
     items: [
-      { id: 'i1', sessionId: 's1', at: iso(5, 10), directionId: 'a', text: 'разобрал сторы' },
+      { id: 'i1', sessionId: 's1', at: iso(5, 10), directionId: 'a', text: 'разобрал фильтры' },
       { id: 'i2', sessionId: 's2', at: iso(5, 10, 30), directionId: null, text: 'придумывал worklog' },
     ],
     candidates: [{ id: 'c1', sessionId: 's1', text: 'Завести задачу бэку', requestedBy: 'Олега', directionId: 'a' }],
@@ -40,7 +40,7 @@ function draft(patch: Partial<DailyDraft> = {}): DailyDraft {
   return { periodStart: PERIOD, text: null, textAt: null, summary: summary(), run: null, ...patch };
 }
 
-async function seed(store: Store, value: DailyDraft | null, directions: Direction[] = [direction('a', 'Сторы')]): Promise<void> {
+async function seed(store: Store, value: DailyDraft | null, directions: Direction[] = [direction('a', 'Фильтры')]): Promise<void> {
   await store.mutate(s => {
     s.directions.push(...directions);
     s.draft = value;
@@ -69,7 +69,7 @@ test('holdDaily writes daily file, removes draft and adds session-summary events
   assert.equal(state.draft, null);
   assert.deepEqual(state.dailies, [daily]);
   const [added] = state.directions[0].events;
-  assert.deepEqual({ at: added.at, text: added.text, source: added.source, kind: added.kind }, { at: iso(5, 10), text: 'разобрал сторы', source: 'session-summary', kind: 'note' });
+  assert.deepEqual({ at: added.at, text: added.text, source: added.source, kind: added.kind }, { at: iso(5, 10), text: 'разобрал фильтры', source: 'session-summary', kind: 'note' });
 });
 
 test('unbound summary items stay only in the daily record', async t => {
@@ -79,7 +79,7 @@ test('unbound summary items stay only in the daily record', async t => {
   assert.deepEqual(
     daily.items.map(i => [i.directionId, i.text, i.origin]),
     [
-      ['a', 'разобрал сторы', 'summary'],
+      ['a', 'разобрал фильтры', 'summary'],
       [null, 'придумывал worklog', 'summary'],
     ],
   );

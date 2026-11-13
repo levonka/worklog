@@ -820,7 +820,7 @@ test('POST /api/jira/refresh also links the merge request of the branch', async 
       pollMs: 3_600_000,
       lsRemote: async () => {
         calls++;
-        return calls === 1 ? '' : 'abc\trefs/heads/feature/APP-7301\nabc\trefs/merge-requests/4022/head\n';
+        return calls === 1 ? '' : 'abc\trefs/heads/feature/APP-7301\nabc\trefs/merge-requests/3015/head\n';
       },
     },
   });
@@ -832,7 +832,7 @@ test('POST /api/jira/refresh also links the merge request of the branch', async 
   assert.equal((await call(app.url, 'POST', '/api/jira/refresh')).status, 200);
   assert.equal(calls, 2);
   const state = await json<WorklogState>(await call(app.url, 'GET', '/api/state'));
-  assert.equal(state.directions[0].links[0]?.title, 'MR !4022');
+  assert.equal(state.directions[0].links[0]?.title, 'MR !3015');
 });
 
 interface UpdateApp {

@@ -130,7 +130,7 @@ describe('EnvLinks', () => {
   });
 
   it('only platforms with tickets', async () => {
-    await setup([ticket('APP-7301', ['EU']), ticket('SHOP-8221')]);
+    await setup([ticket('APP-7301', ['EU']), ticket('SHOP-5233')]);
 
     expect(Array.from(host.querySelectorAll('.el__group')).map(text)).toEqual(['App ⧉']);
     expect(cells().length).toBe(2);

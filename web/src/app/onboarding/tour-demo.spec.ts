@@ -14,7 +14,7 @@ const AT = '2026-11-01T09:00:00.000Z';
 
 const EXAMPLE: Direction = {
   id: 'ex',
-  title: 'Пример: капча на входе',
+  title: 'Пример: карта пунктов выдачи',
   status: 'in_progress',
   example: true,
   tickets: [],
@@ -103,7 +103,7 @@ describe('TourDemo', () => {
     const { host } = await render('todo-card');
 
     const ghosts = Array.from(host.querySelectorAll<HTMLElement>('.td__ghost'));
-    expect(ghosts.map(ghost => ghost.textContent?.trim())).toEqual(['Уточнить текст ошибки', 'Пример: капча на входе']);
+    expect(ghosts.map(ghost => ghost.textContent?.trim())).toEqual(['Уточнить текст ошибки', 'Пример: карта пунктов выдачи']);
     // the todo ghost is 220 × 30: centred on the row, then on the card
     expect(variables(ghosts[0])).toEqual(['640px', '100px', '10px', '225px']);
     expect(variables(ghosts[1])).toEqual(['20px', '218px', '650px', '93px']);

@@ -351,7 +351,7 @@ describe('Sidebar', () => {
     vi.spyOn(TestBed.inject(Tour), 'start').mockImplementation(() => undefined);
     const done: WorklogState = {
       ...STATE,
-      directions: [{ id: 'd', title: 'Капча', status: 'in_progress', tickets: [], links: [], order: 0, createdAt: '2026-11-01T09:00:00.000Z', updatedAt: '2026-11-01T09:00:00.000Z', events: [{ id: 'e', at: '2026-11-01T09:00:00.000Z', text: 'Разобрал BRD', source: 'manual', kind: 'note' }] }],
+      directions: [{ id: 'd', title: 'Карта', status: 'in_progress', tickets: [], links: [], order: 0, createdAt: '2026-11-01T09:00:00.000Z', updatedAt: '2026-11-01T09:00:00.000Z', events: [{ id: 'e', at: '2026-11-01T09:00:00.000Z', text: 'Разобрал BRD', source: 'manual', kind: 'note' }] }],
       todos: [{ id: 't', text: 'Дело', done: false, createdAt: '2026-11-01T09:00:00.000Z' }],
       onboarding: { stepsHidden: true, tabsReadAt: '2026-11-01T09:00:00.000Z' },
     };

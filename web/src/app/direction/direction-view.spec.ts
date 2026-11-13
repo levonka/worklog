@@ -33,7 +33,7 @@ function todo(id: string, text: string, fields: Partial<Todo> = {}): Todo {
 
 const SEO = direction('seo', 'SEO-текст на страницах товаров', 'waiting', 0, {
   waitingFor: 'бэк',
-  tickets: [ticketFromKey('APP-7301', TEST_PROFILE), ticketFromKey('WEB-4410', TEST_PROFILE), ticketFromKey('SHOP-8221', TEST_PROFILE)],
+  tickets: [ticketFromKey('APP-7301', TEST_PROFILE), ticketFromKey('WEB-4410', TEST_PROFILE), ticketFromKey('SHOP-5233', TEST_PROFILE)],
   links: [
     { title: 'feature/APP-7301_WEB-4410', url: BRANCH_URL, kind: 'branch' },
     { title: 'SRS', url: SRS_URL, kind: 'confluence' },
@@ -49,7 +49,7 @@ const SEO = direction('seo', 'SEO-текст на страницах товар�
 const STATE: WorklogState = {
   directions: [
     SEO,
-    direction('unify', 'Унификация сервисов', 'in_progress', 0),
+    direction('unify', 'Переезд сервисов', 'in_progress', 0),
     direction('push', 'US пуши', 'testing', 0, { stage: 'testing', stageFromJira: true }),
     direction('toggles', 'Удаление тоглов', 'testing', 1),
   ],
@@ -152,13 +152,13 @@ describe('DirectionView', () => {
     expect(tickets.map(ticket => [text(ticket), ticket.href, ticket.target, ticket.rel])).toEqual([
       ['APP-7301 App', 'https://jira.example.com/browse/APP-7301', '_blank', 'noopener'],
       ['WEB-4410 Web', 'https://jira.example.com/browse/WEB-4410', '_blank', 'noopener'],
-      ['SHOP-8221', 'https://jira.example.com/browse/SHOP-8221', '_blank', 'noopener'],
+      ['SHOP-5233', 'https://jira.example.com/browse/SHOP-5233', '_blank', 'noopener'],
     ]);
 
     expect(tickets.map(ticket => ticket.querySelector('img.fv__img')?.getAttribute('src'))).toEqual([
       '/api/favicon?url=https%3A%2F%2Fjira.example.com%2Fbrowse%2FAPP-7301',
       '/api/favicon?url=https%3A%2F%2Fjira.example.com%2Fbrowse%2FWEB-4410',
-      '/api/favicon?url=https%3A%2F%2Fjira.example.com%2Fbrowse%2FSHOP-8221',
+      '/api/favicon?url=https%3A%2F%2Fjira.example.com%2Fbrowse%2FSHOP-5233',
     ]);
 
     query('button[aria-label="Убрать WEB-4410"]', HTMLButtonElement).click();
@@ -203,17 +203,17 @@ describe('DirectionView', () => {
         .filter(chip => chip instanceof HTMLAnchorElement)
         .filter(chip => text(chip.querySelector('.dv__key')).startsWith('MR'));
     expect(mrChips().length).toBe(0);
-    const mr = 'https://git.example.com/team/app/-/merge_requests/4022';
-    await loadState(withSeo({ links: [...SEO.links, { title: 'MR !4022', url: mr, kind: 'mr' }, { title: 'diffs', url: `${mr}/diffs`, kind: 'mr' }] }));
+    const mr = 'https://git.example.com/team/app/-/merge_requests/3015';
+    await loadState(withSeo({ links: [...SEO.links, { title: 'MR !3015', url: mr, kind: 'mr' }, { title: 'diffs', url: `${mr}/diffs`, kind: 'mr' }] }));
 
     const chips = mrChips();
     expect(chips.map(chip => [text(chip.querySelector('.dv__key')), chip.href, chip.title, chip.target, chip.rel, chip.getAttribute('draggable')])).toEqual([
-      ['MR !4022', mr, mr, '_blank', 'noopener', 'false'],
+      ['MR !3015', mr, mr, '_blank', 'noopener', 'false'],
     ]);
     expect(chips[0].querySelector('img.fv__img')?.getAttribute('src')).toBe(`/api/favicon?url=${encodeURIComponent(mr)}`);
     expect(Array.from(host.querySelectorAll('.dl__text')).map(text)).toEqual(['feature/APP-7301_WEB-4410', 'SRS']);
 
-    query('button[aria-label="Убрать MR !4022"]', HTMLButtonElement).click();
+    query('button[aria-label="Убрать MR !3015"]', HTMLButtonElement).click();
     for (const url of [mr, `${mr}/diffs`]) {
       await settle();
       const request = http.expectOne(req => req.method === 'DELETE' && req.url === '/api/directions/seo/links');
@@ -337,11 +337,11 @@ describe('DirectionView', () => {
     request.flush({});
     await answerRefresh();
 
-    field.value = 'капча';
+    field.value = 'карта';
     press(field, 'Enter');
     await fixture.whenStable();
     http.expectNone({ method: 'POST', url: '/api/directions/seo/tickets' });
-    expect(field.value).toBe('капча');
+    expect(field.value).toBe('карта');
     expect(field.classList).toContain('dv__ticket-input_invalid');
 
     field.dispatchEvent(new Event('input'));

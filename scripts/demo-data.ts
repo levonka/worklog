@@ -14,15 +14,15 @@ export async function seedDemo(dataDir: string, profilePath: string): Promise<vo
   const env = { ...process.env, WORKLOG_DATA_DIR: dataDir, WORKLOG_PROFILE: profilePath, WORKLOG_ENV_FILE: '/nonexistent', WORKLOG_JIRA: 'off' };
   const worklog = (...args: string[]): string => execFileSync(path.join(ROOT, 'bin', 'worklog'), args, { env, encoding: 'utf8' }).trim();
 
-  const captcha = worklog('dir', 'add', 'Капча на входе', '--ticket', 'APP-101', '--ticket', 'WEB-102');
-  worklog('link', 'add', captcha, 'https://www.figma.com/design/demo/Captcha', '--title', 'макет');
-  worklog('link', 'add', captcha, 'https://wiki.example.com/pages/viewpage.action?pageId=101', '--title', 'BRD', '--desc', 'Капча после трёх неудачных входов; текст ошибок согласует дизайнер');
-  worklog('event', captcha, 'Разобрал BRD, задал аналитику вопросы по лимиту попыток');
-  worklog('event', captcha, 'Сверстал виджет капчи, осталось состояние ошибки');
-  worklog('todo', 'add', 'Уточнить текст ошибки капчи', '--dir', captcha, '--from', 'Ани');
+  const map = worklog('dir', 'add', 'Карта пунктов выдачи', '--ticket', 'APP-101', '--ticket', 'WEB-102');
+  worklog('link', 'add', map, 'https://www.figma.com/design/demo/Map', '--title', 'макет');
+  worklog('link', 'add', map, 'https://wiki.example.com/pages/viewpage.action?pageId=101', '--title', 'BRD', '--desc', 'Пункты выдачи на карте рядом с адресом; тексты ошибок согласует дизайнер');
+  worklog('event', map, 'Разобрал BRD, задал аналитику вопросы по радиусу поиска');
+  worklog('event', map, 'Сверстал виджет карты, осталось состояние ошибки');
+  worklog('todo', 'add', 'Уточнить текст ошибки карты', '--dir', map, '--from', 'Ани');
 
-  const redirect = worklog('dir', 'add', 'Редирект по user-agent', '--ticket', 'WEB-110', '--status', 'wait', '--waiting', 'девопсы');
-  worklog('event', redirect, 'Создал задачу девопсам на правило в балансировщике, жду реакции');
+  const certificate = worklog('dir', 'add', 'Сертификат для стенда', '--ticket', 'WEB-110', '--status', 'wait', '--waiting', 'девопсы');
+  worklog('event', certificate, 'Создал задачу девопсам на выпуск сертификата, жду реакции');
 
   const theme = worklog('dir', 'add', 'Тёмная тема настроек', '--ticket', 'APP-120', '--status', 'mr');
   worklog('link', 'add', theme, 'https://git.example.com/team/app/-/merge_requests/42', '--title', 'MR !42');
@@ -43,7 +43,7 @@ export async function seedDemo(dataDir: string, profilePath: string): Promise<vo
   worklog('quicklink', 'add', 'Разработка', 'Jira', 'https://jira.example.com', '--desc', 'Вход по сертификату');
   worklog('quicklink', 'add', 'Разработка', 'GitLab', 'https://git.example.com');
 
-  worklog('note', 'add', 'Ключ капчи на стендах', '--dir', captcha, '--body', 'На стендах ключ сайта берётся из конфига стенда, на проде — из переменной окружения.', '--link', 'https://wiki.example.com/pages/viewpage.action?pageId=102 Настройки капчи');
+  worklog('note', 'add', 'Ключ карты на стендах', '--dir', map, '--body', 'На стендах ключ API карты берётся из конфига стенда, на проде — из переменной окружения.', '--link', 'https://wiki.example.com/pages/viewpage.action?pageId=102 Настройки карты');
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

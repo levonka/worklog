@@ -17,7 +17,7 @@ const AT = '2026-11-01T09:00:00.000Z';
 const NOW = new Date(2026, 10, 5, 15, 0);
 
 const SEO_TASK = 'Завести задачу бэку на фикс SEO-текста';
-const MR = 'Ответить на комментарии в MR !3852';
+const MR = 'Ответить на комментарии в MR !2741';
 const TRANSLATE = 'Доступ к Translate — заявка GLPI #35111';
 const SEO_ADMIN = 'Добавить перевод SEO-текста в админку';
 const DEVOPS_DONE = 'Создать задачу девопсам через дашборд';
@@ -34,8 +34,8 @@ function todo(id: string, text: string, fields: Partial<Todo> = {}): Todo {
 const STATE: WorklogState = {
   directions: [
     direction('seo', 'SEO-текст', 'waiting', 0),
-    direction('stores', 'Браузерные сторы', 'in_progress', 1),
-    direction('unify', 'Унификация сервисов', 'in_progress', 0),
+    direction('stores', 'Фильтры каталога', 'in_progress', 1),
+    direction('unify', 'Переезд сервисов', 'in_progress', 0),
     direction('old', 'Старое направление', 'done', 0),
   ],
   todos: [
@@ -261,7 +261,7 @@ describe('TodoList', () => {
     TestBed.inject(DropHint).show({ kind: 'todo', todoId: 't3', directionId: 'unify' });
     await fixture.whenStable();
     expect(Array.from(host.querySelectorAll('.wl-todo-row_target')).map(element => element.getAttribute('data-todo-id'))).toEqual(['t3']);
-    expect(host.querySelector('[data-todo-id="t3"] .tr__drop-hint')?.textContent?.trim()).toBe('→ Унификация сервисов');
+    expect(host.querySelector('[data-todo-id="t3"] .tr__drop-hint')?.textContent?.trim()).toBe('→ Переезд сервисов');
     expect(host.querySelectorAll('.tr__drop-hint')).toHaveLength(1);
   });
 
@@ -289,11 +289,11 @@ describe('TodoList', () => {
     press(field, 'Enter');
     http.expectNone({ method: 'POST', url: '/api/todos' });
 
-    field.value = '  Пнуть девопсов по INFRA-4601 ';
+    field.value = '  Пнуть девопсов по INFRA-2208 ';
     press(field, 'Enter');
 
     const request = http.expectOne({ method: 'POST', url: '/api/todos' });
-    expect(request.request.body).toStrictEqual({ text: 'Пнуть девопсов по INFRA-4601' });
+    expect(request.request.body).toStrictEqual({ text: 'Пнуть девопсов по INFRA-2208' });
     expect(field.value).toBe('');
     expect(document.activeElement).toBe(field);
     request.flush({});
@@ -558,10 +558,10 @@ describe('TodoList', () => {
     menuItem(translate, 'Направление ▸').click();
     await fixture.whenStable();
     // the board order, without finished directions
-    expect(menuItems(translate).map(text)).toEqual(['Без направления', 'Унификация сервисов', 'Браузерные сторы', 'SEO-текст']);
+    expect(menuItems(translate).map(text)).toEqual(['Без направления', 'Переезд сервисов', 'Фильтры каталога', 'SEO-текст']);
     expect(menuItem(translate, 'Без направления').classList).toContain('tr__item_current');
 
-    menuItem(translate, 'Браузерные сторы').click();
+    menuItem(translate, 'Фильтры каталога').click();
     await fixture.whenStable();
     expect(translate.querySelector('.tr__menu')).toBeNull();
     await expectPatch('t3', { directionId: 'stores' });

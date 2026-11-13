@@ -17,14 +17,14 @@ const OUTPUT = [
   `${HEAD}\trefs/heads/${SEO}`,
   `${OTHER}\trefs/heads/feature/APP-2715`,
   `${OTHER}\trefs/merge-requests/3001/head`,
-  `${HEAD}\trefs/merge-requests/3990/head`,
-  `${HEAD}\trefs/merge-requests/4022/head`,
+  `${HEAD}\trefs/merge-requests/2990/head`,
+  `${HEAD}\trefs/merge-requests/3015/head`,
   '',
 ].join('\n');
 
 test('matchMergeRequests takes the newest MR whose head is the branch head', () => {
   assert.deepEqual(matchMergeRequests(OUTPUT, [SEO, 'feature/APP-2715', 'feature/APP-404']), new Map([
-    [SEO, 4022],
+    [SEO, 3015],
     ['feature/APP-2715', 3001],
   ]));
 });
@@ -36,7 +36,7 @@ test('findMergeRequests asks git only about the branches and MR heads', async ()
     return OUTPUT;
   };
 
-  assert.deepEqual(await findMergeRequests('/code', [SEO], lsRemote), new Map([[SEO, 4022]]));
+  assert.deepEqual(await findMergeRequests('/code', [SEO], lsRemote), new Map([[SEO, 3015]]));
   assert.deepEqual(asked, [[`refs/heads/${SEO}`, 'refs/merge-requests/*/head']]);
   assert.deepEqual(await findMergeRequests('/code', [], lsRemote), new Map());
   assert.equal(asked.length, 1);
@@ -60,7 +60,7 @@ test('linkMergeRequests links the MRs of unfinished directions', async t => {
   });
 
   assert.deepEqual(asked, [[`refs/heads/${SEO}`, 'refs/merge-requests/*/head']]);
-  assert.equal((await store.read()).directions.find(d => d.title === 'SEO')?.links[0].title, 'MR !4022');
+  assert.equal((await store.read()).directions.find(d => d.title === 'SEO')?.links[0].title, 'MR !3015');
 });
 
 test('linkMergeRequests stays quiet when git fails', async t => {

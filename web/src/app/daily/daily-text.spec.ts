@@ -11,13 +11,13 @@ import { DailyText } from './daily-text';
 const NOW = new Date(2026, 10, 5, 11, 5);
 const PERIOD = new Date(2026, 10, 4, 11, 30).toISOString();
 const at = (hour: number, minute = 0): string => new Date(2026, 10, 5, hour, minute).toISOString();
-const TEMPLATE = 'Касаемо задачи «Сторы»: Разобрал localStorage.';
+const TEMPLATE = 'Касаемо задачи «Фильтры»: Разобрал localStorage.';
 
 function state(draft: DailyDraft | null, extraEvent = false): WorklogState {
   const events = [{ id: 'e1', at: at(9), text: 'Разобрал localStorage', source: 'manual' as const, kind: 'note' as const }];
   if (extraEvent) events.push({ id: 'e2', at: at(10, 30), text: 'Завёл задачу', source: 'manual', kind: 'note' });
   return {
-    directions: [{ id: 'a', title: 'Сторы', status: 'waiting', tickets: [], links: [], events, order: 0, createdAt: at(8), updatedAt: at(8) }],
+    directions: [{ id: 'a', title: 'Фильтры', status: 'waiting', tickets: [], links: [], events, order: 0, createdAt: at(8), updatedAt: at(8) }],
     todos: [],
     repeats: [],
     linkGroups: [],

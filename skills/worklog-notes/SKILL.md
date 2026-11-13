@@ -1,6 +1,6 @@
 ---
 name: worklog-notes
-description: Use when the user asks to save knowledge to Worklog's knowledge base («запиши в базу», «запомни в знаниях», «добавь заметку»), asks what the base knows («что есть в базе по капче»), or when starting work on a task tracked in Worklog (a ticket key, a branch feature/<KEY>, a direction named by the user) — read its notes before touching the code.
+description: Use when the user asks to save knowledge to Worklog's knowledge base («запиши в базу», «запомни в знаниях», «добавь заметку»), asks what the base knows («что есть в базе по карте»), or when starting work on a task tracked in Worklog (a ticket key, a branch feature/<KEY>, a direction named by the user) — read its notes before touching the code.
 ---
 
 # Worklog: knowledge notes

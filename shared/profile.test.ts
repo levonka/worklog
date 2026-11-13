@@ -139,7 +139,7 @@ test('parseProfile rejects a tone Worklog does not have', () => {
 test('parseProfile adds the trailing slash to the merge requests url', () => {
   const parsed = parseProfile(profileWith({ gitlab: { sshHost: 'git.example.com', mergeRequestsUrl: 'https://git.example.com/team/app/-/merge_requests' } }));
   assert.equal(parsed.gitlab?.mergeRequestsUrl, 'https://git.example.com/team/app/-/merge_requests/');
-  assert.equal(mergeRequestNumber(mergeRequestUrl(4022, parsed) ?? ''), 4022);
+  assert.equal(mergeRequestNumber(mergeRequestUrl(3015, parsed) ?? ''), 3015);
 });
 
 test('profileQuickLinks fills in the GitLab login', () => {

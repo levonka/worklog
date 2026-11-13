@@ -28,7 +28,7 @@ const DIRECTIONS: Direction[] = [
   direction('twofa', 'Развитие 2FA', { doneAt: on(2026, 9, 22), tickets: tickets('APP-7098', 'WEB-4332', 'APP-9438') }),
   direction('promo', 'Промокоды', { doneAt: on(2026, 3, 9), tickets: tickets(...PROMO_TICKETS) }),
   direction('reg', 'Экран успешной регистрации', { doneAt: on(2025, 11, 26), tickets: tickets('APP-6339', 'WEB-3683') }),
-  direction('stores', 'Браузерные сторы', { status: 'in_progress', tickets: tickets('APP-6120') }),
+  direction('stores', 'Фильтры каталога', { status: 'in_progress', tickets: tickets('APP-6120') }),
 ];
 
 describe('DoneView', () => {
@@ -145,7 +145,7 @@ describe('DoneView', () => {
   });
 
   it('a done example is no work done', async () => {
-    await load([{ ...DIRECTIONS[0], id: 'example', title: 'Пример: капча на входе', example: true }]);
+    await load([{ ...DIRECTIONS[0], id: 'example', title: 'Пример: карта пунктов выдачи', example: true }]);
     expect(texts('.dv__empty')).toEqual(['Пока ничего не сделано']);
   });
 

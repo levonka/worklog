@@ -75,10 +75,10 @@ test('skips sidechain records, command caveats and system reminders', async t =>
     user('<system-reminder>skills</system-reminder>'),
     user('мета', { isMeta: true }),
     user('сбоку', { isSidechain: true }),
-    user('реальный вопрос<system-reminder>шум</system-reminder> про сторы'),
+    user('реальный вопрос<system-reminder>шум</system-reminder> про фильтры'),
   ]);
   const [session] = await collectSessions({ projectsDir: root, start: START, end: END });
-  assert.deepEqual(texts(session), ['user: реальный вопрос про сторы']);
+  assert.deepEqual(texts(session), ['user: реальный вопрос про фильтры']);
 });
 
 test('skips subagent transcripts', async t => {

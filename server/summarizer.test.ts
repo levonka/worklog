@@ -62,20 +62,20 @@ test('buildSummaryPrompt starts with the marker and lists sessions, directions, 
 });
 
 test('buildSummaryPrompt marks Jira events and gives their neutral phrase', () => {
-  const unify = direction('u', 'Унификация', ['APP-1'], {
+  const unify = direction('u', 'Переезд', ['APP-1'], {
     status: 'testing',
     events: [{ id: 'j', at: at(4, 15), text: 'Статус: Тестирование', source: 'jira', kind: 'status' } satisfies WorkEvent],
   });
   const state = { directions: [seo, unify], todos: [], repeats: [], linkGroups: [], dailies: [], draft: null, notes: [], runs: [] };
   const prompt = buildSummaryPrompt({ periodStart: at(4, 11, 30), periodEnd: at(5, 11), sessions: [], directions: state.directions, digest: periodDigest(state, at(4, 11, 30), null, '2026-11-05') });
-  assert.ok(prompt.includes('- «Унификация» · 04.11 15:00 · [Jira] Ушла в тестирование'));
+  assert.ok(prompt.includes('- «Переезд» · 04.11 15:00 · [Jira] Ушла в тестирование'));
   assert.ok(!prompt.includes('Статус: Тестирование'));
   assert.ok(prompt.includes('- «SEO-текст на страницах товаров» · 04.11 14:00 · Олег подтвердил баг бэка'));
   assert.ok(prompt.includes('с пометкой [Jira] сделал не он'));
 });
 
 test('directionHints finds ticket keys in branches and messages', () => {
-  const stores = direction('st', 'Сторы', ['APP-6120']);
+  const stores = direction('st', 'Фильтры', ['APP-6120']);
   assert.deepEqual(directionHints(session('s', { branches: ['feature/APP-7301_WEB-4410'] }), [seo, stores]).map(d => d.id), ['seo']);
   const mention = session('s', { messages: [{ at: at(5, 9), role: 'user', text: 'посмотри app-6120' }] });
   assert.deepEqual(directionHints(mention, [seo, stores]).map(d => d.id), ['st']);

@@ -330,7 +330,7 @@ describe('WorklogStore', () => {
   }
 
   const actions: ActionCase[] = [
-    { name: 'createDirection', run: s => s.createDirection({ title: 'Капча', tickets: ['APP-1'] }), method: 'POST', url: '/api/directions', body: { title: 'Капча', tickets: ['APP-1'] } },
+    { name: 'createDirection', run: s => s.createDirection({ title: 'Карта', tickets: ['APP-1'] }), method: 'POST', url: '/api/directions', body: { title: 'Карта', tickets: ['APP-1'] } },
     { name: 'renameDirection', run: s => s.renameDirection('a', 'Сео'), method: 'PATCH', url: '/api/directions/a', body: { title: 'Сео' } },
     { name: 'setWaitingFor', run: s => s.setWaitingFor('a', 'девопсы'), method: 'PATCH', url: '/api/directions/a', body: { waitingFor: 'девопсы' } },
     { name: 'setWaitingFor null', run: s => s.setWaitingFor('a', null), method: 'PATCH', url: '/api/directions/a', body: { waitingFor: null } },
@@ -397,7 +397,7 @@ describe('WorklogStore', () => {
     const at = (hour: number): string => new Date(2026, 10, 5, hour).toISOString();
 
     function withEvents(...events: WorkEvent[]): WorklogState {
-      return worklog({ directions: [{ ...direction('a', 'waiting', 0), title: 'Сторы', events }] });
+      return worklog({ directions: [{ ...direction('a', 'waiting', 0), title: 'Фильтры', events }] });
     }
 
     function note(id: string, when: string, text: string): WorkEvent {
@@ -422,7 +422,7 @@ describe('WorklogStore', () => {
       restartAt(NOW);
       await load(withEvents(note('e', at(9), 'Разобрал localStorage')));
       expect(store.periodStart()).toBe(PERIOD);
-      expect(store.dailyText()).toBe('Касаемо задачи «Сторы»: Разобрал localStorage.');
+      expect(store.dailyText()).toBe('Касаемо задачи «Фильтры»: Разобрал localStorage.');
       expect(store.textIsTemplate()).toBe(true);
       await load({ ...withEvents(note('e', at(9), 'Разобрал localStorage')), draft: draft({ text: 'Своё', textAt: at(10) }) });
       expect(store.dailyText()).toBe('Своё');

@@ -60,7 +60,7 @@ test('createDirection ignores waitingFor unless the status is waiting', async t 
 
 test('createDirection normalizes ticket keys and rejects invalid ones', async t => {
   const store = await tempStore(t);
-  const created = await store.createDirection({ title: 'Сторы', ticketKeys: ['app-7301', 'WEB-4410', 'APP-7301'] });
+  const created = await store.createDirection({ title: 'Фильтры', ticketKeys: ['app-7301', 'WEB-4410', 'APP-7301'] });
   assert.deepEqual(
     created.tickets.map(ticket => [ticket.key, ticket.platform]),
     [
@@ -154,8 +154,8 @@ test('setDoneDate stores local noon of the day and writes no event', async t => 
 
 test('setDoneDate rejects a direction that is not done and a bad day', async t => {
   const store = await tempStore(t);
-  const created = await store.createDirection({ title: 'Сторы' });
-  await assert.rejects(store.setDoneDate(created.id, '2026-10-01'), (e: unknown) => e instanceof ValidationError && e.message === 'Направление не в статусе «Готово»: Сторы');
+  const created = await store.createDirection({ title: 'Фильтры' });
+  await assert.rejects(store.setDoneDate(created.id, '2026-10-01'), (e: unknown) => e instanceof ValidationError && e.message === 'Направление не в статусе «Готово»: Фильтры');
   await store.setStatus(created.id, 'done');
   for (const bad of ['2026-13-01', '1.10.2026']) {
     await assert.rejects(store.setDoneDate(created.id, bad), (e: unknown) => e instanceof ValidationError && e.message === `Дата должна быть в формате YYYY-MM-DD: ${bad}`);

@@ -21,7 +21,7 @@ function direction(id: string, title: string, keys: string[] = []): Direction {
 }
 
 const directions = [
-  direction('abc123', 'Браузерные сторы'),
+  direction('abc123', 'Фильтры каталога'),
   direction('def456', 'Сео-текст на товарах', ['APP-7301']),
   direction('ghi789', 'Сео-ссылки'),
 ];
@@ -35,8 +35,8 @@ test('resolves by ticket key, case-insensitively', () => {
 });
 
 test('resolves a single title substring ignoring case', () => {
-  assert.equal(resolveDirection(directions, 'сторы').id, 'abc123');
-  assert.equal(resolveDirection(directions, 'БРАУЗЕРНЫЕ').id, 'abc123');
+  assert.equal(resolveDirection(directions, 'фильтры').id, 'abc123');
+  assert.equal(resolveDirection(directions, 'КАТАЛОГА').id, 'abc123');
 });
 
 test('ambiguous title substring lists every candidate', () => {
@@ -82,9 +82,9 @@ test('an empty ref is not found', () => {
 });
 
 test('resolveDirection finds the example only by id', () => {
-  const own = direction('own', 'Капча', ['APP-1']);
-  const example: Direction = { ...direction('example', 'Пример: капча на входе', ['APP-1001']), example: true };
-  assert.equal(resolveDirection([example, own], 'капч').id, 'own');
+  const own = direction('own', 'Карта', ['APP-1']);
+  const example: Direction = { ...direction('example', 'Пример: карта пунктов выдачи', ['APP-1001']), example: true };
+  assert.equal(resolveDirection([example, own], 'карт').id, 'own');
   assert.throws(() => resolveDirection([example, own], 'APP-1001'), NotFoundError);
   assert.throws(() => resolveDirection([example, own], 'пример'), NotFoundError);
   assert.equal(resolveDirection([example, own], 'example').id, 'example');

@@ -16,7 +16,7 @@ const AT = '2026-11-01T09:00:00.000Z';
 
 const EXAMPLE: Direction = {
   id: 'ex',
-  title: 'Пример: капча на входе',
+  title: 'Пример: карта пунктов выдачи',
   status: 'in_progress',
   example: true,
   tickets: [],

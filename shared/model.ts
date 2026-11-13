@@ -854,34 +854,34 @@ export function exampleData(profile: Profile | null, at: string, newId: () => st
   const event = (days: number, text: string): WorkEvent => ({ id: newId(), at: before(days), text, source: 'manual', kind: 'note' });
   const direction: Direction = {
     id,
-    title: 'Пример: капча на входе',
+    title: 'Пример: карта пунктов выдачи',
     status: 'in_progress',
     stage: 'in_progress',
     example: true,
     tickets,
     links: [
-      { title: 'Макет', url: 'https://www.figma.com/design/example/captcha', kind: 'figma', description: 'Экраны капчи для всех платформ' },
-      { title: 'BRD', url: 'https://wiki.example.com/pages/viewpage.action?pageId=1001', kind: 'confluence', description: 'Требования: капча после трёх неудачных входов' },
+      { title: 'Макет', url: 'https://www.figma.com/design/example/map', kind: 'figma', description: 'Экраны карты для всех платформ' },
+      { title: 'BRD', url: 'https://wiki.example.com/pages/viewpage.action?pageId=1001', kind: 'confluence', description: 'Требования: пункты выдачи на карте рядом с адресом' },
       { title: 'Swagger', url: 'https://api.example.com/swagger', kind: 'other' },
       { title: 'MR !1', url: 'https://git.example.com/team/app/-/merge_requests/1', kind: 'mr' },
     ],
     events: [
-      event(3, 'Разобрал BRD, задал аналитику вопросы по лимиту попыток входа'),
-      event(2, 'Сверстал виджет капчи, жду от дизайнера текст ошибки'),
-      event(1, 'Так выглядит лента: сюда попадает всё, что вы рассказываете агенту, например «запиши в worklog по капче: бэк поправил редирект»'),
+      event(3, 'Разобрал BRD, задал аналитику вопросы по радиусу поиска'),
+      event(2, 'Сверстал виджет карты, жду от дизайнера текст ошибки'),
+      event(1, 'Так выглядит лента: сюда попадает всё, что вы рассказываете агенту, например «запиши в worklog по карте: бэк поправил выдачу точек»'),
     ],
     order: 0,
     createdAt: before(3),
     updatedAt: at,
   };
-  const todo: Todo = { id: newId(), text: 'Уточнить у дизайнера текст ошибки капчи', directionId: id, requestedBy: 'Ани', done: false, createdAt: before(2) };
+  const todo: Todo = { id: newId(), text: 'Уточнить у дизайнера текст ошибки карты', directionId: id, requestedBy: 'Ани', done: false, createdAt: before(2) };
   const note: Note = {
     id: newId(),
-    title: 'Ключ капчи на стендах',
-    body: 'На стендах ключ сайта берётся из конфига стенда, на проде — из переменной окружения.',
+    title: 'Ключ карты на стендах',
+    body: 'На стендах ключ API карты берётся из конфига стенда, на проде — из переменной окружения.',
     directionIds: [id],
     files: [],
-    urls: [{ url: 'https://wiki.example.com/pages/viewpage.action?pageId=1002', title: 'Настройки капчи' }],
+    urls: [{ url: 'https://wiki.example.com/pages/viewpage.action?pageId=1002', title: 'Настройки карты' }],
     createdAt: before(1),
     updatedAt: before(1),
   };
@@ -921,11 +921,11 @@ export function onboardingPrompts(profile: Profile | null, directions: readonly 
     .filter(direction => direction.status !== 'done')
     .sort((a, b) => a.order - b.order)[0];
   // the title stays as written: it does not decline after «по»
-  const about = named === undefined ? 'по капче' : `по направлению «${named.title}»`;
-  const to = named === undefined ? 'к капче' : `к направлению «${named.title}»`;
+  const about = named === undefined ? 'по карте' : `по направлению «${named.title}»`;
+  const to = named === undefined ? 'к карте' : `к направлению «${named.title}»`;
   return {
     direction: `заведи в worklog направление по задачам ${first}1234 и ${second}567`,
-    event: `запиши в worklog ${about}: бэк поправил редирект, жду стенд`,
+    event: `запиши в worklog ${about}: бэк поправил выдачу точек, жду стенд`,
     link: `добавь в worklog ${to} ссылку на макет: <ссылка>`,
     todo: 'добавь в worklog дело: завести задачу на бэк, просил аналитик',
     repeat: 'добавь в worklog повторяющееся дело: дейлик каждый будний день в 11:30',

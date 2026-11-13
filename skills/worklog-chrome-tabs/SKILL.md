@@ -17,9 +17,9 @@ Run the CLI exactly as `~/.local/bin/worklog <command>`, one command per Bash ca
    - «Без номеров».
    `· сохранена` after a URL means it is already a link or ticket in Worklog (or a sidebar link): nothing to do. `tabs --json` gives the same with keys and direction ids.
 2. Build one numbered proposal, grouped by direction:
-   - **links to add**: work pages not saved yet — Confluence (BRD, UI, тех. анализ), Figma, MR, branch, Jenkins, Swagger, docs. Short Russian title, the way the user names things: «BRD», «Figma: CAPTCHA», «MR !3852», «Jenkins: сборка». A tab under a direction that is only the Jira page of its own ticket needs nothing.
+   - **links to add**: work pages not saved yet — Confluence (BRD, UI, тех. анализ), Figma, MR, branch, Jenkins, Swagger, docs. Short Russian title, the way the user names things: «BRD», «Figma: карта», «MR !512», «Jenkins: сборка». A tab under a direction that is only the Jira page of its own ticket needs nothing.
    - **tickets to add**: a tab clearly about a direction mentions another key (parent, related backend task).
-   - **tabs without keys**: match them to a direction by title and content words («Капча — теханализ» → Капча). Permanent tools that are not a sidebar link yet (dashboards, stands) → offer as sidebar links. Unclear work tabs → list under «не понял, куда» with the title.
+   - **tabs without keys**: match them to a direction by title and content words («Карта — теханализ» → Карта). Permanent tools that are not a sidebar link yet (dashboards, stands) → offer as sidebar links. Unclear work tabs → list under «не понял, куда» with the title.
    - **«Номера без направления»**: per key, offer «новое направление», «к направлению …» or «пропустить». A login page («Вход», «Log in») hides the title: show the key and say you cannot see what the task is.
    - Personal tabs (YouTube, music, shops, news) and generic pages (Jira board, mail, search) — do not list them, give only their count.
 3. Ask the user to confirm: «всё», or numbers to drop or change. Do not write anything before the answer.

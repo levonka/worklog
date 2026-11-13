@@ -16,7 +16,7 @@ import { TEST_PROFILE } from '@worklog/test-profile';
 const AT = '2026-11-01T09:00:00.000Z';
 
 function direction(fields: Partial<Direction>): Direction {
-  return { id: 'd1', title: 'Браузерные сторы', status: 'in_progress', tickets: [], links: [], events: [], order: 0, createdAt: AT, updatedAt: AT, ...fields };
+  return { id: 'd1', title: 'Фильтры каталога', status: 'in_progress', tickets: [], links: [], events: [], order: 0, createdAt: AT, updatedAt: AT, ...fields };
 }
 
 function todo(id: string, text: string, fields: Partial<Todo> = {}): Todo {
@@ -154,7 +154,7 @@ describe('AgentSheetView', () => {
   it('shows the direction, its context and the task branch, then launches with the chosen parts', async () => {
     await useProfile();
     await open({ directionId: 'd1' });
-    expect(text(host.querySelector('.as__title'))).toBe('✦ Поручение агенту · Браузерные сторы');
+    expect(text(host.querySelector('.as__title'))).toBe('✦ Поручение агенту · Фильтры каталога');
     expect(Array.from(host.querySelectorAll('.as__part'), part => [text(part.querySelector('.as__part-label')), text(part.querySelector('.as__part-summary'))])).toEqual([
       ['Тикеты', 'CORE-580, APP-6120 (App), WEB-3380 (Web) — агент откроет их сам'],
       ['Ссылки', 'Теханализ'],

@@ -23,7 +23,7 @@ function worklog(fields: Partial<WorklogState>): WorklogState {
   return { directions: [], todos: [], repeats: [], linkGroups: [], dailies: [], draft: null, notes: [], runs: [], ...fields };
 }
 
-const EXAMPLE = direction('ex', { title: 'Пример: капча на входе', example: true, events: [event('e0')] });
+const EXAMPLE = direction('ex', { title: 'Пример: карта пунктов выдачи', example: true, events: [event('e0')] });
 const TODO = { id: 't', text: 'Дело', done: false, createdAt: AT };
 const ALL_DONE = worklog({ directions: [direction('own', { events: [event('e1')] })], todos: [TODO], onboarding: { tabsReadAt: AT } });
 
@@ -113,7 +113,7 @@ describe('FirstSteps', () => {
     expect(items.map(item => item.querySelectorAll('wl-prompt').length)).toEqual([0, 1, 1, 2]);
     expect(texts('.pr__text')).toEqual([
       'разбери вкладки chrome в worklog',
-      'запиши в worklog по направлению «Тёмная тема»: бэк поправил редирект, жду стенд',
+      'запиши в worklog по направлению «Тёмная тема»: бэк поправил выдачу точек, жду стенд',
       'добавь в worklog дело: завести задачу на бэк, просил аналитик',
       'добавь в worklog повторяющееся дело: дейлик каждый будний день в 11:30',
     ]);

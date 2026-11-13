@@ -20,7 +20,7 @@ function worklog(fields: Partial<WorklogState>): WorklogState {
   return { directions: [], todos: [], repeats: [], linkGroups: [], dailies: [], draft: null, notes: [], runs: [], ...fields };
 }
 
-const EXAMPLE = direction('ex', 'in_progress', 5, { title: 'Пример: капча на входе', example: true });
+const EXAMPLE = direction('ex', 'in_progress', 5, { title: 'Пример: карта пунктов выдачи', example: true });
 
 function settle(): Promise<void> {
   return new Promise(resolve => setTimeout(resolve));

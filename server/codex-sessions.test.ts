@@ -37,7 +37,7 @@ test('collectCodexSessions reads user and assistant messages of the period', asy
   await rollout(dir, 'a', [
     meta(),
     message('developer', 'служебное'),
-    message('user', 'Почини редирект', '2026-03-02T10:01:00.000Z'),
+    message('user', 'Почини сертификат', '2026-03-02T10:01:00.000Z'),
     { timestamp: AT, type: 'response_item', payload: { type: 'reasoning', summary: [] } },
     { timestamp: AT, type: 'response_item', payload: { type: 'custom_tool_call', name: 'exec', input: 'ls' } },
     message('assistant', 'Поправил условие в guard', '2026-03-02T10:05:00.000Z'),
@@ -52,7 +52,7 @@ test('collectCodexSessions reads user and assistant messages of the period', asy
       firstAt: '2026-03-02T10:01:00.000Z',
       lastAt: '2026-03-02T10:05:00.000Z',
       messages: [
-        { at: '2026-03-02T10:01:00.000Z', role: 'user', text: 'Почини редирект' },
+        { at: '2026-03-02T10:01:00.000Z', role: 'user', text: 'Почини сертификат' },
         { at: '2026-03-02T10:05:00.000Z', role: 'assistant', text: 'Поправил условие в guard' },
       ],
     },

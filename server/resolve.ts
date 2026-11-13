@@ -7,7 +7,7 @@ export function resolveDirection(directions: Direction[], ref: string): Directio
   const byId = directions.find(d => d.id === query);
   if (byId) return byId;
 
-  // the onboarding example answers only to its id: «по капче» means the user's own captcha
+  // the onboarding example answers only to its id: «по карте» means the user's own map
   const own = ownDirections(directions);
   const key = normalizeTicketKey(query);
   if (key) {
