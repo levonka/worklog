@@ -82,4 +82,4 @@ Run all four before committing.
 - `origin` is the public repository on GitHub. Work directly on `main`, no feature branches. Push only when the user asks.
 - Commit messages: one short line in Russian, no `Co-Authored-By` or any other trailer, no AI mentions. They are public: the leak rule applies to them too.
 - On the maintainer's machine `pre-commit` and `commit-msg` hooks run `scripts/check-leaks.sh`; never bypass them (`--no-verify`).
-- `data/` is not part of this repository. Snapshots of it: `worklog data commit`.
+- `data/` is not part of this repository. Snapshots of it: the server's daily one (`snapshotData`) and `worklog data commit`.

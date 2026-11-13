@@ -5,7 +5,7 @@ import { execFileSync } from 'node:child_process';
 import { access, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { DATA_GITIGNORE, commitData, dataRepoState, initDataRepo } from './data-git.ts';
+import { DATA_GITIGNORE, commitData, dataRepoState, initDataRepo, snapshotData } from './data-git.ts';
 
 async function tempDir(t: TestContext): Promise<string> {
   const dir = await mkdtemp(path.join(tmpdir(), 'worklog-data-git-'));
@@ -74,4 +74,34 @@ test('commitData commits changes and skips a clean tree', async t => {
   assert.match(hash ?? '', /^[0-9a-f]{7,}$/);
   assert.equal(git(dataDir, 'show', '--name-only', '--format=%s', 'HEAD').trim(), 'Снимок\n\ntodos.json');
   assert.equal(await commitData(dataDir, 'снова'), null);
+});
+
+test('snapshotData commits the changes once a day', async t => {
+  const dir = await tempDir(t);
+  await writeFile(path.join(dir, 'todos.json'), '[]');
+  await initDataRepo(dir);
+  await writeFile(path.join(dir, 'todos.json'), '[1]');
+
+  const today = git(dir, 'log', '-1', '--format=%cs').trim();
+  assert.equal(await snapshotData(dir, today), null);
+
+  assert.match((await snapshotData(dir, '2099-01-01')) ?? '', /^[0-9a-f]+$/);
+  assert.equal(git(dir, 'log', '-1', '--format=%s').trim(), 'Снимок 2099-01-01');
+  assert.equal(git(dir, 'status', '--porcelain'), '');
+});
+
+test('snapshotData makes no empty commit', async t => {
+  const dir = await tempDir(t);
+  await writeFile(path.join(dir, 'todos.json'), '[]');
+  await initDataRepo(dir);
+
+  assert.equal(await snapshotData(dir, '2099-01-01'), null);
+  assert.equal(git(dir, 'rev-list', '--count', 'HEAD').trim(), '1');
+});
+
+test('snapshotData does nothing without data own git', async t => {
+  const dir = await tempDir(t);
+  await writeFile(path.join(dir, 'todos.json'), '[]');
+  assert.equal(await snapshotData(dir, '2099-01-01'), null);
+  assert.equal(await snapshotData(await codeRepo(t, false), '2099-01-01'), null);
 });

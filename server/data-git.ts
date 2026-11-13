@@ -61,3 +61,11 @@ export async function commitData(dataDir: string, message: string): Promise<stri
   await git(dataDir, [...IDENTITY, 'commit', '--quiet', '-m', message]);
   return (await git(dataDir, ['rev-parse', '--short', 'HEAD'])).trim();
 }
+
+/** a commit of what changed, at most once a day and only when the day has no commit yet; nothing without data's own git */
+export async function snapshotData(dataDir: string, today: string): Promise<string | null> {
+  if ((await dataRepoState(dataDir)) !== 'own') return null;
+  const lastDay = (await git(dataDir, ['log', '-1', '--format=%cs'])).trim();
+  if (lastDay === today) return null;
+  return commitData(dataDir, `Снимок ${today}`);
+}

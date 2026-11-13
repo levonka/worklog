@@ -4,12 +4,14 @@ import type { AgentConfig } from './agent-launch.ts';
 import { createApiRoutes } from './api.ts';
 import type { CodeConfig } from './code-files.ts';
 import type { SummaryConfig } from './daily.ts';
+import { snapshotData } from './data-git.ts';
 import { STATUS_NOT_FOUND, assertLocalHost, assertSameOrigin, matchRoute, readJsonBody, sendError, sendJson, sendText } from './http.ts';
 import type { Route } from './http.ts';
 import { createFavicons, serveFavicon } from './favicons.ts';
 import type { Favicons } from './favicons.ts';
 import { History } from './history.ts';
 import type { Profile } from '../shared/model.ts';
+import { localDate } from '../shared/model.ts';
 import type { JiraFetch } from './jira.ts';
 import { createJiraPoller } from './jira-poller.ts';
 import type { LsRemote } from './merge-requests.ts';
@@ -26,6 +28,8 @@ const FAVICON_PATH = '/api/favicon';
 const FAVICON_SNAPSHOT_MS = 10 * 60_000;
 // how soon after midnight today's repeating todos appear
 const REPEAT_CHECK_MS = 5 * 60_000;
+// how often the server checks whether today's snapshot of data is due
+const SNAPSHOT_CHECK_MS = 60 * 60_000;
 
 export interface AppOptions {
   dataDir: string;
@@ -42,6 +46,7 @@ export interface AppOptions {
   /** how an agent's Warp tab is opened; none, launching answers 503 */
   agent?: AgentConfig;
   repeatCheckMs?: number;
+  snapshotCheckMs?: number;
   /** how to build the Jira client and how often to poll; none, Jira is off */
   jira?: { connect: () => Promise<JiraFetch | string>; pollMs: number };
   /** where the branches' merge requests are looked up; none, MR links are not added */
@@ -111,6 +116,12 @@ export async function createApp(opts: AppOptions): Promise<App> {
   applyRepeats();
   const repeatTimer = setInterval(applyRepeats, opts.repeatCheckMs ?? REPEAT_CHECK_MS);
   repeatTimer.unref();
+  const snapshot = (): void => {
+    snapshotData(opts.dataDir, localDate(new Date())).catch(error => console.error('Снимок данных:', error));
+  };
+  snapshot();
+  const snapshotTimer = setInterval(snapshot, opts.snapshotCheckMs ?? SNAPSHOT_CHECK_MS);
+  snapshotTimer.unref();
   jira?.start();
   let mrTimer: NodeJS.Timeout | undefined;
   if (mr !== undefined && checkMergeRequests !== undefined) {
@@ -123,6 +134,7 @@ export async function createApp(opts: AppOptions): Promise<App> {
     url: `http://${HOST}:${address.port}`,
     close: async () => {
       clearInterval(repeatTimer);
+      clearInterval(snapshotTimer);
       jira?.close();
       clearInterval(mrTimer);
       await new Promise<void>((resolve, reject) => {

@@ -1,15 +1,18 @@
 import { test } from 'node:test';
 import type { TestContext } from 'node:test';
 import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
 import { request as httpRequest } from 'node:http';
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { setTimeout as sleep } from 'node:timers/promises';
 import { homedir, tmpdir } from 'node:os';
 import path from 'node:path';
+import { localDate } from '../shared/model.ts';
 import type { AgentRun, Direction, Link, Note, Profile, QuickLink, QuickLinkGroup, Ticket, Todo, WorkEvent, WorklogState } from '../shared/model.ts';
 import type { AgentConfig } from './agent-launch.ts';
 import type { CodeConfig } from './code-files.ts';
 import { createApp } from './app.ts';
+import { initDataRepo } from './data-git.ts';
 import { png, writeFaviconsDb } from './favicons.fixture.ts';
 import { Store } from './store.ts';
 import { TEST_PROFILE } from '../shared/test-profile.ts';
@@ -262,6 +265,22 @@ test('a broken data file gives 500 with the file named', async t => {
   const response = await call(app.url, 'GET', '/api/state');
   assert.equal(response.status, 500);
   assert.match((await json<{ error: string }>(response)).error, /^Повреждён файл данных: .*abc\.json$/);
+});
+
+test('the server snapshots the data once the day has no commit of its own', async t => {
+  const dataDir = await tempDir(t, 'worklog-api-data-');
+  await writeFile(path.join(dataDir, 'todos.json'), '[]');
+  await initDataRepo(dataDir);
+  const git = (env: NodeJS.ProcessEnv, ...args: string[]): string => execFileSync('git', ['-C', dataDir, '-c', 'user.name=t', '-c', 'user.email=t@example.com', ...args], { encoding: 'utf8', env: { ...process.env, ...env } });
+  git({ GIT_COMMITTER_DATE: '2000-01-01T12:00:00' }, 'commit', '--quiet', '--amend', '--no-edit');
+  await writeFile(path.join(dataDir, 'todos.json'), '[1]');
+
+  const app = await createApp({ dataDir, port: 0, staticDir: path.join(dataDir, 'missing'), idleMs: IDLE_MS });
+  t.after(() => app.close());
+
+  const expected = `Снимок ${localDate(new Date())}`;
+  for (let i = 0; i < 50 && git({}, 'log', '-1', '--format=%s').trim() !== expected; i++) await sleep(50);
+  assert.equal(git({}, 'log', '-1', '--format=%s').trim(), expected);
 });
 
 test('GET /api/profile answers the profile the app was created with', async t => {
