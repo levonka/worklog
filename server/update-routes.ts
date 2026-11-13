@@ -77,6 +77,8 @@ export function createUpdateRoutes(update: UpdateOptions | undefined, summaryRun
       handler: async () => {
         if (update === undefined) throw new HttpError(UNAVAILABLE, OFF);
         if (starting) throw new HttpError(CONFLICT, 'Обновление уже идёт');
+        // the click's time: asking GitHub below takes seconds, and the window counts from the click
+        const startedAt = (update.now ?? (() => new Date()))().toISOString();
         starting = true;
         try {
           if (await updateRunning(update)) throw new HttpError(CONFLICT, 'Обновление уже идёт');
@@ -87,7 +89,7 @@ export function createUpdateRoutes(update: UpdateOptions | undefined, summaryRun
           if (check === 'local-changes') throw new HttpError(CONFLICT, 'В папке Worklog есть свои правки — обновите её через git');
           if (await summaryRunning()) throw new HttpError(CONFLICT, 'Идёт сборка дейлика из сессий — обновите после неё');
           // written before the launch: the update process writes after it, its pid first and its result last
-          const run: UpdateRun = { phase: 'running', startedAt: (update.now ?? (() => new Date()))().toISOString() };
+          const run: UpdateRun = { phase: 'running', startedAt };
           await writeJsonAtomic(update.runFile, run);
           try {
             update.launch(run.startedAt);

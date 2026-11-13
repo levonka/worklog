@@ -913,6 +913,21 @@ test('POST /api/update starts once and refuses a second click', async t => {
   assert.deepEqual(await errorOf(await call(app.base, 'POST', '/api/update')), [409, 'Обновление уже идёт']);
 });
 
+test('POST /api/update stamps the start when the click arrives, not after asking GitHub', async t => {
+  let clock = new Date('2026-11-13T09:00:00.000Z');
+  const app = await startUpdateApp(t, async () => BEHIND, false, { now: () => clock });
+  await waitForCheck(app.base, 'available');
+  app.setFacts(async () => {
+    clock = new Date('2026-11-13T09:00:05.000Z');
+    return BEHIND;
+  });
+
+  const answer = await call(app.base, 'POST', '/api/update');
+
+  assert.equal(answer.status, 202);
+  assert.equal((await json<{ run: { startedAt: string } }>(answer)).run.startedAt, '2026-11-13T09:00:00.000Z');
+});
+
 test('POST /api/update refuses without a new version, with local changes and during a summary', async t => {
   const none = await startUpdateApp(t, async () => null);
   await waitForCheck(none.base, 'none');
