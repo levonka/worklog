@@ -280,12 +280,12 @@ describe('Board', () => {
     }
   });
 
-  it('card shows жду: девопсы and badge "2 дела · Олега"', () => {
+  it('card shows жду: девопсы and badge "2 дела · от Олега"', () => {
     const waiting = query('[data-direction-id="redirect"]', HTMLElement);
     expect(text(waiting.querySelector('.dc__title'))).toBe('Редирект по UA');
     expect(text(waiting.querySelector('.dc__meta'))).toBe('SHOP-8221');
     expect(text(waiting.querySelector('.dc__wait'))).toBe('жду: девопсы');
-    expect(text(waiting.querySelector('.dc__badge'))).toBe('2 дела · Олега');
+    expect(text(waiting.querySelector('.dc__badge'))).toBe('2 дела · от Олега');
 
     const working = query('[data-direction-id="stores"]', HTMLElement);
     expect(Array.from(working.querySelectorAll('.dc__meta .dc__key')).map(text)).toEqual(['APP-9618', 'WEB-5742']);

@@ -60,6 +60,6 @@ export class DirectionCard {
     const stats = this.stats();
     if (stats === undefined || stats.count === 0) return '';
     const count = `${stats.count} ${plural(stats.count, { one: 'дело', few: 'дела', many: 'дел' })}`;
-    return stats.requesters.length === 0 ? count : `${count} · ${stats.requesters.join(', ')}`;
+    return stats.requesters.length === 0 ? count : `${count} · от ${stats.requesters.join(', ')}`;
   });
 }
