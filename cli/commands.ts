@@ -1,3 +1,4 @@
+import { readFile } from 'node:fs/promises';
 import { parseArgs } from 'node:util';
 import type { Direction, EventSource, LinkKind, Note, NoteFile, NoteUrl, Profile, RepeatRule, Status, Todo, WorklogState } from '../shared/model.ts';
 import {
@@ -26,10 +27,12 @@ import {
   templateText,
   withScheme,
   isExample,
+  PROFILE_VERSION,
 } from '../shared/model.ts';
 import { missingFiles } from '../server/code-files.ts';
 import { commitData, initDataRepo } from '../server/data-git.ts';
 import { fetchProfile } from '../server/profile-source.ts';
+import { profileFromText } from '../server/profile.ts';
 import type { MatchedTab } from '../server/chrome-tabs.ts';
 import { matchTabs, readChromeTabs } from '../server/chrome-tabs.ts';
 import { resolveDirection } from '../server/resolve.ts';
@@ -59,6 +62,8 @@ type Handler = (args: string[], store: Store, env: Env) => Promise<string>;
 
 const EXIT_ERROR = 1;
 const EXIT_USAGE = 2;
+/** `profile check`: the saved profile is older than this Worklog reads — the self-update fetches a new one */
+const EXIT_PROFILE_OLD = 3;
 const RECENT_EVENTS = 10;
 const CLI_SOURCES = ['manual', 'claude'] as const satisfies readonly EventSource[];
 const SEPARATOR = ' · ';
@@ -104,6 +109,7 @@ const USAGES = {
   'agent done': 'agent done <id>',
   'profile fetch': 'profile fetch <source> [--from FILE]',
   'profile update': 'profile update',
+  'profile check': 'profile check',
   'data init': 'data init',
   'data commit': 'data commit [--message T]',
 } as const;
@@ -119,6 +125,7 @@ ${[...Object.values(USAGES), ...Object.values(SETUP_USAGES)]
 const DASH_HINT = 'Текст, начинающийся с «-», передайте после --: worklog event <ref> -- "-5 багов"';
 
 class UsageError extends Error {}
+class ProfileTooOld extends Error {}
 
 const COMMANDS: Record<string, Record<string, Handler> | Handler> = {
   state: stateCommand,
@@ -133,7 +140,7 @@ const COMMANDS: Record<string, Record<string, Handler> | Handler> = {
   daily: { show: dailyShow },
   tabs: tabsCommand,
   agent: { list: agentList, done: agentDone },
-  profile: { fetch: profileFetch, update: profileUpdate },
+  profile: { fetch: profileFetch, update: profileUpdate, check: profileCheck },
   data: { init: dataInit, commit: dataCommit },
 };
 
@@ -161,6 +168,7 @@ export async function runCli(argv: string[], env: Env): Promise<CliResult> {
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     if (error instanceof UsageError) return { code: EXIT_USAGE, stdout: '', stderr: `${message}\n${USAGE}\n` };
+    if (error instanceof ProfileTooOld) return { code: EXIT_PROFILE_OLD, stdout: '', stderr: `${message}\n` };
     if (isErrorCode(error, 'ERR_PARSE_ARGS_UNKNOWN_OPTION')) return { code: EXIT_ERROR, stdout: '', stderr: `${message}\n${DASH_HINT}\n` };
     return { code: EXIT_ERROR, stdout: '', stderr: `${message}\n` };
   }
@@ -597,6 +605,32 @@ async function profileUpdate(args: string[], _store: Store, env: Env): Promise<s
   positionalsOf(positionals, 'profile update');
   if (env.profileSource === undefined) throw new Error('Источник профиля не записан: worklog profile fetch <ссылка или полный путь>');
   return saveProfile(env.profileSource, env, undefined);
+}
+
+async function profileCheck(args: string[], _store: Store, env: Env): Promise<string> {
+  const { positionals } = parseArgs({ args, allowPositionals: true, strict: true });
+  positionalsOf(positionals, 'profile check');
+  const { profilePath } = settingsPaths(env);
+  let text: string;
+  try {
+    text = await readFile(profilePath, 'utf8');
+  } catch (error) {
+    if (isErrorCode(error, 'ENOENT')) return 'Профиля нет';
+    throw error;
+  }
+  const version = profileVersionOf(text);
+  if (version !== null && version < PROFILE_VERSION) throw new ProfileTooOld(`Профиль версии ${version}, а нужна версия ${PROFILE_VERSION}: обнови профиль`);
+  profileFromText(text, profilePath);
+  return 'Профиль в порядке';
+}
+
+function profileVersionOf(text: string): number | null {
+  try {
+    const raw: unknown = JSON.parse(text);
+    return typeof raw === 'object' && raw !== null && 'version' in raw && typeof raw.version === 'number' ? raw.version : null;
+  } catch {
+    return null;
+  }
 }
 
 async function dataInit(args: string[], _store: Store, env: Env): Promise<string> {

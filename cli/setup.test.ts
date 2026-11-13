@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import type { TestContext } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
-import { mkdtemp, readFile, rm, stat, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { TEST_PROFILE } from '../shared/test-profile.ts';
@@ -115,6 +115,25 @@ test('profile fetch --from records the link as the source', async t => {
   const nonsense = await runCli(['profile', 'fetch', '--from', downloaded, 'docs/p.json'], env);
   assert.equal(nonsense.code, 1);
   assert.match(nonsense.stderr, /Не понял источник профиля/);
+});
+
+test('profile check reports whether the saved profile fits this version', async t => {
+  const env = await profileEnv(t);
+  const none = await runCli(['profile', 'check'], env);
+  assert.deepEqual([none.code, none.stdout], [0, 'Профиля нет\n']);
+
+  await mkdir(path.dirname(env.profilePath), { recursive: true });
+  await writeFile(env.profilePath, JSON.stringify(TEST_PROFILE));
+  const fits = await runCli(['profile', 'check'], env);
+  assert.deepEqual([fits.code, fits.stdout], [0, 'Профиль в порядке\n']);
+
+  await writeFile(env.profilePath, JSON.stringify({ ...TEST_PROFILE, version: 0 }));
+  const old = await runCli(['profile', 'check'], env);
+  assert.equal(old.code, 3);
+  assert.match(old.stderr, /обнови профиль/);
+
+  await writeFile(env.profilePath, '{');
+  assert.equal((await runCli(['profile', 'check'], env)).code, 1);
 });
 
 test('profile update without a source says how to set one', async t => {

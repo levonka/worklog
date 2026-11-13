@@ -102,13 +102,14 @@ worklog agent list [--json]
 worklog agent done <id>
 worklog profile fetch <source> [--from FILE]
 worklog profile update
+worklog profile check
 worklog data init
 worklog data commit [--message T]
 worklog config set <NAME> <value>
 worklog doctor [--json]
 ```
 
-`<ref>` — id направления, ключ тикета или часть названия. `doctor` проверяет машину, настройки, профиль, сборку, сертификат и токен Jira, порт, скиллы и данные и под каждой ошибкой пишет, как чинить. `config set` правит `~/.config/worklog/env` и работает, даже когда в нём ошибка. `profile fetch` забирает профиль по ссылке на файл в GitLab (по SSH) или по полному пути и запоминает источник для `profile update`. `quicklink import` добавляет ссылки сайдбара из профиля, которых ещё нет.
+`<ref>` — id направления, ключ тикета или часть названия. `doctor` проверяет машину, настройки, профиль, сборку, сертификат и токен Jira, порт, скиллы и данные и под каждой ошибкой пишет, как чинить. `config set` правит `~/.config/worklog/env` и работает, даже когда в нём ошибка. `profile fetch` забирает профиль по ссылке на файл в GitLab (по SSH) или по полному пути и запоминает источник для `profile update`; `profile check` говорит, подходит ли сохранённый профиль этой версии (код 3 — нужен новый). `quicklink import` добавляет ссылки сайдбара из профиля, которых ещё нет.
 
 ## Данные и настройки
 
