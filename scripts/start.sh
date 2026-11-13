@@ -7,9 +7,29 @@ worklog_setting WORKLOG_PORT
 PORT=${REPLY:-4317}
 APP_URL=http://localhost:$PORT
 HEALTH_URL=$APP_URL/api/health
+LOG=$ROOT/logs/server.log
 
 is_up() {
   curl -fsS "$HEALTH_URL" >/dev/null 2>&1
+}
+
+# the title and the message go as arguments: no quoting for AppleScript
+alert() {
+  osascript - "$1" "$2" >/dev/null 2>&1 <<'APPLESCRIPT' || true
+on run argv
+  display alert (item 1 of argv) message (item 2 of argv)
+end run
+APPLESCRIPT
+}
+
+# what the server printed after the log had $1 bytes: its error line, else its last line, up to 200 characters
+start_failure() {
+  local LC_ALL=en_US.UTF-8 reason
+  reason=$(tail -c +$(($1 + 1)) "$LOG" 2>/dev/null | awk '
+    /^[A-Za-z]*Error[^:]*: / { error = $0 }
+    NF && !/^Node\.js v/ { last = $0 }
+    END { print (error != "" ? error : last) }')
+  REPLY=${reason[1,200]}
 }
 
 # brings Chrome's first window showing Worklog to the front; prints found or none
@@ -33,7 +53,7 @@ APPLESCRIPT
 }
 
 if [[ -z $NODE ]]; then
-  osascript -e 'display alert "Worklog не запустился" message "Не найден node — укажи WORKLOG_NODE в ~/.config/worklog/env"' >/dev/null 2>&1 || true
+  alert "Worklog не запустился" "Не найден node — укажи WORKLOG_NODE в ~/.config/worklog/env"
   exit 1
 fi
 
@@ -43,14 +63,18 @@ fi
 
 if ! is_up; then
   mkdir -p "$ROOT/logs"
+  log_size=$(stat -f %z "$LOG" 2>/dev/null || echo 0)
   # the app starts with a bare PATH: the server's tools (claude, the editor) may be scripts that need node
-  PATH=${NODE:h}:$PATH nohup "$NODE" "$ROOT/server/main.ts" >>"$ROOT/logs/server.log" 2>&1 </dev/null &
+  PATH=${NODE:h}:$PATH nohup "$NODE" "$ROOT/server/main.ts" >>"$LOG" 2>&1 </dev/null &
   for _ in {1..50}; do
     is_up && break
     sleep 0.1
   done
   if ! is_up; then
-    osascript -e 'display alert "Worklog не запустился" message "Подробности: logs/server.log"' >/dev/null 2>&1 || true
+    start_failure $log_size
+    alert "Worklog не запустился" "${REPLY:+$REPLY
+
+}Подробности: logs/server.log"
     exit 1
   fi
 fi

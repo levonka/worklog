@@ -3,7 +3,7 @@ import type { TestContext } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { once } from 'node:events';
-import { chmod, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { chmod, copyFile, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { get } from 'node:http';
 import type { IncomingMessage } from 'node:http';
 import { createServer } from 'node:net';
@@ -128,9 +128,9 @@ async function connectWindow(box: Sandbox): Promise<void> {
   assert.deepEqual(await healthOf(box.port), { ok: true, clients: 1 });
 }
 
-function runStart(env: NodeJS.ProcessEnv): Promise<{ code: number | null; stderr: string }> {
+function runStart(env: NodeJS.ProcessEnv, script = START_SCRIPT): Promise<{ code: number | null; stderr: string }> {
   return new Promise((resolve, reject) => {
-    const child = spawn('zsh', [START_SCRIPT], { cwd: ROOT_DIR, env, stdio: ['ignore', 'ignore', 'pipe'] });
+    const child = spawn('zsh', [script], { cwd: ROOT_DIR, env, stdio: ['ignore', 'ignore', 'pipe'] });
     let stderr = '';
     child.stderr.on('data', chunk => (stderr += chunk));
     const timer = setTimeout(() => child.kill(), PROCESS_TIMEOUT_MS);
@@ -234,5 +234,44 @@ test('start.sh shows an alert and opens no window when the server does not come 
   assert.deepEqual(await box.calls('open'), []);
   const osascript = await box.calls('osascript');
   assert.equal(osascript.length, 1);
-  assert.match(osascript[0], /display alert "Worklog не запустился" message "Подробности: logs\/server\.log"/);
+  assert.equal(osascript[0], 'osascript - Worklog не запустился Подробности: logs/server.log');
+});
+
+/** start.sh in a clone of its own, so the server log it reads and writes is not this clone's */
+async function cloneWithDeadNode(t: TestContext, output: string): Promise<{ script: string; node: string }> {
+  const root = await mkdtemp(path.join(tmpdir(), 'worklog-root-'));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  await mkdir(path.join(root, 'scripts'));
+  await mkdir(path.join(root, 'logs'));
+  await mkdir(path.join(root, 'web', 'dist', 'web', 'browser'), { recursive: true });
+  await writeFile(path.join(root, 'web', 'dist', 'web', 'browser', 'index.html'), '');
+  for (const name of ['start.sh', 'settings.sh']) await copyFile(path.join(ROOT_DIR, 'scripts', name), path.join(root, 'scripts', name));
+  await writeFile(path.join(root, 'logs', 'server.log'), 'Error: вчерашний сбой\n');
+  await writeFile(path.join(root, 'output.txt'), output);
+  const node = path.join(root, 'node');
+  await writeFile(node, `#!/bin/sh\ncat '${path.join(root, 'output.txt')}' >&2\nexit 1\n`);
+  await chmod(node, 0o755);
+  return { script: path.join(root, 'scripts', 'start.sh'), node };
+}
+
+test('start.sh names in the alert the error the server printed on this start', async t => {
+  const box = await sandbox(t);
+  const error = 'Error: Некорректное значение WORKLOG_TERMINAL: "termnal" (warp, iterm, terminal)';
+  const clone = await cloneWithDeadNode(t, `file:///x/server/config.ts:21\n  throw new Error(x);\n  ^\n\n${error}\n    at setting (file:///x/server/config.ts:21:31)\n\nNode.js v24.15.0\n`);
+
+  const result = await runStart({ ...box.env, WORKLOG_NODE: clone.node }, clone.script);
+
+  assert.equal(result.code, 1);
+  const log = await readFile(box.env.STUB_LOG ?? '', 'utf8');
+  assert.ok(log.includes(`osascript - Worklog не запустился ${error}\n\nПодробности: logs/server.log\n`), log);
+});
+
+test('start.sh cuts a long reason to 200 characters', async t => {
+  const box = await sandbox(t);
+  const clone = await cloneWithDeadNode(t, `${'я'.repeat(250)}\n`);
+
+  await runStart({ ...box.env, WORKLOG_NODE: clone.node }, clone.script);
+
+  const log = await readFile(box.env.STUB_LOG ?? '', 'utf8');
+  assert.ok(log.includes(`osascript - Worklog не запустился ${'я'.repeat(200)}\n\nПодробности`), log);
 });
