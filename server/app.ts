@@ -22,6 +22,7 @@ import { serveStatic } from './static.ts';
 import { Store } from './store.ts';
 import type { UpdateFacts } from '../shared/model.ts';
 import { createUpdateChecker } from './update-check.ts';
+import { updateRunning } from './update-routes.ts';
 
 const HOST = '127.0.0.1';
 const API_PREFIX = '/api/';
@@ -96,7 +97,7 @@ export async function createApp(opts: AppOptions): Promise<App> {
           return mrRunning;
         };
   // a change of what the check found reaches the windows like a change of data
-  const checker = opts.update === undefined ? undefined : createUpdateChecker({ facts: opts.update.facts, intervalMs: opts.update.intervalMs, onChange: live.notify });
+  const checker = opts.update === undefined ? undefined : createUpdateChecker({ facts: opts.update.facts, intervalMs: opts.update.intervalMs, onChange: live.notify, busy: (): Promise<boolean> => updateRunning(update) });
   const update = opts.update === undefined || checker === undefined ? undefined : { ...opts.update, checker };
   const routes = createApiRoutes(store, history, live.clientCount, { summary: opts.summary, code: opts.code, agent: opts.agent, jira, mergeRequests: checkMergeRequests, update });
   const favicons = createFavicons({ profileDir: opts.chromeProfileDir ?? null, snapshotMs: FAVICON_SNAPSHOT_MS });

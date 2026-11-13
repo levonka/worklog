@@ -98,6 +98,29 @@ test('the checker asks at once, then on the timer, and calls onChange only on a 
   assert.equal(changes, 1);
 });
 
+test('the checks on start and on the timer wait while an update runs', async t => {
+  let asked = 0;
+  let busy = true;
+  const checker = createUpdateChecker({
+    facts: async () => {
+      asked++;
+      return null;
+    },
+    intervalMs: 10,
+    onChange: () => {},
+    busy: async () => busy,
+  });
+  t.after(() => checker.close());
+
+  checker.start();
+  await new Promise(resolve => setTimeout(resolve, 40));
+  assert.equal(asked, 0);
+
+  busy = false;
+  await new Promise(resolve => setTimeout(resolve, 40));
+  assert.ok(asked > 0);
+});
+
 test('refresh reports unreachable when fetch fails and keeps the check at none', async () => {
   let fail = false;
   const checker = createUpdateChecker({

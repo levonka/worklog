@@ -56,7 +56,7 @@ export async function updateFacts(git: GitRun): Promise<UpdateFacts | null> {
   );
   if (!known) return null;
   await git(['fetch', '--quiet', remote, merge]);
-  const [counts, status] = await Promise.all([git(['rev-list', '--left-right', '--count', 'HEAD...@{u}']), git(['status', '--porcelain'])]);
+  const [counts, status] = await Promise.all([git(['rev-list', '--left-right', '--count', 'HEAD...@{u}']), git(['--no-optional-locks', 'status', '--porcelain'])]);
   const [ahead = 0, behind = 0] = counts.trim().split(/\s+/).map(Number);
   return { ahead, behind, dirty: status.trim() !== '' };
 }
@@ -77,7 +77,8 @@ export interface UpdateChecker {
   close(): void;
 }
 
-export function createUpdateChecker(opts: { facts: () => Promise<UpdateFacts | null>; intervalMs: number; onChange: () => void }): UpdateChecker {
+/** `busy`: an update is running, and the checks on start and on the timer leave the clone alone */
+export function createUpdateChecker(opts: { facts: () => Promise<UpdateFacts | null>; intervalMs: number; onChange: () => void; busy?: () => Promise<boolean> }): UpdateChecker {
   let current: UpdateCheck = 'none';
   let running: Promise<UpdateCheckResult> | null = null;
   let timer: NodeJS.Timeout | undefined;
@@ -105,13 +106,19 @@ export function createUpdateChecker(opts: { facts: () => Promise<UpdateFacts | n
     return running;
   };
 
+  // git in the clone while the update pulls or resets it could collide on its lock
+  const timed = async (): Promise<void> => {
+    if ((await opts.busy?.()) === true) return;
+    await refresh();
+  };
+
   return {
     check: () => current,
     refresh,
     start() {
-      void refresh();
+      void timed();
       clearInterval(timer);
-      timer = setInterval(() => void refresh(), opts.intervalMs);
+      timer = setInterval(() => void timed(), opts.intervalMs);
       timer.unref();
     },
     close() {
