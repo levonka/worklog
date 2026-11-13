@@ -1,11 +1,12 @@
 import { afterRenderEffect, ChangeDetectionStrategy, Component, computed, inject, signal, viewChild } from '@angular/core';
 import type { ElementRef } from '@angular/core';
-import { BOARD_STATUSES, DAILY_HOUR, DAILY_MINUTE, withScheme } from '@worklog/model';
+import { BOARD_STATUSES, DAILY_HOUR, DAILY_MINUTE, FIRST_STEPS, firstStepsDone, withScheme } from '@worklog/model';
 import type { TabId } from '../core/tabs-layout';
 import { TabsStore } from '../core/tabs-store';
 import { WorklogStore } from '../core/worklog-store';
 import { Favicon } from '../favicon/favicon';
 import { LinkDescription } from '../link-description/link-description';
+import { Tour } from '../onboarding/tour';
 import { inBackground } from '../core/background';
 
 export const ICON_COLORS = ['#3b82f6', '#7c3aed', '#e24329', '#0f766e', '#d97706', '#db2777', '#64748b', '#0ea5e9'] as const;
@@ -43,6 +44,7 @@ function iconColor(title: string): string {
 export class Sidebar {
   private readonly worklog = inject(WorklogStore);
   protected readonly tabs = inject(TabsStore);
+  private readonly tour = inject(Tour);
 
   private readonly titleInput = viewChild<ElementRef<HTMLInputElement>>('linkTitle');
   protected readonly addingTo = signal<string | null>(null);
@@ -79,6 +81,15 @@ export class Sidebar {
 
   constructor() {
     afterRenderEffect(() => this.titleInput()?.nativeElement.focus());
+  }
+
+  /** the tour again, and the first steps back while something in them is left */
+  protected startTour(): void {
+    const done = firstStepsDone(this.worklog.state());
+    if (this.worklog.onboarding().stepsHidden === true && FIRST_STEPS.some(step => !done[step])) {
+      inBackground(this.worklog.setOnboarding({ stepsHidden: false }));
+    }
+    this.tour.start();
   }
 
   protected startAdding(groupId: string): void {

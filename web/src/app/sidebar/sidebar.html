@@ -8,6 +8,10 @@
       }
     </button>
   }
+  <button type="button" class="sb__help" title="Экскурсия по Worklog" (click)="startTour()">
+    <span class="sb__icon">?</span>
+    <span class="sb__label">Как пользоваться</span>
+  </button>
 </nav>
 
 @for (group of groups(); track group.id) {

@@ -5,6 +5,7 @@ import type { ComponentFixture } from '@angular/core/testing';
 import type { WorklogState } from '@worklog/model';
 import { TabsStore } from '../core/tabs-store';
 import { WorklogStore } from '../core/worklog-store';
+import { Tour } from '../onboarding/tour';
 import { ICON_COLORS, Sidebar } from './sidebar';
 
 const STATE: WorklogState = {
@@ -258,5 +259,42 @@ describe('Sidebar', () => {
     expect(request.request.body).toEqual({ url: 'https://it.test/', description: 'Заявки в IT' });
     request.flush({});
     await answerRefresh();
+  });
+
+  it('Как пользоваться starts the tour and brings hidden first steps back while something is left', async () => {
+    const start = vi.spyOn(TestBed.inject(Tour), 'start').mockImplementation(() => undefined);
+    const help = query('.sb__help', HTMLButtonElement);
+    expect(help.textContent?.trim()).toContain('Как пользоваться');
+
+    help.click();
+    expect(start).toHaveBeenCalledTimes(1);
+
+    const store = TestBed.inject(WorklogStore);
+    const loading = store.refresh();
+    http.expectOne({ method: 'GET', url: '/api/state' }).flush({ ...STATE, onboarding: { stepsHidden: true } });
+    await loading;
+    help.click();
+    expect(start).toHaveBeenCalledTimes(2);
+    const request = http.expectOne({ method: 'PATCH', url: '/api/onboarding' });
+    expect(request.request.body).toEqual({ stepsHidden: false });
+    request.flush({});
+    await answerRefresh();
+  });
+
+  it('Как пользоваться leaves first steps hidden when all of them are done', async () => {
+    vi.spyOn(TestBed.inject(Tour), 'start').mockImplementation(() => undefined);
+    const done: WorklogState = {
+      ...STATE,
+      directions: [{ id: 'd', title: 'Капча', status: 'in_progress', tickets: [], links: [], order: 0, createdAt: '2026-11-01T09:00:00.000Z', updatedAt: '2026-11-01T09:00:00.000Z', events: [{ id: 'e', at: '2026-11-01T09:00:00.000Z', text: 'Разобрал BRD', source: 'manual', kind: 'note' }] }],
+      todos: [{ id: 't', text: 'Дело', done: false, createdAt: '2026-11-01T09:00:00.000Z' }],
+      onboarding: { stepsHidden: true },
+    };
+    const loading = TestBed.inject(WorklogStore).refresh();
+    http.expectOne({ method: 'GET', url: '/api/state' }).flush(done);
+    await loading;
+
+    query('.sb__help', HTMLButtonElement).click();
+
+    http.expectNone({ method: 'PATCH', url: '/api/onboarding' });
   });
 });

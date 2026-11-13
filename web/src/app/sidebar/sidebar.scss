@@ -20,6 +20,7 @@
 }
 
 .sb__item,
+.sb__help,
 .sb__link {
   display: flex;
   align-items: center;
@@ -31,14 +32,20 @@
   white-space: nowrap;
 }
 
-.sb__item {
+.sb__item,
+.sb__help {
   width: 100%;
   border: 0;
   background: transparent;
   text-align: left;
 }
 
+.sb__help {
+  color: var(--wl-text-2);
+}
+
 .sb__item:hover,
+.sb__help:hover,
 .sb__link:hover {
   background: var(--sb-hover);
 }
