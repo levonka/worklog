@@ -73,3 +73,16 @@ test('linkMergeRequests stays quiet when git fails', async t => {
 
   assert.deepEqual((await store.read()).directions[0].links, []);
 });
+
+test('linkMergeRequests looks no branch up for the example', async t => {
+  const store = await tempStore(t);
+  await store.seedExample();
+  const asked: string[][] = [];
+
+  await linkMergeRequests(store, '/code', async (_root, patterns) => {
+    asked.push([...patterns]);
+    return OUTPUT;
+  });
+
+  assert.deepEqual(asked, []);
+});

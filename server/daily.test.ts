@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { setTimeout as sleep } from 'node:timers/promises';
 import type { Direction } from '../shared/model.ts';
-import { ticketFromKey } from '../shared/model.ts';
+import { exampleData, ticketFromKey } from '../shared/model.ts';
 import { startSummary } from './daily.ts';
 import type { SummaryConfig } from './daily.ts';
 import { Store } from './store.ts';
@@ -144,4 +144,21 @@ test('the daily summary merges Claude and Codex sessions by time', async t => {
   const prompt = await readFile(path.join(stubDir, 'stdin.txt'), 'utf8');
   assert.ok(prompt.indexOf('разбери логи редиректа') > -1 && prompt.indexOf('разбери логи редиректа') < prompt.indexOf('почини сео'));
   assert.equal((await store.read()).draft?.summary?.sessionCount, 2);
+});
+
+test('the summary prompt leaves the example out', async t => {
+  const { store, config, stubDir } = await setup(t, `fs.writeFileSync(path.join(dir, 'prompt'), input); process.stdout.write(${JSON.stringify(JSON.stringify(ANSWER))});`);
+  let n = 0;
+  const example = exampleData(TEST_PROFILE, IN_PERIOD, () => `example-${n++}`);
+  await store.mutate(s => {
+    s.directions.push({ ...example.direction, events: [{ ...example.direction.events[0], at: IN_PERIOD }] });
+  });
+
+  const { done } = await startSummary(store, config, () => NOW);
+  await done;
+
+  const prompt = await readFile(path.join(stubDir, 'prompt'), 'utf8');
+  assert.ok(prompt.includes('seo'));
+  assert.ok(!prompt.includes(example.direction.title));
+  assert.ok(!prompt.includes(example.direction.id));
 });

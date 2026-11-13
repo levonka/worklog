@@ -80,3 +80,12 @@ test('trims spaces around an id and a ticket key', () => {
 test('an empty ref is not found', () => {
   assert.throws(() => resolveDirection(directions, '  '), NotFoundError);
 });
+
+test('resolveDirection finds the example only by id', () => {
+  const own = direction('own', 'Капча', ['APP-1']);
+  const example: Direction = { ...direction('example', 'Пример: капча на входе', ['APP-1001']), example: true };
+  assert.equal(resolveDirection([example, own], 'капч').id, 'own');
+  assert.throws(() => resolveDirection([example, own], 'APP-1001'), NotFoundError);
+  assert.throws(() => resolveDirection([example, own], 'пример'), NotFoundError);
+  assert.equal(resolveDirection([example, own], 'example').id, 'example');
+});

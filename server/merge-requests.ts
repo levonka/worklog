@@ -1,7 +1,7 @@
 import { execFile } from 'node:child_process';
 import { quietGitEnv } from './git-env.ts';
 import { promisify } from 'node:util';
-import { directionBranch } from '../shared/model.ts';
+import { directionBranch, ownDirections } from '../shared/model.ts';
 import type { Store } from './store.ts';
 
 const run = promisify(execFile);
@@ -44,7 +44,7 @@ export async function findMergeRequests(codeRoot: string, branches: readonly str
 /** Best effort: without network or access the links simply do not appear */
 export async function linkMergeRequests(store: Store, codeRoot: string, lsRemote: LsRemote = gitLsRemote): Promise<void> {
   try {
-    const directions = (await store.read()).directions.filter(direction => direction.status !== 'done');
+    const directions = ownDirections((await store.read()).directions).filter(direction => direction.status !== 'done');
     const branches = [...new Set(directions.flatMap(direction => directionBranch(direction.tickets, store.profile) ?? []))];
     const found = await findMergeRequests(codeRoot, branches, lsRemote);
     if (found.size > 0) await store.applyMergeRequests(found);

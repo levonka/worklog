@@ -1,4 +1,4 @@
-import { compareText, localDate, periodDigest } from '../shared/model.ts';
+import { compareText, localDate, ownDirections, periodDigest } from '../shared/model.ts';
 import { collectCodexSessions } from './codex-sessions.ts';
 import type { PreparedSession } from './sessions.ts';
 import { collectSessions, fitToBudget } from './sessions.ts';
@@ -30,9 +30,11 @@ async function summarize(store: Store, config: SummaryConfig, periodStart: strin
       return;
     }
     const digest = periodDigest(state, periodStart, null, localDate(end));
-    const prompt = buildSummaryPrompt({ periodStart, periodEnd: end.toISOString(), sessions, directions: state.directions, digest });
+    // the onboarding example is no work to summarise
+    const directions = ownDirections(state.directions);
+    const prompt = buildSummaryPrompt({ periodStart, periodEnd: end.toISOString(), sessions, directions, digest });
     const output = await runSummaryAgent(prompt, config.agent);
-    const directionIds = new Set(state.directions.map(d => d.id));
+    const directionIds = new Set(directions.map(d => d.id));
     await store.finishSummaryRun(periodStart, parseSummary(output, sessions, directionIds, now()), now());
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

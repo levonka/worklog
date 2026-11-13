@@ -267,6 +267,14 @@ test('a broken data file gives 500 with the file named', async t => {
   assert.match((await json<{ error: string }>(response)).error, /^Повреждён файл данных: .*abc\.json$/);
 });
 
+test('the server seeds the example into empty data on start when asked', async t => {
+  const dataDir = await tempDir(t, 'worklog-api-data-');
+  const app = await createApp({ dataDir, port: 0, staticDir: path.join(dataDir, 'missing'), idleMs: IDLE_MS, profile: TEST_PROFILE, seedExample: true });
+  t.after(() => app.close());
+  const state = await json<WorklogState>(await call(app.url, 'GET', '/api/state'));
+  assert.deepEqual(state.directions.map(direction => direction.example), [true]);
+});
+
 test('the server snapshots the data once the day has no commit of its own', async t => {
   const dataDir = await tempDir(t, 'worklog-api-data-');
   await writeFile(path.join(dataDir, 'todos.json'), '[]');
@@ -450,6 +458,17 @@ test('undo and redo revert and repeat the last change made through the api', asy
   assert.deepEqual(await json(await call(base, 'POST', '/api/redo')), { applied: true });
   state = await json<WorklogState>(await call(base, 'GET', '/api/state'));
   assert.equal(state.directions[0].title, 'SEO');
+});
+
+test('PATCH /api/onboarding is not undone by POST /api/undo', async t => {
+  const base = await startApp(t);
+  const patched = await call(base, 'PATCH', '/api/onboarding', { tourClosed: true });
+  assert.equal(patched.status, 200);
+  assert.match((await json<{ tourClosedAt?: string }>(patched)).tourClosedAt ?? '', /^\d{4}-/);
+
+  assert.deepEqual(await json(await call(base, 'POST', '/api/undo')), { applied: false });
+  assert.ok((await json<WorklogState>(await call(base, 'GET', '/api/state'))).onboarding?.tourClosedAt);
+  assert.equal((await call(base, 'PATCH', '/api/onboarding', { tourClosed: 'да' })).status, 400);
 });
 
 test('undo and redo with nothing to apply answer applied false', async t => {

@@ -211,6 +211,13 @@ export function createApiRoutes(store: Store, history: History, clientCount: () 
       await startSummary(store, summary);
       return { status: ACCEPTED, body: { started: true } };
     }),
+    // outside history as well: undo must not bring the tour back
+    route('PATCH', /^\/api\/onboarding$/, async ctx => {
+      const body = await readObject(ctx);
+      const tourClosed = optionalBoolean(body, 'tourClosed');
+      const stepsHidden = optionalBoolean(body, 'stepsHidden');
+      return { status: OK, body: await store.setOnboarding({ ...(tourClosed === undefined ? {} : { tourClosed }), ...(stepsHidden === undefined ? {} : { stepsHidden }) }) };
+    }),
     // outside history as well: undo cannot close the Warp tab
     route('POST', /^\/api\/agent\/runs$/, async ctx => {
       if (agent === undefined) throw new HttpError(UNAVAILABLE, 'Запуск агента не настроен');

@@ -61,6 +61,13 @@ test('state shows waiting, open todo count, parked and open todos', async t => {
   assert.match(stdout, /Дела \(1\)\n {2}[0-9a-z]+ {2}Позвонить · Ждущее · от Олег\n/);
 });
 
+test('state marks the example', async t => {
+  const dataDir = await tempDir(t);
+  await new Store(dataDir, { profile: TEST_PROFILE }).seedExample();
+  const { stdout } = await runCli(['state'], { dataDir });
+  assert.match(stdout, /Пример: капча на входе · APP-1001 WEB-1002 · дел: 1 · пример\n/);
+});
+
 test('dir status wait --waiting shows Жду · who in dir show', async t => {
   const dataDir = await tempDir(t);
   const { stdout: id } = await runCli(['dir', 'add', 'Деплой'], { dataDir });
