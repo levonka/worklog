@@ -77,6 +77,8 @@ You are an AI coding agent (Claude Code or Codex) installing Worklog for a colle
 
 ## Update Worklog («обнови worklog»)
 
+The window runs the same steps by itself from its «Обновить Worklog» button (`server/update-main.ts`, the run in `logs/update.json`, its output in `logs/update.log`); the phrase works as below either way.
+
 1. `~/.local/bin/worklog data commit` — a snapshot of the data before anything changes.
 2. `git -C <clone> status --porcelain` — if the code has local changes, stop and ask.
 3. `git -C <clone> pull --ff-only`.
