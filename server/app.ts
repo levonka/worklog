@@ -98,7 +98,7 @@ export async function createApp(opts: AppOptions): Promise<App> {
         };
   // a change of what the check found reaches the windows like a change of data
   const checker = opts.update === undefined ? undefined : createUpdateChecker({ facts: opts.update.facts, intervalMs: opts.update.intervalMs, onChange: live.notify, busy: (): Promise<boolean> => updateRunning(update) });
-  const update = opts.update === undefined || checker === undefined ? undefined : { ...opts.update, checker };
+  const update = opts.update === undefined || checker === undefined ? undefined : { ...opts.update, checker, notify: live.notify };
   const routes = createApiRoutes(store, history, live.clientCount, { summary: opts.summary, code: opts.code, agent: opts.agent, jira, mergeRequests: checkMergeRequests, update });
   const favicons = createFavicons({ profileDir: opts.chromeProfileDir ?? null, snapshotMs: FAVICON_SNAPSHOT_MS });
   let port = 0;

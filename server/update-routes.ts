@@ -26,6 +26,8 @@ export interface UpdateOptions {
   /** whether that process still lives */
   alive?: (pid: number) => boolean;
   now?: () => Date;
+  /** tells the open windows to reload: the run file is not among the data files they follow */
+  notify?: () => void;
 }
 
 function processAlive(pid: number): boolean {
@@ -97,6 +99,7 @@ export function createUpdateRoutes(update: UpdateOptions | undefined, summaryRun
             await rm(update.runFile, { force: true });
             throw new HttpError(FAILED, 'Не удалось запустить обновление');
           }
+          update.notify?.();
           return { status: ACCEPTED, body: { run } };
         } finally {
           starting = false;
@@ -107,7 +110,10 @@ export function createUpdateRoutes(update: UpdateOptions | undefined, summaryRun
       method: 'DELETE',
       pattern: /^\/api\/update\/run$/,
       handler: async () => {
-        if (update !== undefined && !(await updateRunning(update))) await rm(update.runFile, { force: true });
+        if (update !== undefined && !(await updateRunning(update))) {
+          await rm(update.runFile, { force: true });
+          update.notify?.();
+        }
         return { status: NO_CONTENT };
       },
     },

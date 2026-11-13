@@ -970,6 +970,72 @@ test('DELETE /api/update/run clears a failed run; the summary waits for a runnin
   assert.equal((await updateStatus(app.base)).run, null);
 });
 
+/** what a window's live stream has received so far */
+async function liveStream(t: TestContext, base: string): Promise<() => string> {
+  const stop = new AbortController();
+  const response = await fetch(`${base}/api/live`, { signal: stop.signal });
+  const reader = response.body?.getReader();
+  assert.ok(reader);
+  const decoder = new TextDecoder();
+  let text = '';
+  const reading = (async () => {
+    for (let chunk = await reader.read(); !chunk.done; chunk = await reader.read()) text += decoder.decode(chunk.value);
+  })().catch(() => undefined);
+  t.after(async () => {
+    stop.abort();
+    await reading;
+  });
+  return () => text;
+}
+
+async function changeAfter(received: () => string, from: number): Promise<boolean> {
+  for (let i = 0; i < 50; i++) {
+    if (received().slice(from).includes('event: change')) return true;
+    await sleep(20);
+  }
+  return false;
+}
+
+test('the windows hear when an update starts and when its run is cleared', async t => {
+  const app = await startUpdateApp(t, async () => BEHIND);
+  await waitForCheck(app.base, 'available');
+  const received = await liveStream(t, app.base);
+  await sleep(300);
+
+  let from = received().length;
+  assert.equal((await call(app.base, 'POST', '/api/update')).status, 202);
+  assert.ok(await changeAfter(received, from), 'no change after the start');
+
+  await writeFile(app.runFile, JSON.stringify({ phase: 'failed', startedAt: new Date().toISOString(), error: 'не удалось скачать пакеты npm' }));
+  await sleep(300);
+  from = received().length;
+  assert.equal((await call(app.base, 'DELETE', '/api/update/run')).status, 204);
+  assert.ok(await changeAfter(received, from), 'no change after the run is cleared');
+});
+
+test('a server started while an update still runs leaves the clone alone', async t => {
+  const dir = await tempDir(t, 'worklog-api-update-busy-');
+  const runFile = path.join(dir, 'logs', 'update.json');
+  await mkdir(path.dirname(runFile), { recursive: true });
+  await writeFile(runFile, JSON.stringify({ phase: 'running', startedAt: new Date().toISOString(), pid: process.pid }));
+  let asked = 0;
+  const base = await startAppWith(t, dir, {
+    facts: async () => {
+      asked++;
+      return BEHIND;
+    },
+    intervalMs: 60_000,
+    version: 'abc1234',
+    runFile,
+    launch: () => undefined,
+  });
+
+  await sleep(200);
+
+  assert.equal(asked, 0);
+  assert.equal((await updateStatus(base)).run?.phase, 'running');
+});
+
 test('POST /api/update/check checks now and reports the result', async t => {
   const app = await startUpdateApp(t, async () => null);
   await waitForCheck(app.base, 'none');
