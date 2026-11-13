@@ -144,7 +144,7 @@ describe('TourOverlay', () => {
     await fixture.whenStable();
 
     expect(texts('.tu__foot button')).toEqual(['Понятно']);
-    expect(texts('.pr__text')).toEqual(['Олег попросил завести задачу на бэк', 'каждый будний день в 11:30 — дейлик']);
+    expect(texts('.pr__text')).toEqual(['аналитик попросил завести задачу на бэк', 'каждый будний день в 11:30 — дейлик']);
   });
 
   it('skips a step whose target is not in the document', async () => {

@@ -82,7 +82,7 @@ describe('FirstSteps', () => {
     expect(items[0].querySelector('wl-prompt')).toBeNull();
     expect(items[1].querySelectorAll('wl-prompt')).toHaveLength(1);
     expect(items[2].querySelectorAll('wl-prompt')).toHaveLength(2);
-    expect(texts('.pr__text')).toEqual(['по тёмная тема: бэк поправил редирект, жду стенд', 'Олег попросил завести задачу на бэк', 'каждый будний день в 11:30 — дейлик']);
+    expect(texts('.pr__text')).toEqual(['по тёмная тема: бэк поправил редирект, жду стенд', 'аналитик попросил завести задачу на бэк', 'каждый будний день в 11:30 — дейлик']);
   });
 
   it('takes prompts from the profile', async () => {

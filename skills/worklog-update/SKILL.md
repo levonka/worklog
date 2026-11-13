@@ -1,6 +1,6 @@
 ---
 name: worklog-update
-description: Use when the user asks to record something in Worklog, their personal tracker of work directions — an event in a direction («по сео: Олег подтвердил баг бэка»), a link or ticket («добавь в капчу ссылку на BRD»), a new direction («заведи направление»), a status change («сео на тестировании», «жду девопсов по редиректу»), a todo or a colleague's request («Олег попросил завести задачу на бэк»), a sidebar link, a description of a link («к КЭДО допиши, что там подписываю отпуска»), or «подготовь дейлик». Knowledge notes («запиши в базу») are the `worklog-notes` skill.
+description: Use when the user asks to record something in Worklog, their personal tracker of work directions — an event in a direction («по сео: Олег подтвердил баг бэка»), a link or ticket («добавь в капчу ссылку на BRD»), a new direction («заведи направление»), a status change («сео на тестировании», «жду девопсов по редиректу»), a todo or a colleague's request («аналитик попросил завести задачу на бэк»), a sidebar link, a description of a link («к КЭДО допиши, что там подписываю отпуска»), or «подготовь дейлик». Knowledge notes («запиши в базу») are the `worklog-notes` skill.
 ---
 
 # Worklog: record by phrase

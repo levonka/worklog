@@ -910,7 +910,7 @@ export function onboardingPrompts(profile: Profile | null, directions: readonly 
     direction: `заведи в worklog направление по задачам ${first}1234 и ${second}567`,
     event: `по ${name ?? 'капче'}: бэк поправил редирект, жду стенд`,
     link: `добавь в ${name ?? 'капчу'} ссылку на макет <ссылка>`,
-    todo: 'Олег попросил завести задачу на бэк',
+    todo: 'аналитик попросил завести задачу на бэк',
     repeat: 'каждый будний день в 11:30 — дейлик',
   };
 }
