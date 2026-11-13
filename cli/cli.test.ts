@@ -68,6 +68,15 @@ test('state marks the example', async t => {
   assert.match(stdout, /Пример: капча на входе · APP-1001 WEB-1002 · дел: 1 · пример\n/);
 });
 
+test('note list and search mark the note of the example', async t => {
+  const dataDir = await tempDir(t);
+  await new Store(dataDir, { profile: TEST_PROFILE }).seedExample();
+  const listed = await runCli(['note', 'list'], { dataDir });
+  assert.match(listed.stdout, /Ключ капчи на стендах · пример\n/);
+  const found = await runCli(['note', 'list', '--search', 'капч'], { dataDir });
+  assert.match(found.stdout, /Ключ капчи на стендах · пример\n/);
+});
+
 test('dir status wait --waiting shows Жду · who in dir show', async t => {
   const dataDir = await tempDir(t);
   const { stdout: id } = await runCli(['dir', 'add', 'Деплой'], { dataDir });

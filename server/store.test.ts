@@ -950,3 +950,29 @@ test('deleting the example deletes its todo and note; deleting an own direction 
   assert.deepEqual(state.todos.map(item => [item.text, item.directionId]), [['Своё дело', undefined]]);
   assert.deepEqual(state.notes.map(note => note.directionIds), [[]]);
 });
+
+test('Jira and MR polls leave the fake tickets of the example alone', async t => {
+  const store = new Store(await tempDataDir(t), { profile: TEST_PROFILE });
+  await store.seedExample();
+  await store.createDirection({ title: 'Своё', ticketKeys: ['APP-1001'] });
+
+  await store.applyJira([{ key: 'APP-1001', status: 'Closed', segments: [] }], '2026-11-13T10:00:00.000Z');
+  await store.applyMergeRequests(new Map([['feature/APP-1001_WEB-1002', 7]]));
+
+  const example = (await store.read()).directions.find(d => d.example === true);
+  assert.deepEqual(example?.tickets.map(ticket => [ticket.url, ticket.jira]), [['', undefined], ['', undefined]]);
+  assert.ok(!example?.links.some(link => link.title === 'MR !7'));
+});
+
+test('deleting the example keeps a note that is also about an own direction', async t => {
+  const store = new Store(await tempDataDir(t), { profile: TEST_PROFILE });
+  await store.seedExample();
+  const own = await store.createDirection({ title: 'Своё' });
+  const example = (await store.read()).directions.find(d => d.example === true);
+  assert.ok(example);
+  await store.createNote({ title: 'Общая', directionIds: [example.id, own.id] });
+
+  await store.deleteDirection(example.id);
+
+  assert.deepEqual((await store.read()).notes.map(note => [note.title, note.directionIds]), [['Общая', [own.id]]]);
+});

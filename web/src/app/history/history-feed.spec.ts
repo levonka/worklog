@@ -64,6 +64,15 @@ describe('history feed', () => {
     ]);
   });
 
+  it('leaves the onboarding example out, events and search alike', () => {
+    const example = direction('example', 'Пример: капча на входе', { example: true, events: [event('x1', at(5, 8), 'Разобрал BRD'), event('x2', at(5, 12), 'Дело примера', { kind: 'todo-done', source: 'system' })] });
+    const days = buildHistory({ ...state(), directions: [...state().directions, example] });
+    const texts = days.flatMap(item => item.entries.map(entry => entry.text));
+    expect(texts).not.toContain('Разобрал BRD');
+    expect(texts).not.toContain('Дело примера');
+    expect(filterHistory(days, 'пример')).toEqual([]);
+  });
+
   it('done todo with direction appears once', () => {
     const texts = buildHistory(state()).flatMap(d => d.entries.map(e => e.text));
     expect(texts.filter(text => text.startsWith('Завести задачу бэку'))).toHaveLength(1);

@@ -144,6 +144,11 @@ describe('DoneView', () => {
     expect(texts('.dv__summary')).toEqual(['3 направления · 25 задач за 2026']);
   });
 
+  it('a done example is no work done', async () => {
+    await load([{ ...DIRECTIONS[0], id: 'example', title: 'Пример: капча на входе', example: true }]);
+    expect(texts('.dv__empty')).toEqual(['Пока ничего не сделано']);
+  });
+
   it('empty state', async () => {
     await load([DIRECTIONS[4]]);
     expect(texts('.dv__empty')).toEqual(['Пока ничего не сделано']);

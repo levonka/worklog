@@ -1,5 +1,5 @@
 import type { Daily, Direction, EventKind, EventSource, WorklogState } from '@worklog/model';
-import { compareText, localDate, todoLabel } from '@worklog/model';
+import { compareText, localDate, ownDirections, todoLabel } from '@worklog/model';
 
 export interface HistoryEntry {
   kind: 'event' | 'todo';
@@ -33,7 +33,8 @@ export function buildHistory(state: WorklogState): HistoryDay[] {
     return found;
   };
 
-  for (const direction of state.directions) {
+  // the onboarding example is no work: neither its events nor its done todo
+  for (const direction of ownDirections(state.directions)) {
     for (const event of direction.events) {
       day(event.at).entries.push({ kind: 'event', at: event.at, text: event.text, direction, source: event.source, eventKind: event.kind });
     }

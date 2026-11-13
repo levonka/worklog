@@ -25,6 +25,7 @@ import {
   statusFromAlias,
   templateText,
   withScheme,
+  isExample,
 } from '../shared/model.ts';
 import { missingFiles } from '../server/code-files.ts';
 import { commitData, initDataRepo } from '../server/data-git.ts';
@@ -703,9 +704,11 @@ function noteText(note: Note, state: WorklogState, missing: ReadonlySet<string>)
   return lines.join('\n');
 }
 
-function noteLine(note: Note, missing: ReadonlySet<string>): string {
+/** `examples`: ids of onboarding examples — a note only about them is invented, not knowledge */
+function noteLine(note: Note, missing: ReadonlySet<string>, examples: ReadonlySet<string>): string {
   const broken = note.files.filter(f => missing.has(f.path)).length;
-  return `${note.id}  ${note.title}${broken > 0 ? `${SEPARATOR}битых ссылок: ${broken}` : ''}`;
+  const example = note.directionIds.length > 0 && note.directionIds.every(id => examples.has(id));
+  return `${note.id}  ${note.title}${broken > 0 ? `${SEPARATOR}битых ссылок: ${broken}` : ''}${example ? `${SEPARATOR}пример` : ''}`;
 }
 
 async function noteAdd(args: string[], store: Store): Promise<string> {
@@ -749,7 +752,8 @@ async function noteList(args: string[], store: Store, env: Env): Promise<string>
   if (values.json) return json(notes);
   if (notes.length === 0) return 'Заметок нет';
   const missing = await missingFor(env, notes);
-  return notes.map(n => noteLine(n, missing)).join('\n');
+  const examples = new Set(state.directions.filter(isExample).map(d => d.id));
+  return notes.map(n => noteLine(n, missing, examples)).join('\n');
 }
 
 async function noteRm(args: string[], store: Store): Promise<string> {

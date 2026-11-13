@@ -371,7 +371,8 @@ export class Store {
       // by id: a direction that changes column is replaced in s.directions
       for (const id of s.directions.map(d => d.id)) {
         const direction = findDirection(s, id);
-        if (direction.status === 'done') continue;
+        // the example's tickets are fake: no Jira link, no status
+        if (direction.status === 'done' || isExample(direction)) continue;
         const ticketEvents: WorkEvent[] = [];
         direction.tickets = direction.tickets.map(ticket => filledTicket(ticket, this.profile));
         for (const ticket of direction.tickets) {
@@ -394,7 +395,7 @@ export class Store {
     return this.mutate(s => {
       let added = 0;
       for (const direction of s.directions) {
-        if (direction.status === 'done') continue;
+        if (direction.status === 'done' || isExample(direction)) continue;
         const branch = directionBranch(direction.tickets, this.profile);
         const id = branch === null ? undefined : found.get(branch);
         const url = id === undefined ? null : mergeRequestUrl(id, this.profile);
@@ -472,8 +473,10 @@ export class Store {
     return this.mutate(s => {
       // the example takes its own todo and note with it: they mean nothing without it
       if (isExample(findDirection(s, id))) {
+        const examples = new Set(s.directions.filter(isExample).map(d => d.id));
         s.todos = s.todos.filter(todo => todo.directionId !== id);
-        s.notes = s.notes.filter(note => !note.directionIds.includes(id));
+        // a note also about an own direction is the user's: it is only unlinked below
+        s.notes = s.notes.filter(note => !note.directionIds.includes(id) || note.directionIds.some(other => !examples.has(other)));
       }
       s.directions = s.directions.filter(d => d.id !== id);
       for (const note of s.notes) {

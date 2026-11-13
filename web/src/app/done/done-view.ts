@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, ElementRef, inject, signal, viewChild } from '@angular/core';
+import { ownDirections } from '@worklog/model';
 import { Clock } from '../core/clock';
 import { plural } from '../core/plural';
 import { TabsStore } from '../core/tabs-store';
@@ -47,7 +48,7 @@ export class DoneView {
   protected readonly query = signal('');
   private readonly chosenYear = signal<number | null>(null);
 
-  private readonly directions = computed(() => this.worklog.state().directions);
+  private readonly directions = computed(() => ownDirections(this.worklog.state().directions));
   protected readonly years = computed(() => doneYears(this.directions()));
   protected readonly searching = computed(() => this.query().trim() !== '');
   // a chosen year left without done directions gives way to the latest one
