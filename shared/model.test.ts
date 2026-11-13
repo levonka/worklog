@@ -914,8 +914,8 @@ test('onboardingPrompts take the prefixes from the profile and the name of the f
   const fresh = onboardingPrompts(TEST_PROFILE, [example]);
   assert.equal(fresh.direction, 'заведи в worklog направление по задачам APP-1234 и WEB-567');
   assert.equal(fresh.event, 'по капче: бэк поправил редирект, жду стенд');
-  assert.equal(fresh.todo, 'аналитик попросил завести задачу на бэк');
-  assert.equal(fresh.repeat, 'каждый будний день в 11:30 — дейлик');
+  assert.equal(fresh.todo, 'добавь в worklog дело: завести задачу на бэк, просил аналитик');
+  assert.equal(fresh.repeat, 'добавь в worklog повторяющееся дело: дейлик каждый будний день в 11:30');
 
   const own = onboardingPrompts(TEST_PROFILE, [example, ownDirection('theme', { title: 'Тёмная тема' }), ownDirection('old', { title: 'Старое', status: 'done', order: -1 })]);
   assert.equal(own.event, 'по тёмная тема: бэк поправил редирект, жду стенд');
