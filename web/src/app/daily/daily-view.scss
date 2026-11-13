@@ -41,7 +41,6 @@
   background: var(--dly-fill);
   font-size: 12px;
   white-space: nowrap;
-  cursor: default;
 }
 
 .dly__summary:disabled {
@@ -119,7 +118,6 @@
   background: transparent;
   font: inherit;
   color: inherit;
-  cursor: default;
 }
 
 .dly__group-title {
@@ -211,7 +209,6 @@
   border: 0;
   background: transparent;
   color: var(--wl-text-3);
-  cursor: default;
 }
 
 .dly__remove:hover {

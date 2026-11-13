@@ -86,6 +86,17 @@ textarea,
   user-select: text;
 }
 
+// whatever a click acts on shows the hand; a disabled control keeps the arrow
+button:not(:disabled),
+select:not(:disabled),
+input[type='checkbox']:not(:disabled),
+label:has(> input[type='checkbox']:not(:disabled)),
+summary,
+[role='button'],
+[role='tab'] {
+  cursor: pointer;
+}
+
 // a drag in progress: the closed hand wherever the pointer goes
 body:has(.cdk-drag-preview),
 body:has(.cdk-drag-preview) * {

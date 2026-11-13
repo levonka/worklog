@@ -64,7 +64,6 @@
   border: 1.5px solid light-dark(#c7c7cc, #636366);
   border-radius: 50%;
   background: transparent;
-  cursor: default;
 }
 
 .tr__check:hover,
@@ -192,7 +191,6 @@
   background: transparent;
   color: var(--wl-text-2);
   opacity: 0;
-  cursor: default;
 }
 
 :host(:hover) .tr__grip,
@@ -248,7 +246,6 @@
   outline: none;
   background: transparent;
   white-space: nowrap;
-  cursor: default;
 }
 
 .tr__item:hover,
