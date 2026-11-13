@@ -72,4 +72,7 @@ test('settingProblem lets the editor be none and Jira be switched off', () => {
   assert.equal(settingProblem('WORKLOG_JIRA', 'off'), null);
   assert.equal(settingProblem('WORKLOG_JIRA', 'on'), null);
   assert.equal(settingProblem('WORKLOG_JIRA', 'no'), 'on, off');
+  assert.equal(settingProblem('WORKLOG_UPDATE_CHECK', 'off'), null);
+  assert.equal(settingProblem('WORKLOG_UPDATE_CHECK', 'on'), null);
+  assert.equal(settingProblem('WORKLOG_UPDATE_CHECK', 'never'), 'on, off');
 });

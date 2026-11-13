@@ -6,7 +6,7 @@
     "node": ">=24"
   },
   "scripts": {
-    "test": "WORKLOG_ENV_FILE=/nonexistent/worklog-env WORKLOG_PROFILE=/nonexistent/worklog-profile.json node --test \"shared/**/*.test.ts\" \"server/**/*.test.ts\" \"cli/**/*.test.ts\" \"scripts/**/*.test.ts\"",
+    "test": "WORKLOG_ENV_FILE=/nonexistent/worklog-env WORKLOG_PROFILE=/nonexistent/worklog-profile.json WORKLOG_UPDATE_CHECK=off node --test \"shared/**/*.test.ts\" \"server/**/*.test.ts\" \"cli/**/*.test.ts\" \"scripts/**/*.test.ts\"",
     "test:web": "npm --prefix web test -- --watch=false",
     "typecheck": "tsc -p tsconfig.json",
     "build": "npm --prefix web run build",

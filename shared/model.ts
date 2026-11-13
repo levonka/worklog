@@ -1068,6 +1068,72 @@ export function summaryRunState(run: SummaryRun | null, now: Date): 'idle' | 'ru
   return now.getTime() - new Date(run.startedAt).getTime() > SUMMARY_STALE_MS ? 'failed' : 'running';
 }
 
+export const UPDATE_CHECKS = ['none', 'available', 'local-changes'] as const;
+/** what the window learns about a newer Worklog on GitHub */
+export type UpdateCheck = (typeof UPDATE_CHECKS)[number];
+/** the result of a check asked for by the user: also when GitHub could not be reached */
+export type UpdateCheckResult = UpdateCheck | 'unreachable';
+
+/** the clone against its tracked branch */
+export interface UpdateFacts {
+  ahead: number;
+  behind: number;
+  dirty: boolean;
+}
+
+export const UPDATE_PHASES = ['running', 'done', 'failed'] as const;
+export type UpdatePhase = (typeof UPDATE_PHASES)[number];
+
+export interface UpdateRun {
+  phase: UpdatePhase;
+  startedAt: string;
+  finishedAt?: string;
+  /** why it failed, a lowercase clause for «Не удалось обновить Worklog: …» */
+  error?: string;
+  /** the new version had written data, and the data came back from the snapshot */
+  dataRestored?: true;
+  /** the process doing the update: while it lives the update runs, however long */
+  pid?: number;
+}
+
+export interface UpdateStatus {
+  check: UpdateCheck;
+  /** the code the server runs, a short commit hash; null outside git */
+  version: string | null;
+  run: UpdateRun | null;
+}
+
+export const UPDATE_CHECK_MS = 6 * 60 * 60_000;
+export const UPDATE_STALE_MS = 15 * 60_000;
+export const UPDATE_HEALTH_MS = 30_000;
+
+/** local commits or edits keep the button from touching the clone */
+export function updateCheckOf(facts: UpdateFacts | null): UpdateCheck {
+  if (facts === null || facts.behind === 0) return 'none';
+  return facts.ahead > 0 || facts.dirty ? 'local-changes' : 'available';
+}
+
+/** a run read back from its file; a running one whose process is gone, or without a process and too old, was interrupted */
+export function parseUpdateRun(raw: unknown, now: Date, alive: (pid: number) => boolean = () => false): UpdateRun | null {
+  if (typeof raw !== 'object' || raw === null || !('phase' in raw) || !('startedAt' in raw)) return null;
+  const phase = UPDATE_PHASES.find(item => item === raw.phase);
+  const startedAt = raw.startedAt;
+  if (phase === undefined || typeof startedAt !== 'string' || Number.isNaN(Date.parse(startedAt))) return null;
+  const run: UpdateRun = { phase, startedAt };
+  if ('finishedAt' in raw && typeof raw.finishedAt === 'string') run.finishedAt = raw.finishedAt;
+  if ('error' in raw && typeof raw.error === 'string') run.error = raw.error;
+  if ('dataRestored' in raw && raw.dataRestored === true) run.dataRestored = true;
+  if ('pid' in raw && typeof raw.pid === 'number' && Number.isInteger(raw.pid)) run.pid = raw.pid;
+  if (phase !== 'running') return run;
+  const over = run.pid === undefined ? now.getTime() - Date.parse(startedAt) > UPDATE_STALE_MS : !alive(run.pid);
+  return over ? { phase: 'failed', startedAt, error: 'обновление прервалось' } : run;
+}
+
+export function updateFailureText(run: UpdateRun): string {
+  const left = run.dataRestored === true ? 'данные возвращены из снимка перед обновлением' : 'данные не тронуты';
+  return `Не удалось обновить Worklog: ${run.error ?? 'причина неизвестна'}. Осталась прежняя версия, ${left}.`;
+}
+
 const STATUS_EVENT_PREFIX = 'Статус: ';
 
 export function statusOfEvent(event: WorkEvent): Status | null {

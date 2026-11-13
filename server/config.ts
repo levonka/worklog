@@ -55,6 +55,9 @@ export const JIRA_FILES: JiraFiles = {
 };
 export const JIRA_POLL_MS = intSetting('WORKLOG_JIRA_POLL_MS', 300_000);
 export const JIRA_ON = setting('WORKLOG_JIRA') !== 'off';
+export const UPDATE_CHECK_ON = setting('WORKLOG_UPDATE_CHECK') !== 'off';
+/** the last update by the button: written by server/update-main.ts, read by the server after its restart */
+export const UPDATE_RUN_FILE = path.join(ROOT_DIR, 'logs', 'update.json');
 
 function editorCommand(name: Editor): EditorCommand {
   return { name, bin: setting('WORKLOG_EDITOR_BIN') || EDITOR_BINS[name] };

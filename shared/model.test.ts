@@ -3,6 +3,9 @@ import assert from 'node:assert/strict';
 import type { Direction, Note, RepeatRule } from './model.ts';
 import {
   EMPTY_STATE,
+  parseUpdateRun,
+  updateCheckOf,
+  updateFailureText,
   clampIndex,
   detectLinkKind,
   dueRepeats,
@@ -939,4 +942,40 @@ test('periodDigest, countEventsAfter and jiraTicketKeys leave the example out', 
   assert.equal(digest.eventCount, 0);
   assert.equal(countAfter(state, '2026-11-01T00:00:00.000Z', '2026-11-01T00:00:00.000Z'), 0);
   assert.deepEqual(jiraKeys(state.directions), []);
+});
+
+test('updateCheckOf tells a new version from local work', () => {
+  assert.equal(updateCheckOf(null), 'none');
+  assert.equal(updateCheckOf({ ahead: 0, behind: 0, dirty: true }), 'none');
+  assert.equal(updateCheckOf({ ahead: 0, behind: 2, dirty: false }), 'available');
+  assert.equal(updateCheckOf({ ahead: 1, behind: 2, dirty: false }), 'local-changes');
+  assert.equal(updateCheckOf({ ahead: 0, behind: 2, dirty: true }), 'local-changes');
+});
+
+test('parseUpdateRun reads a run, drops garbage and fails a stale running one', () => {
+  const now = new Date('2026-11-13T12:00:00.000Z');
+  const done = { phase: 'done', startedAt: '2026-11-13T11:58:00.000Z', finishedAt: '2026-11-13T11:59:00.000Z' };
+  assert.deepEqual(parseUpdateRun(done, now), done);
+  const failed = { phase: 'failed', startedAt: '2026-11-13T11:58:00.000Z', error: 'не удалось собрать окно', dataRestored: true };
+  assert.deepEqual(parseUpdateRun(failed, now), failed);
+  assert.deepEqual(parseUpdateRun({ phase: 'running', startedAt: '2026-11-13T11:50:00.000Z' }, now), { phase: 'running', startedAt: '2026-11-13T11:50:00.000Z' });
+  for (const garbage of [{}, 'x', null, { phase: 'other', startedAt: '2026-11-13T11:58:00.000Z' }, { phase: 'done', startedAt: 'вчера' }]) assert.equal(parseUpdateRun(garbage, now), null);
+  assert.deepEqual(parseUpdateRun({ phase: 'running', startedAt: '2026-11-13T11:44:00.000Z' }, now), { phase: 'failed', startedAt: '2026-11-13T11:44:00.000Z', error: 'обновление прервалось' });
+});
+
+test('updateFailureText says what is left', () => {
+  const run = { phase: 'failed' as const, startedAt: '2026-11-13T11:58:00.000Z', error: 'не удалось скачать пакеты npm' };
+  assert.equal(updateFailureText(run), 'Не удалось обновить Worklog: не удалось скачать пакеты npm. Осталась прежняя версия, данные не тронуты.');
+  assert.equal(updateFailureText({ ...run, dataRestored: true }), 'Не удалось обновить Worklog: не удалось скачать пакеты npm. Осталась прежняя версия, данные возвращены из снимка перед обновлением.');
+});
+
+test('a running run with its update process is judged by that process, not by its age', () => {
+  const now = new Date('2026-11-13T12:00:00.000Z');
+  const old = '2026-11-13T11:40:00.000Z';
+  assert.deepEqual(parseUpdateRun({ phase: 'running', startedAt: old, pid: 42 }, now, pid => pid === 42), { phase: 'running', startedAt: old, pid: 42 });
+  assert.deepEqual(parseUpdateRun({ phase: 'running', startedAt: '2026-11-13T11:59:00.000Z', pid: 42 }, now, () => false), {
+    phase: 'failed',
+    startedAt: '2026-11-13T11:59:00.000Z',
+    error: 'обновление прервалось',
+  });
 });

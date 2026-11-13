@@ -98,7 +98,7 @@ interface ProcessResult {
 function runMain(env: Record<string, string>): Promise<ProcessResult> {
   return new Promise((resolve, reject) => {
     // never the real Jira or GitLab: no certificate and no repository there
-    const missing = { WORKLOG_JIRA_P12: path.join(ROOT_DIR, 'missing.p12'), WORKLOG_CODE_ROOT: path.join(ROOT_DIR, 'missing-code'), WORKLOG_PROFILE: path.join(ROOT_DIR, 'missing-profile.json'), WORKLOG_ENV_FILE: path.join(ROOT_DIR, 'missing-env') };
+    const missing = { WORKLOG_UPDATE_CHECK: 'off', WORKLOG_JIRA_P12: path.join(ROOT_DIR, 'missing.p12'), WORKLOG_CODE_ROOT: path.join(ROOT_DIR, 'missing-code'), WORKLOG_PROFILE: path.join(ROOT_DIR, 'missing-profile.json'), WORKLOG_ENV_FILE: path.join(ROOT_DIR, 'missing-env') };
     const child = spawn(process.execPath, ['server/main.ts'], { cwd: ROOT_DIR, env: { ...process.env, ...missing, ...env } });
     let stdout = '';
     let stderr = '';
@@ -319,7 +319,7 @@ test('main prints its url and exits with code 0 when idle', async t => {
 /** what a running main answers on /api/jira with this environment */
 async function jiraOfMain(t: TestContext, env: Record<string, string>): Promise<unknown> {
   const dataDir = await tempDir(t);
-  const missing = { WORKLOG_JIRA_P12: path.join(ROOT_DIR, 'missing.p12'), WORKLOG_CODE_ROOT: path.join(ROOT_DIR, 'missing-code'), WORKLOG_ENV_FILE: path.join(ROOT_DIR, 'missing-env') };
+  const missing = { WORKLOG_UPDATE_CHECK: 'off', WORKLOG_JIRA_P12: path.join(ROOT_DIR, 'missing.p12'), WORKLOG_CODE_ROOT: path.join(ROOT_DIR, 'missing-code'), WORKLOG_ENV_FILE: path.join(ROOT_DIR, 'missing-env') };
   const child = spawn(process.execPath, ['server/main.ts'], { cwd: ROOT_DIR, env: { ...process.env, ...missing, WORKLOG_PORT: '0', WORKLOG_DATA_DIR: dataDir, ...env } });
   t.after(() => child.kill());
   let stdout = '';

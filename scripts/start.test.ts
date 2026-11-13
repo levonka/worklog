@@ -79,6 +79,7 @@ async function sandbox(t: TestContext): Promise<Sandbox> {
       WORKLOG_NODE: process.execPath,
       // never the real Jira or GitLab: no certificate and no repository there
       WORKLOG_JIRA_P12: path.join(dataDir, 'missing.p12'),
+      WORKLOG_UPDATE_CHECK: 'off',
       WORKLOG_PROFILE: path.join(dataDir, 'missing-profile.json'),
       WORKLOG_ENV_FILE: path.join(dataDir, 'missing-env'),
       WORKLOG_CODE_ROOT: path.join(dataDir, 'missing-code'),

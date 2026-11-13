@@ -36,6 +36,7 @@ export const SETTINGS = [
   'WORKLOG_JIRA_KEYCHAIN',
   'WORKLOG_JIRA_TOKEN_KEYCHAIN',
   'WORKLOG_JIRA_POLL_MS',
+  'WORKLOG_UPDATE_CHECK',
 ] as const;
 export type SettingName = (typeof SETTINGS)[number];
 
@@ -47,7 +48,15 @@ export const MAX_SUMMARY_TIMEOUT_MS = SUMMARY_STALE_MS - 60_000;
 export const NO_EDITOR = 'none';
 /** WORKLOG_JIRA=off: Jira is put off, nothing polls it */
 export const JIRA_SWITCH = ['on', 'off'] as const;
-const CHOICES: Partial<Record<SettingName, readonly string[]>> = { WORKLOG_TERMINAL: TERMINALS, WORKLOG_EDITOR: [...EDITORS, NO_EDITOR], WORKLOG_AGENT: AGENTS, WORKLOG_JIRA: JIRA_SWITCH };
+/** WORKLOG_UPDATE_CHECK=off: no look at GitHub for a newer Worklog (tests, the demo) */
+export const UPDATE_CHECK_SWITCH = ['on', 'off'] as const;
+const CHOICES: Partial<Record<SettingName, readonly string[]>> = {
+  WORKLOG_TERMINAL: TERMINALS,
+  WORKLOG_EDITOR: [...EDITORS, NO_EDITOR],
+  WORKLOG_AGENT: AGENTS,
+  WORKLOG_JIRA: JIRA_SWITCH,
+  WORKLOG_UPDATE_CHECK: UPDATE_CHECK_SWITCH,
+};
 const NUMBERS: Partial<Record<SettingName, number>> = {
   WORKLOG_PORT: 65535,
   WORKLOG_IDLE_MS: Number.MAX_SAFE_INTEGER,
