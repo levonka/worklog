@@ -1,0 +1,37 @@
+// the button itself sits in the tab bar's row: no box and no gap while there is nothing to show
+:host {
+  display: contents;
+}
+
+.ub__btn {
+  align-self: center;
+  margin-left: auto;
+  height: 24px;
+  flex-shrink: 0;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: #fff;
+  background: var(--wl-accent);
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
+}
+
+.ub__btn:active:not(:disabled) {
+  filter: brightness(0.95);
+}
+
+.ub__btn_running {
+  color: var(--wl-accent);
+  background: color-mix(in srgb, var(--wl-accent) 14%, transparent);
+  box-shadow: none;
+}
+
+.ub__btn_muted {
+  color: var(--wl-text-3);
+  background: color-mix(in srgb, var(--wl-text) 7%, transparent);
+  box-shadow: none;
+}

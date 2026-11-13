@@ -7,6 +7,7 @@ import { daysBetween } from '../core/clock';
 import { plural } from '../core/plural';
 import { statusDot } from '../core/status-dot';
 import { TabsStore } from '../core/tabs-store';
+import { UpdateStore } from '../update/update-store';
 import { WorklogStore } from '../core/worklog-store';
 import { DailyText } from './daily-text';
 
@@ -57,6 +58,7 @@ function aiWarning(text: string, where: string): string | null {
 export class DailyView {
   protected readonly worklog = inject(WorklogStore);
   private readonly tabs = inject(TabsStore);
+  protected readonly updates = inject(UpdateStore);
 
   private readonly now = signal(new Date());
 

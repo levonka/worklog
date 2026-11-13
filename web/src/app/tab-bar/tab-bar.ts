@@ -4,6 +4,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, input, signal } f
 import type { TabId } from '../core/tabs-layout';
 import { statusDot } from '../core/status-dot';
 import { TabsStore } from '../core/tabs-store';
+import { UpdateButton } from '../update/update-button';
 
 interface Point {
   x: number;
@@ -23,7 +24,7 @@ function contains(zone: Zone, point: Point): boolean {
 
 @Component({
   selector: 'wl-tab-bar',
-  imports: [CdkDropList, CdkDrag],
+  imports: [CdkDropList, CdkDrag, UpdateButton],
   templateUrl: './tab-bar.html',
   styleUrl: './tab-bar.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

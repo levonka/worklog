@@ -1,12 +1,14 @@
 import { afterRenderEffect, ChangeDetectionStrategy, Component, computed, inject, signal, viewChild } from '@angular/core';
 import type { ElementRef } from '@angular/core';
 import { BOARD_STATUSES, DAILY_HOUR, DAILY_MINUTE, FIRST_STEPS, firstStepsDone, withScheme } from '@worklog/model';
+import type { UpdateCheckResult } from '@worklog/model';
 import type { TabId } from '../core/tabs-layout';
 import { TabsStore } from '../core/tabs-store';
 import { WorklogStore } from '../core/worklog-store';
 import { Favicon } from '../favicon/favicon';
 import { LinkDescription } from '../link-description/link-description';
 import { Tour } from '../onboarding/tour';
+import { UpdateStore } from '../update/update-store';
 import { inBackground } from '../core/background';
 
 export const ICON_COLORS = ['#3b82f6', '#7c3aed', '#e24329', '#0f766e', '#d97706', '#db2777', '#64748b', '#0ea5e9'] as const;
@@ -14,6 +16,13 @@ export const ICON_COLORS = ['#3b82f6', '#7c3aed', '#e24329', '#0f766e', '#d97706
 const NAV_TABS = ['todos', 'board', 'daily', 'history', 'done', 'knowledge'] as const;
 type NavTab = (typeof NAV_TABS)[number];
 const DAILY_LABEL = `${DAILY_HOUR}:${String(DAILY_MINUTE).padStart(2, '0')}`;
+const CHECK_RESULTS: Record<UpdateCheckResult, string> = {
+  none: 'Новой версии нет',
+  unreachable: 'Не удалось проверить',
+  available: 'Есть новая версия',
+  'local-changes': 'Есть новая версия',
+};
+const CHECK_RESULT_MS = 2_000;
 
 interface NavItem {
   id: TabId;
@@ -45,6 +54,7 @@ export class Sidebar {
   private readonly worklog = inject(WorklogStore);
   protected readonly tabs = inject(TabsStore);
   private readonly tour = inject(Tour);
+  protected readonly updates = inject(UpdateStore);
 
   private readonly titleInput = viewChild<ElementRef<HTMLInputElement>>('linkTitle');
   protected readonly addingTo = signal<string | null>(null);
@@ -53,6 +63,8 @@ export class Sidebar {
   protected readonly editingInfo = signal(false);
   // a second Enter while the link is being saved would add it twice
   private readonly saving = signal(false);
+  /** «Проверяю…», then the result for a moment; null: the line offers the check */
+  protected readonly checkNote = signal<string | null>(null);
 
   protected readonly nav = computed<NavItem[]>(() => {
     const open = this.tabs.layout().tabs;
@@ -90,6 +102,17 @@ export class Sidebar {
       inBackground(this.worklog.setOnboarding({ stepsHidden: false }));
     }
     this.tour.start();
+  }
+
+  protected checkUpdates(): void {
+    if (this.checkNote() !== null) return;
+    this.checkNote.set('Проверяю…');
+    inBackground(
+      this.updates.checkNow().then(result => {
+        this.checkNote.set(CHECK_RESULTS[result]);
+        setTimeout(() => this.checkNote.set(null), CHECK_RESULT_MS);
+      }),
+    );
   }
 
   protected startAdding(groupId: string): void {

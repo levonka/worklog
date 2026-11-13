@@ -1,0 +1,14 @@
+@switch (state()) {
+  @case ('reload') {
+    <button type="button" class="ub__btn" title="Worklog обновлён — перезагрузите окно" (click)="updates.reload()">Перезагрузить</button>
+  }
+  @case ('running') {
+    <button type="button" class="ub__btn ub__btn_running" disabled>Обновляю… {{ elapsed() }}</button>
+  }
+  @case ('available') {
+    <button type="button" class="ub__btn" (click)="updates.start()">Обновить Worklog</button>
+  }
+  @case ('local-changes') {
+    <button type="button" class="ub__btn ub__btn_muted" disabled title="В папке Worklog есть свои правки — обновите её через git">Обновить Worklog</button>
+  }
+}

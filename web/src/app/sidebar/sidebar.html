@@ -82,5 +82,10 @@
   </section>
 }
 
-<!-- needed after the first tour only now and then: out of the sections, at the very bottom -->
-<button type="button" class="sb__help" title="Экскурсия по Worklog" (click)="startTour()">Как пользоваться</button>
+<!-- needed only now and then: out of the sections, at the very bottom -->
+<div class="sb__foot">
+  @if (updates.enabled()) {
+    <button type="button" class="sb__foot-link" [disabled]="checkNote() !== null" (click)="checkUpdates()">{{ checkNote() ?? 'Проверить обновления' }}</button>
+  }
+  <button type="button" class="sb__foot-link" title="Экскурсия по Worklog" (click)="startTour()">Как пользоваться</button>
+</div>

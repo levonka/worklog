@@ -39,18 +39,25 @@
 }
 
 // pushed to the bottom of the column by the free space above it
-.sb__help {
+.sb__foot {
   flex-shrink: 0;
-  align-self: flex-start;
   margin-top: auto;
-  padding: 8px 8px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding-top: 8px;
+}
+
+.sb__foot-link {
+  padding: 0 8px;
   border: 0;
   font-size: 11.5px;
   color: var(--wl-text-3);
   background: transparent;
 }
 
-.sb__help:hover {
+.sb__foot-link:hover:not(:disabled) {
   color: var(--wl-text-2);
   text-decoration: underline;
 }

@@ -6,6 +6,7 @@ import type { WorklogState } from '@worklog/model';
 import { TabsStore } from '../core/tabs-store';
 import { WorklogStore } from '../core/worklog-store';
 import { Tour } from '../onboarding/tour';
+import { UpdateStore } from '../update/update-store';
 import { ICON_COLORS, Sidebar } from './sidebar';
 
 const STATE: WorklogState = {
@@ -40,6 +41,7 @@ describe('Sidebar', () => {
   });
 
   afterEach(() => {
+    vi.useRealTimers();
     localStorage.clear();
     try {
       http.verify();
@@ -56,6 +58,16 @@ describe('Sidebar', () => {
 
   function settle(): Promise<void> {
     return new Promise(resolve => setTimeout(resolve));
+  }
+
+  function texts(selector: string): string[] {
+    return Array.from(host.querySelectorAll(selector)).map(node => node.textContent?.trim() ?? '');
+  }
+
+  // under fake timers: the answers settle, then the view follows
+  async function render(): Promise<void> {
+    await vi.advanceTimersByTimeAsync(0);
+    fixture.detectChanges();
   }
 
   // every write is followed by a state refresh
@@ -262,13 +274,46 @@ describe('Sidebar', () => {
   });
 
   it('Как пользоваться sits at the very bottom, under the link groups, not among the sections', () => {
-    expect(host.querySelector('.sb__nav .sb__help')).toBeNull();
-    expect(host.lastElementChild?.classList).toContain('sb__help');
+    expect(host.querySelector('.sb__nav .sb__foot-link')).toBeNull();
+    expect(host.lastElementChild?.lastElementChild?.textContent?.trim()).toBe('Как пользоваться');
+  });
+
+  it('Проверить обновления checks now and tells the result for two seconds', async () => {
+    expect(texts('.sb__foot-link')).toEqual(['Как пользоваться']);
+    vi.useFakeTimers();
+    const updates = TestBed.inject(UpdateStore);
+    const loading = updates.load();
+    http.expectOne({ method: 'GET', url: '/api/update' }).flush({ check: 'none', version: 'aaa111', run: null });
+    await loading;
+    await render();
+    const check = query('.sb__foot-link:first-child', HTMLButtonElement);
+    expect(check.textContent?.trim()).toBe('Проверить обновления');
+
+    const answers = [
+      ['none', 'none', 'Новой версии нет'],
+      ['unreachable', 'none', 'Не удалось проверить'],
+      ['available', 'available', 'Есть новая версия'],
+    ] as const;
+    for (const [result, found, text] of answers) {
+      check.click();
+      await render();
+      expect(check.textContent?.trim()).toBe('Проверяю…');
+      expect(check.disabled).toBe(true);
+      http.expectOne({ method: 'POST', url: '/api/update/check' }).flush({ result, status: { check: found, version: 'aaa111', run: null } });
+      await render();
+      expect(check.textContent?.trim()).toBe(text);
+
+      await vi.advanceTimersByTimeAsync(2_000);
+      await render();
+      expect(check.textContent?.trim()).toBe('Проверить обновления');
+      expect(check.disabled).toBe(false);
+    }
+    expect(updates.status()?.check).toBe('available');
   });
 
   it('Как пользоваться starts the tour and brings hidden first steps back while something is left', async () => {
     const start = vi.spyOn(TestBed.inject(Tour), 'start').mockImplementation(() => undefined);
-    const help = query('.sb__help', HTMLButtonElement);
+    const help = query('.sb__foot-link:last-child', HTMLButtonElement);
     expect(help.textContent?.trim()).toContain('Как пользоваться');
 
     help.click();
@@ -298,7 +343,7 @@ describe('Sidebar', () => {
     http.expectOne({ method: 'GET', url: '/api/state' }).flush(done);
     await loading;
 
-    query('.sb__help', HTMLButtonElement).click();
+    query('.sb__foot-link:last-child', HTMLButtonElement).click();
 
     http.expectNone({ method: 'PATCH', url: '/api/onboarding' });
   });

@@ -6,6 +6,7 @@ import type { DailyDraft, Direction, SessionSummary, WorkEvent, WorklogState } f
 import { ticketFromKey } from '@worklog/model';
 import { TabsStore } from '../core/tabs-store';
 import { WorklogStore } from '../core/worklog-store';
+import { UpdateStore } from '../update/update-store';
 import { DailyView } from './daily-view';
 import { TEST_PROFILE } from '@worklog/test-profile';
 
@@ -168,6 +169,18 @@ describe('DailyView', () => {
     const run = host.querySelector<HTMLButtonElement>('.dly__summary');
     expect(run?.disabled).toBe(true);
     expect(run?.textContent?.trim()).toBe('Собираю… 0:42');
+  });
+
+  it('the summary button waits for a running update', async () => {
+    await setup(draft());
+    const loading = TestBed.inject(UpdateStore).load();
+    http.expectOne({ method: 'GET', url: '/api/update' }).flush({ check: 'available', version: 'aaa111', run: { phase: 'running', startedAt: NOW.toISOString(), pid: 7 } });
+    await loading;
+    await fixture.whenStable();
+
+    const summary = button('✦ Собрать из сессий');
+    expect(summary.disabled).toBe(true);
+    expect(summary.title).toBe('Идёт обновление Worklog');
   });
 
   it('failed run shows the error', async () => {

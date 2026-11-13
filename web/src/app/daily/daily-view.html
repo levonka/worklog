@@ -1,7 +1,15 @@
 <header class="dly__bar">
   <h1 class="dly__title">{{ title() }}</h1>
   <span class="dly__spacer"></span>
-  <button type="button" class="dly__summary" data-tour="daily-summary" [disabled]="runState() === 'running'" (click)="startSummary()">
+  <!-- the update restarts the server: a summary must not start in the middle of it -->
+  <button
+    type="button"
+    class="dly__summary"
+    data-tour="daily-summary"
+    [disabled]="runState() === 'running' || updates.running()"
+    [attr.title]="updates.running() ? 'Идёт обновление Worklog' : null"
+    (click)="startSummary()"
+  >
     @if (runState() === 'running') {
       Собираю… {{ elapsed() }}
     } @else {
