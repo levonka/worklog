@@ -11,12 +11,21 @@ import { saveScroll } from './scroll-keep';
 export const UPDATE_POLL_MS = 2_000;
 
 // a checkbox keeps the focus after a click, yet a reload loses nothing typed in it
-const EDITING = 'input:not([type="checkbox"]):not([type="radio"]), textarea, select, [contenteditable]:not([contenteditable="false"])';
+const TYPING = 'input:not([type="checkbox"]):not([type="radio"]), textarea, [contenteditable]:not([contenteditable="false"])';
+const EDITING = `${TYPING}, select`;
 
-/** a reload now cuts nothing short: no field being typed in, no task window, menu or form open */
-export function canReloadNow(doc: Document): boolean {
+/** typed into and not sent yet: still on screen and not empty; a field that saves itself is marked `data-autosave` */
+function unsent(field: Element): boolean {
+  if (!field.isConnected || field.closest('[data-autosave]') !== null) return false;
+  const text = field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement ? field.value : (field.textContent ?? '');
+  return text.trim() !== '';
+}
+
+/** a reload now cuts nothing short: no field being typed in or left with unsent text, no task window, tour, menu or form open */
+export function canReloadNow(doc: Document, typed: Iterable<Element> = []): boolean {
   if (doc.activeElement?.matches(EDITING) === true) return false;
-  return doc.querySelector('dialog[open], [aria-expanded="true"]') === null;
+  if (doc.querySelector('dialog[open], [aria-modal="true"], [aria-expanded="true"]') !== null) return false;
+  return !Array.from(typed).some(unsent);
 }
 
 /** A newer Worklog on GitHub, the update the window started, and the reload into the new version */
@@ -32,6 +41,8 @@ export class UpdateStore {
   /** the server version this window was loaded from */
   private version: string | null = null;
   private poll: ReturnType<typeof setTimeout> | undefined;
+  /** fields typed into since the window loaded: a form left open with text, the focus gone elsewhere */
+  private readonly typed = new Set<Element>();
 
   readonly status = this.current.asReadonly();
   /** when the running update started, null when none runs */
@@ -49,7 +60,14 @@ export class UpdateStore {
   readonly enabled = computed(() => (this.current()?.version ?? null) !== null);
 
   constructor() {
-    inject(DestroyRef).onDestroy(() => clearTimeout(this.poll));
+    const remember = (event: Event): void => {
+      if (event.target instanceof Element && event.target.matches(TYPING)) this.typed.add(event.target);
+    };
+    this.document.addEventListener('input', remember, true);
+    inject(DestroyRef).onDestroy(() => {
+      clearTimeout(this.poll);
+      this.document.removeEventListener('input', remember, true);
+    });
   }
 
   // never rejects: while the server restarts the last status stays
@@ -116,13 +134,20 @@ export class UpdateStore {
 
   private apply(status: UpdateStatus): void {
     this.current.set(status);
-    if (status.version === null || this.waiting()) return;
+    if (status.version === null) return;
     if (this.version === null) {
       this.version = status.version;
       return;
     }
-    if (status.version === this.version) return;
-    if (canReloadNow(this.document)) this.reload();
+    // a new server that fails its check is rolled back: the window follows a version only once the update is over
+    if (status.run?.phase === 'running') return;
+    if (status.version === this.version) {
+      this.waiting.set(false);
+      return;
+    }
+    if (this.waiting()) return;
+    for (const field of this.typed) if (!field.isConnected) this.typed.delete(field);
+    if (canReloadNow(this.document, this.typed)) this.reload();
     else this.waiting.set(true);
   }
 

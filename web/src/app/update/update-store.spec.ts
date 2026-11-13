@@ -134,6 +134,55 @@ describe('UpdateStore', () => {
     expect(canReloadNow(document)).toBe(false);
   });
 
+  it('waits with Перезагрузить while a form keeps typed text, even without focus', async () => {
+    const note = document.createElement('textarea');
+    document.body.append(note);
+    note.value = 'Черновик заметки';
+    note.dispatchEvent(new Event('input', { bubbles: true }));
+
+    await load(status('aaa111', null, 'none'));
+    await load(status('bbb222', null, 'none'));
+
+    expect(document.activeElement).toBe(document.body);
+    expect(updates.reloadWaiting()).toBe(true);
+    expect(sessionStorage.getItem(SCROLL_KEY)).toBeNull();
+
+    // sent and emptied, or saving itself, or gone: nothing to lose
+    note.value = '';
+    const daily = document.createElement('textarea');
+    daily.setAttribute('data-autosave', '');
+    daily.value = 'Текст дейлика';
+    document.body.append(daily);
+    const closed = document.createElement('input');
+    closed.value = 'закрытая форма';
+    expect(canReloadNow(document, [note, daily, closed])).toBe(true);
+    note.value = 'Черновик заметки';
+    expect(canReloadNow(document, [note])).toBe(false);
+
+    // the tour is a dialog of its own
+    note.remove();
+    document.body.insertAdjacentHTML('beforeend', '<div role="dialog" aria-modal="true">Экскурсия</div>');
+    expect(canReloadNow(document)).toBe(false);
+  });
+
+  it('follows a new version only once the update is over, and stops waiting when the old one comes back', async () => {
+    const field = document.createElement('input');
+    document.body.append(field);
+
+    await load(status('aaa111', null, 'none'));
+    // the new server answers, yet its check may still fail and bring the old one back
+    await load(status('bbb222', RUNNING, 'none'));
+    expect(updates.reloadWaiting()).toBe(false);
+    expect(sessionStorage.getItem(SCROLL_KEY)).toBeNull();
+
+    field.focus();
+    await load(status('bbb222', { phase: 'done', startedAt: STARTED }, 'none'));
+    expect(updates.reloadWaiting()).toBe(true);
+
+    await load(status('aaa111', { phase: 'failed', startedAt: STARTED, error: 'новая версия не запустилась' }, 'available'));
+    expect(updates.reloadWaiting()).toBe(false);
+  });
+
   it('turns a failed run into the strip text and dismisses it with DELETE', async () => {
     await load(status('aaa111', { phase: 'failed', startedAt: STARTED, error: 'новая версия не запустилась' }));
     expect(updates.failure()).toBe('Не удалось обновить Worklog: новая версия не запустилась. Осталась прежняя версия, данные не тронуты.');
