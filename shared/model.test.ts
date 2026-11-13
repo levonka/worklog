@@ -913,13 +913,14 @@ test('onboardingPrompts take the prefixes from the profile and the name of the f
   const example = exampleData(TEST_PROFILE, AT, () => `e${n++}`).direction;
   const fresh = onboardingPrompts(TEST_PROFILE, [example]);
   assert.equal(fresh.direction, 'заведи в worklog направление по задачам APP-1234 и WEB-567');
-  assert.equal(fresh.event, 'по капче: бэк поправил редирект, жду стенд');
+  assert.equal(fresh.event, 'запиши в worklog по капче: бэк поправил редирект, жду стенд');
+  assert.equal(fresh.link, 'добавь в worklog к капче ссылку на макет: <ссылка>');
   assert.equal(fresh.todo, 'добавь в worklog дело: завести задачу на бэк, просил аналитик');
   assert.equal(fresh.repeat, 'добавь в worklog повторяющееся дело: дейлик каждый будний день в 11:30');
 
   const own = onboardingPrompts(TEST_PROFILE, [example, ownDirection('theme', { title: 'Тёмная тема' }), ownDirection('old', { title: 'Старое', status: 'done', order: -1 })]);
-  assert.equal(own.event, 'по тёмная тема: бэк поправил редирект, жду стенд');
-  assert.ok(own.link.startsWith('добавь в тёмная тема ссылку'));
+  assert.equal(own.event, 'запиши в worklog по направлению «Тёмная тема»: бэк поправил редирект, жду стенд');
+  assert.equal(own.link, 'добавь в worklog к направлению «Тёмная тема» ссылку на макет: <ссылка>');
 
   assert.equal(onboardingPrompts(null, []).direction, 'заведи в worklog направление по задачам PROJ-1234 и PROJ-567');
 });

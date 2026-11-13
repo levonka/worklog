@@ -203,7 +203,7 @@ describe('Board', () => {
     http.expectOne({ method: 'GET', url: '/api/state' }).flush({ ...STATE, directions: [], onboarding: { stepsHidden: true } });
     await loading;
     await fixture.whenStable();
-    expect(text(host.querySelector('.bd__empty'))).toContain('«заведи направление');
+    expect(text(host.querySelector('.bd__empty'))).toContain('«заведи в worklog направление');
 
     loading = store.refresh();
     http.expectOne({ method: 'GET', url: '/api/state' }).flush({ ...STATE, directions: [direction('seo', 'SEO-текст', 'done', 0)], onboarding: { stepsHidden: true } });

@@ -855,7 +855,7 @@ export function exampleData(profile: Profile | null, at: string, newId: () => st
     events: [
       event(3, 'Разобрал BRD, задал аналитику вопросы по лимиту попыток входа'),
       event(2, 'Сверстал виджет капчи, жду от дизайнера текст ошибки'),
-      event(1, 'Так выглядит лента: сюда попадает всё, что вы рассказываете агенту, например «по капче: бэк поправил редирект»'),
+      event(1, 'Так выглядит лента: сюда попадает всё, что вы рассказываете агенту, например «запиши в worklog по капче: бэк поправил редирект»'),
     ],
     order: 0,
     createdAt: before(3),
@@ -905,11 +905,13 @@ export function onboardingPrompts(profile: Profile | null, directions: readonly 
   const named = ownDirections(directions)
     .filter(direction => direction.status !== 'done')
     .sort((a, b) => a.order - b.order)[0];
-  const name = named?.title.toLowerCase();
+  // the title stays as written: it does not decline after «по»
+  const about = named === undefined ? 'по капче' : `по направлению «${named.title}»`;
+  const to = named === undefined ? 'к капче' : `к направлению «${named.title}»`;
   return {
     direction: `заведи в worklog направление по задачам ${first}1234 и ${second}567`,
-    event: `по ${name ?? 'капче'}: бэк поправил редирект, жду стенд`,
-    link: `добавь в ${name ?? 'капчу'} ссылку на макет <ссылка>`,
+    event: `запиши в worklog ${about}: бэк поправил редирект, жду стенд`,
+    link: `добавь в worklog ${to} ссылку на макет: <ссылка>`,
     todo: 'добавь в worklog дело: завести задачу на бэк, просил аналитик',
     repeat: 'добавь в worklog повторяющееся дело: дейлик каждый будний день в 11:30',
   };

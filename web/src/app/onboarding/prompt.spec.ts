@@ -8,7 +8,7 @@ import { Prompt } from './prompt';
   template: `<wl-prompt [text]="text()" />`,
 })
 class Host {
-  readonly text = signal('по капче: бэк поправил редирект, жду стенд');
+  readonly text = signal('запиши в worklog по капче: бэк поправил редирект, жду стенд');
 }
 
 describe('Prompt', () => {
@@ -45,7 +45,7 @@ describe('Prompt', () => {
   it('copies exactly the prompt text, which can be selected', async () => {
     await click();
 
-    expect(writeText).toHaveBeenCalledWith('по капче: бэк поправил редирект, жду стенд');
+    expect(writeText).toHaveBeenCalledWith('запиши в worklog по капче: бэк поправил редирект, жду стенд');
     expect(host.querySelector('.pr__text')?.classList).toContain('wl-selectable');
   });
 
