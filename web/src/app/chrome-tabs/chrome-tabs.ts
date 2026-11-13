@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, computed, ElementRef, inject, signal } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
+import { ChangeDetectionStrategy, Component, computed, DestroyRef, ElementRef, inject, signal } from '@angular/core';
 import { baseBranch, onboardingPrompts, TERMINAL_OPEN_LABELS } from '@worklog/model';
 import { firstValueFrom } from 'rxjs';
 import { ApiClient } from '../core/api';
@@ -29,6 +30,7 @@ export class ChromeTabs {
   private readonly worklog = inject(WorklogStore);
   private readonly profiles = inject(ProfileStore);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly document = inject(DOCUMENT);
 
   protected readonly open = signal(false);
   private readonly launcher = signal<AgentLauncher | null>(null);
@@ -43,6 +45,15 @@ export class ChromeTabs {
     const launcher = this.launcher();
     return launcher === null ? '' : `Откроется ${TERMINAL_OPEN_LABELS[launcher.terminal]}`;
   });
+
+  constructor() {
+    // scroll does not bubble: the sidebar's scroll is caught on its way down
+    const onScroll = (event: Event): void => {
+      if (event.target instanceof Node && event.target.contains(this.host.nativeElement)) this.place();
+    };
+    this.document.addEventListener('scroll', onScroll, { capture: true, passive: true });
+    inject(DestroyRef).onDestroy(() => this.document.removeEventListener('scroll', onScroll, { capture: true }));
+  }
 
   protected toggle(): void {
     if (this.open()) {

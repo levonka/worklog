@@ -123,6 +123,22 @@ describe('ChromeTabs', () => {
     expect(query('.ct__button', HTMLButtonElement).getAttribute('aria-expanded')).toBe('false');
   });
 
+  it('keeps the bubble at the button while the sidebar scrolls', async () => {
+    const sidebar = document.createElement('nav');
+    document.body.append(sidebar);
+    sidebar.append(host);
+    const box = vi.spyOn(host, 'getBoundingClientRect').mockReturnValue(new DOMRect(0, 300, 200, 30));
+    await open();
+    expect(query('.ct__pop', HTMLDivElement).style.bottom).toBe(`${window.innerHeight - 330}px`);
+
+    box.mockReturnValue(new DOMRect(0, 200, 200, 30));
+    sidebar.dispatchEvent(new Event('scroll'));
+    await render();
+
+    expect(query('.ct__pop', HTMLDivElement).style.bottom).toBe(`${window.innerHeight - 230}px`);
+    sidebar.remove();
+  });
+
   it('shows why the launch failed', async () => {
     await open();
     query('.ct__launch', HTMLButtonElement).click();
