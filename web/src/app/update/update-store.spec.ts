@@ -2,7 +2,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import type { UpdateCheck, UpdateRun, UpdateStatus } from '@worklog/model';
-import { saveScroll, takeScroll } from './scroll-keep';
+import { restoreScroll, saveScroll, takeScroll } from './scroll-keep';
 import { canReloadNow, UPDATE_POLL_MS, UpdateStore } from './update-store';
 
 const GET = { method: 'GET', url: '/api/update' };
@@ -98,7 +98,7 @@ describe('UpdateStore', () => {
     expect(sessionStorage.getItem(SCROLL_KEY)).toBeNull();
 
     await load(status('bbb222', { phase: 'done', startedAt: STARTED }, 'none'));
-    expect(sessionStorage.getItem(SCROLL_KEY)).toBe('{"board":0}');
+    expect(sessionStorage.getItem(SCROLL_KEY)).toBe('{}');
     expect(updates.reloadWaiting()).toBe(false);
   });
 
@@ -157,19 +157,30 @@ describe('UpdateStore', () => {
   });
 
   it('keeps the scroll of each pane across the reload', () => {
-    document.body.innerHTML = `
-      <wl-pane data-tab-id="board"><div class="pn__body"></div></wl-pane>
-      <wl-pane data-tab-id="direction:seo"><div class="pn__body"></div></wl-pane>
+    // each view scrolls its own blocks: the board its columns, the history its body
+    const panes = `
+      <wl-pane data-tab-id="board"><div class="pn__body"><div class="bd__list"></div><div class="bd__list"></div></div></wl-pane>
+      <wl-pane data-tab-id="history"><div class="pn__body"><div class="hv__body"></div></div></wl-pane>
     `;
-    const [left, right] = document.querySelectorAll('.pn__body');
-    left.scrollTop = 120;
-    right.scrollTop = 40;
+    document.body.innerHTML = panes;
+    const [, column] = document.querySelectorAll('.bd__list');
+    const [feed] = document.querySelectorAll('.hv__body');
+    column.scrollTop = 120;
+    feed.scrollTop = 40;
+    feed.scrollLeft = 5;
 
     saveScroll(document, sessionStorage);
+    document.body.innerHTML = panes;
+    const history = takeScroll(sessionStorage, 'history');
+    const board = takeScroll(sessionStorage, 'board');
 
-    expect(takeScroll(sessionStorage, 'direction:seo')).toBe(40);
-    expect(takeScroll(sessionStorage, 'direction:seo')).toBeNull();
-    expect(takeScroll(sessionStorage, 'board')).toBe(120);
+    expect(history).toEqual([['div.hv__body#0', 40, 5]]);
+    expect(takeScroll(sessionStorage, 'history')).toBeNull();
     expect(takeScroll(sessionStorage, 'todos')).toBeNull();
+    const [boardPane, historyPane] = document.querySelectorAll('wl-pane');
+    restoreScroll(boardPane, board ?? []);
+    restoreScroll(historyPane, history ?? []);
+    expect(Array.from(document.querySelectorAll('.bd__list'), list => list.scrollTop)).toEqual([0, 120]);
+    expect(document.querySelector('.hv__body')?.scrollTop).toBe(40);
   });
 });

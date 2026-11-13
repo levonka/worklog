@@ -1,6 +1,6 @@
 import { DOCUMENT, NgTemplateOutlet } from '@angular/common';
-import { afterRenderEffect, ChangeDetectionStrategy, Component, computed, inject, input, untracked, viewChild } from '@angular/core';
-import type { AfterRenderRef, ElementRef } from '@angular/core';
+import { afterRenderEffect, ChangeDetectionStrategy, Component, computed, ElementRef, inject, input, untracked } from '@angular/core';
+import type { AfterRenderRef } from '@angular/core';
 import { EMPTY_STATE } from '@worklog/model';
 import { Board } from '../board/board';
 import { DailyView } from '../daily/daily-view';
@@ -13,7 +13,7 @@ import { TabsStore } from '../core/tabs-store';
 import { WorklogStore } from '../core/worklog-store';
 import { DirectionView } from '../direction/direction-view';
 import { TodoList } from '../todos/todo-list';
-import { takeScroll } from '../update/scroll-keep';
+import { restoreScroll, takeScroll } from '../update/scroll-keep';
 
 @Component({
   selector: 'wl-pane',
@@ -27,10 +27,9 @@ export class Pane {
   protected readonly tabs = inject(TabsStore);
   private readonly store = inject(WorklogStore);
   private readonly document = inject(DOCUMENT);
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
 
   readonly tabId = input.required<TabId>();
-
-  private readonly body = viewChild.required<ElementRef<HTMLElement>>('body');
 
   protected readonly view = computed(() => this.tabs.view(this.tabId()));
   protected readonly kind = computed(() => {
@@ -50,11 +49,10 @@ export class Pane {
     const restore: AfterRenderRef = afterRenderEffect(() => {
       if (this.store.state() === EMPTY_STATE) return;
       restore.destroy();
-      const body = this.body().nativeElement;
       try {
         const storage = this.document.defaultView?.sessionStorage;
-        const top = storage === undefined ? null : takeScroll(storage, untracked(this.tabId));
-        if (top !== null) body.scrollTop = top;
+        const scrolled = storage === undefined ? null : takeScroll(storage, untracked(this.tabId));
+        if (scrolled !== null) restoreScroll(this.host.nativeElement, scrolled);
       } catch {
         // storage unavailable: the pane starts at the top
       }
