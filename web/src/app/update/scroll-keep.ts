@@ -1,6 +1,8 @@
 import type { TabId } from '../core/tabs-layout';
 
 const SCROLL_KEY = 'worklog.scroll.v1';
+// a reload takes seconds: a pane that was not back by then is no longer the one that was saved
+export const SCROLL_KEEP_MS = 60_000;
 
 /** a scrolled block of a pane: which one, then how far down and across */
 export type Scrolled = [key: string, top: number, left: number];
@@ -26,16 +28,20 @@ export function saveScroll(doc: Document, storage: Storage): void {
       .map(([key, element]): Scrolled => [key, element.scrollTop, element.scrollLeft]);
     if (id !== null && scrolled.length > 0) scroll[id] = scrolled;
   }
-  storage.setItem(SCROLL_KEY, JSON.stringify(scroll));
+  storage.setItem(SCROLL_KEY, JSON.stringify({ savedAt: Date.now(), panes: scroll }));
 }
 
-/** the saved scroll of a pane, given once */
+/** the saved scroll of a pane, given once and only soon after the save */
 export function takeScroll(storage: Storage, tabId: TabId): Scrolled[] | null {
-  const scroll = readScroll(storage);
-  const scrolled = scroll.get(tabId);
+  const saved = readScroll(storage);
+  if (saved === null) {
+    storage.removeItem(SCROLL_KEY);
+    return null;
+  }
+  const scrolled = saved.panes.get(tabId);
   if (scrolled === undefined) return null;
-  scroll.delete(tabId);
-  storage.setItem(SCROLL_KEY, JSON.stringify(Object.fromEntries(scroll)));
+  saved.panes.delete(tabId);
+  storage.setItem(SCROLL_KEY, JSON.stringify({ savedAt: saved.savedAt, panes: Object.fromEntries(saved.panes) }));
   return scrolled;
 }
 
@@ -53,13 +59,15 @@ function isScrolled(value: unknown): value is Scrolled {
   return Array.isArray(value) && value.length === 3 && typeof value[0] === 'string' && typeof value[1] === 'number' && typeof value[2] === 'number';
 }
 
-function readScroll(storage: Storage): Map<string, Scrolled[]> {
-  // broken JSON: nothing to restore
+// null: nothing saved, saved too long ago, or unreadable
+function readScroll(storage: Storage): { savedAt: number; panes: Map<string, Scrolled[]> } | null {
   try {
-    const raw: unknown = JSON.parse(storage.getItem(SCROLL_KEY) ?? '{}');
-    if (typeof raw !== 'object' || raw === null) return new Map();
-    return new Map(Object.entries(raw).filter((entry): entry is [string, Scrolled[]] => Array.isArray(entry[1]) && entry[1].every(isScrolled)));
+    const raw: unknown = JSON.parse(storage.getItem(SCROLL_KEY) ?? 'null');
+    if (typeof raw !== 'object' || raw === null || !('savedAt' in raw) || !('panes' in raw)) return null;
+    const { savedAt, panes } = raw;
+    if (typeof savedAt !== 'number' || Date.now() - savedAt > SCROLL_KEEP_MS || typeof panes !== 'object' || panes === null) return null;
+    return { savedAt, panes: new Map(Object.entries(panes).filter((entry): entry is [string, Scrolled[]] => Array.isArray(entry[1]) && entry[1].every(isScrolled))) };
   } catch {
-    return new Map();
+    return null;
   }
 }

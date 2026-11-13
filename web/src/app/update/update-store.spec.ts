@@ -2,7 +2,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import type { UpdateCheck, UpdateRun, UpdateStatus } from '@worklog/model';
-import { restoreScroll, saveScroll, takeScroll } from './scroll-keep';
+import { restoreScroll, saveScroll, SCROLL_KEEP_MS, takeScroll } from './scroll-keep';
 import { canReloadNow, UPDATE_POLL_MS, UpdateStore } from './update-store';
 
 const GET = { method: 'GET', url: '/api/update' };
@@ -98,7 +98,7 @@ describe('UpdateStore', () => {
     expect(sessionStorage.getItem(SCROLL_KEY)).toBeNull();
 
     await load(status('bbb222', { phase: 'done', startedAt: STARTED }, 'none'));
-    expect(sessionStorage.getItem(SCROLL_KEY)).toBe('{}');
+    expect(JSON.parse(sessionStorage.getItem(SCROLL_KEY) ?? 'null')).toEqual({ savedAt: Date.now(), panes: {} });
     expect(updates.reloadWaiting()).toBe(false);
   });
 
@@ -182,5 +182,17 @@ describe('UpdateStore', () => {
     restoreScroll(historyPane, history ?? []);
     expect(Array.from(document.querySelectorAll('.bd__list'), list => list.scrollTop)).toEqual([0, 120]);
     expect(document.querySelector('.hv__body')?.scrollTop).toBe(40);
+  });
+
+  it('forgets a scroll that no pane took soon after the reload', async () => {
+    document.body.innerHTML = '<wl-pane data-tab-id="history"><div class="pn__body"><div class="hv__body"></div></div></wl-pane>';
+    const [feed] = document.querySelectorAll('.hv__body');
+    feed.scrollTop = 40;
+    saveScroll(document, sessionStorage);
+
+    await vi.advanceTimersByTimeAsync(SCROLL_KEEP_MS + 1);
+
+    expect(takeScroll(sessionStorage, 'history')).toBeNull();
+    expect(sessionStorage.getItem(SCROLL_KEY)).toBeNull();
   });
 });
