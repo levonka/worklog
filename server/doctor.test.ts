@@ -198,6 +198,38 @@ test('doctor reports the profile: missing, without a source, broken', async t =>
   assert.equal(byId(await runDoctor(machine, config, probes), 'profile').status, 'fail');
 });
 
+test('doctor does not blame Jira when the profile cannot be read', async t => {
+  const { machine, config, probes } = await rig(t, TEST_PROFILE);
+  await writeFile(config.profilePath, '{');
+  const checks = await runDoctor(machine, config, probes);
+  for (const id of ['p12', 'token', 'jira'] as const) {
+    assert.deepEqual(byId(checks, id), { id, status: 'skip', detail: 'профиль не прочитан — см. строку profile' });
+  }
+});
+
+test('doctor tells a hung Worklog of this clone from another program on the port', async t => {
+  const { machine, config, probes } = await rig(t);
+  const git = probes.run;
+  let command = '';
+  probes.health = async () => 'other';
+  probes.run = async (bin, args, cwd) => {
+    if (bin === 'lsof' && args.includes('-sTCP:LISTEN')) return { code: 0, stdout: '4242\n', stderr: '' };
+    if (bin === 'lsof' && args.includes('cwd')) return { code: 0, stdout: `p4242\nfcwd\nn${machine.rootDir}\n`, stderr: '' };
+    if (bin === 'ps') return { code: 0, stdout: `${command}\n`, stderr: '' };
+    return git(bin, args, cwd);
+  };
+  const port = async () => byId(await runDoctor(machine, config, probes), 'port');
+
+  command = `/usr/local/bin/node ${path.join(machine.rootDir, 'server', 'main.ts')}`;
+  assert.deepEqual(await port(), { id: 'port', status: 'fail', detail: 'на порту 1 завис Worklog', fix: 'kill 4242' });
+  command = '/usr/local/bin/node server/main.ts';
+  assert.equal((await port()).fix, 'kill 4242');
+  command = '/usr/local/bin/node /elsewhere/worklog/server/main.ts';
+  assert.match((await port()).detail, /занят другой программой/);
+  command = '/usr/local/bin/python3 -m http.server 1';
+  assert.match((await port()).detail, /занят другой программой/);
+});
+
 test('formatChecks marks each status and the fix', () => {
   const text = formatChecks([
     { id: 'node', status: 'ok', detail: '24.3.0' },

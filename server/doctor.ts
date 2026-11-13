@@ -184,6 +184,7 @@ export async function runDoctor(machine: DoctorMachine, config: DoctorConfig | s
   };
   const once: DoctorProbes = { ...probes, readPassword: readOnce };
   const jiraChecks = (async (): Promise<Check[]> => {
+    if (profileError !== null) return JIRA_CHECKS.map(id => check(id, 'skip', 'профиль не прочитан — см. строку profile'));
     if (profile?.jira !== undefined && !config.jiraOn) return JIRA_CHECKS.map(id => check(id, 'skip', 'Jira отложена; вернуть: worklog config set WORKLOG_JIRA on'));
     const p12 = await p12Check(profile?.jira, config.jiraFiles, once);
     const token = await tokenCheck(profile?.jira, config.jiraFiles, once);
@@ -199,7 +200,7 @@ export async function runDoctor(machine: DoctorMachine, config: DoctorConfig | s
     codeRootCheck(config, probes),
     web,
     jiraChecks,
-    portCheck(config.port, probes),
+    portCheck(config.port, machine.rootDir, probes),
     skillsCheck(machine, config.agents),
     codexDataCheck(machine, config),
     cliCheck(machine),
@@ -330,11 +331,24 @@ async function jiraCheck(jira: ProfileJira | undefined, files: JiraFiles, probes
   }
 }
 
-async function portCheck(port: number, probes: DoctorProbes): Promise<Check> {
+async function portCheck(port: number, rootDir: string, probes: DoctorProbes): Promise<Check> {
   const health = await probes.health(port);
   if (health === 'free') return check('port', 'ok', `${port} свободен`);
   if (health === 'worklog') return check('port', 'ok', `${port}: работает Worklog`);
+  const pid = await hungWorklog(port, rootDir, probes);
+  if (pid !== null) return check('port', 'fail', `на порту ${port} завис Worklog`, `kill ${pid}`);
   return check('port', 'fail', `порт ${port} занят другой программой`, `посмотри, кто его держит: lsof -nP -iTCP:${port} -sTCP:LISTEN`);
+}
+
+/** the pid on the port when it is this clone's server, started by a full path or from the clone folder */
+async function hungWorklog(port: number, rootDir: string, probes: DoctorProbes): Promise<string | null> {
+  const pid = (await probes.run('lsof', ['-t', `-iTCP:${port}`, '-sTCP:LISTEN'])).stdout.split('\n')[0].trim();
+  if (!/^\d+$/.test(pid)) return null;
+  const command = (await probes.run('ps', ['-o', 'command=', '-p', pid])).stdout.trim();
+  if (command.endsWith(` ${path.join(rootDir, 'server', 'main.ts')}`)) return pid;
+  if (!command.endsWith(' server/main.ts')) return null;
+  const cwd = await probes.run('lsof', ['-a', '-p', pid, '-d', 'cwd', '-Fn']);
+  return cwd.stdout.split('\n').includes(`n${rootDir}`) ? pid : null;
 }
 
 /** where the link points, null when there is no link; a plain file or folder reads as '' */
