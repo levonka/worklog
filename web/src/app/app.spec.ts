@@ -8,6 +8,7 @@ import { App } from './app';
 import { LiveUpdates } from './core/live-updates';
 import { TabsStore } from './core/tabs-store';
 import { WorklogStore } from './core/worklog-store';
+import { Tour } from './onboarding/tour';
 import { UpdateStore } from './update/update-store';
 
 const STATE_REQUEST = { method: 'GET', url: '/api/state' };
@@ -60,6 +61,32 @@ describe('App', () => {
 
     expect(start).toHaveBeenCalledOnce();
     expect(strip()).toBeNull();
+  });
+
+  it('keeps the first steps out of the tour and leaves room in the corner while shown', async () => {
+    const left = { ...EMPTY_STATE, directions: [], onboarding: { tourClosedAt: '2026-11-13T09:00:00.000Z' } };
+    http.expectOne(STATE_REQUEST).flush(left);
+    await settle();
+    await fixture.whenStable();
+    const host: HTMLElement = fixture.nativeElement;
+    expect(host.querySelector('.rt__main .fs__pill')).not.toBeNull();
+    expect(host.querySelector('.rt__main')?.classList.contains('rt__main_corner')).toBe(true);
+
+    const tour = TestBed.inject(Tour);
+    tour.show('welcome');
+    await fixture.whenStable();
+    expect(host.querySelector('.fs__pill')).toBeNull();
+    expect(host.querySelector('.rt__main')?.classList.contains('rt__main_corner')).toBe(false);
+    tour.close();
+    await fixture.whenStable();
+    expect(host.querySelector('.fs__pill')).not.toBeNull();
+
+    const loading = TestBed.inject(WorklogStore).refresh();
+    http.expectOne(STATE_REQUEST).flush({ ...left, onboarding: { ...left.onboarding, stepsDoneAt: '2026-11-13T09:00:00.000Z' } });
+    await loading;
+    await fixture.whenStable();
+    expect(host.querySelector('.fs__pill')).toBeNull();
+    expect(host.querySelector('.rt__main')?.classList.contains('rt__main_corner')).toBe(false);
   });
 
   it('the strip shows why the state could not be loaded', async () => {

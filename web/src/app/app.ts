@@ -9,6 +9,7 @@ import { LiveUpdates } from './core/live-updates';
 import { ProfileStore } from './core/profile-store';
 import { TabsStore } from './core/tabs-store';
 import { WorklogStore } from './core/worklog-store';
+import { FirstSteps, firstStepsShown } from './onboarding/first-steps';
 import { Tour } from './onboarding/tour';
 import { UpdateStore } from './update/update-store';
 import { TourOverlay } from './onboarding/tour-overlay';
@@ -25,7 +26,7 @@ interface Problem {
 
 @Component({
   selector: 'wl-root',
-  imports: [AgentSheetView, Sidebar, TabBar, Pane, TourOverlay],
+  imports: [AgentSheetView, FirstSteps, Sidebar, TabBar, Pane, TourOverlay],
   templateUrl: './app.html',
   styleUrl: './app.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -43,6 +44,8 @@ export class App implements OnInit {
 
   /** the window under the tour's dim takes no keyboard focus either */
   protected readonly touring = computed(() => this.tour.current() !== null);
+  /** the screens leave room at the bottom so the first steps button never hides their last line */
+  protected readonly cornerShown = computed(() => !this.touring() && firstStepsShown(this.store.state()));
 
   protected readonly problem = computed<Problem | null>(() => {
     if (!this.live.connected()) return { text: NO_CONNECTION, dismiss: null };

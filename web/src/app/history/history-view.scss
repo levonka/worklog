@@ -48,7 +48,7 @@
 .hv__body {
   flex: 1;
   min-height: 0;
-  padding: 12px 24px 24px;
+  padding: 12px 24px calc(24px + var(--wl-corner-room, 0px));
   overflow-y: auto;
 }
 

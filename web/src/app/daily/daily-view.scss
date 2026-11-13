@@ -56,7 +56,7 @@
 .dly__doc {
   flex: 1;
   min-width: 0;
-  padding: 16px 24px 24px;
+  padding: 16px 24px calc(24px + var(--wl-corner-room, 0px));
   overflow-y: auto;
 }
 

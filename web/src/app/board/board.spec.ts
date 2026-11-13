@@ -212,20 +212,13 @@ describe('Board', () => {
     expect(host.querySelector('.bd__empty')).toBeNull();
   });
 
-  it('the board shows the empty hint only without the first steps block', async () => {
+  it('the board has no first steps and shows the empty hint while the steps are left', async () => {
     const store = TestBed.inject(WorklogStore);
-    let loading = store.refresh();
+    const loading = store.refresh();
     http.expectOne({ method: 'GET', url: '/api/state' }).flush({ ...STATE, directions: [], todos: [] });
     await loading;
     await fixture.whenStable();
-    expect(host.querySelector('.fs__card')).not.toBeNull();
-    expect(host.querySelector('.bd__empty')).toBeNull();
-
-    loading = store.refresh();
-    http.expectOne({ method: 'GET', url: '/api/state' }).flush({ ...STATE, directions: [], todos: [], onboarding: { stepsHidden: true } });
-    await loading;
-    await fixture.whenStable();
-    expect(host.querySelector('.fs__card')).toBeNull();
+    expect(host.querySelector('wl-first-steps')).toBeNull();
     expect(host.querySelector('.bd__empty')).not.toBeNull();
   });
 

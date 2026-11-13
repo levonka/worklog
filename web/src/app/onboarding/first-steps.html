@@ -1,29 +1,35 @@
 @if (shown()) {
-  <section class="fs__card" aria-labelledby="fs-title">
-    <header class="fs__head">
-      <h2 id="fs-title" class="fs__title">Первые шаги · {{ doneCount() }} из {{ total }}</h2>
-      <button type="button" class="fs__hide" (click)="hide()">Скрыть</button>
-    </header>
-    <p class="fs__intro">Скопируйте фразу и отправьте агенту в любой сессии — или нажмите «Показать», чтобы найти нужную кнопку.</p>
-    <ol class="fs__list">
-      @for (item of items(); track item.step) {
-        <li class="fs__item">
-          <span class="fs__check" [class.fs__check_done]="item.done" aria-hidden="true">{{ item.done ? '✓' : '' }}</span>
-          <div class="fs__body">
-            <div class="fs__row">
-              <span class="fs__label" [class.fs__label_done]="item.done">{{ item.label }}</span>
+  @if (open()) {
+    <section class="fs__card" role="dialog" aria-labelledby="fs-title">
+      <header class="fs__head">
+        <h2 id="fs-title" class="fs__title">Первые шаги · {{ doneCount() }} из {{ total }}</h2>
+        <button type="button" class="fs__hide" (click)="hide()">Скрыть</button>
+      </header>
+      <p class="fs__intro">Скопируйте фразу и отправьте агенту в любой сессии — или нажмите «Показать», чтобы найти нужную кнопку.</p>
+      <ol class="fs__list">
+        @for (item of items(); track item.step) {
+          <li class="fs__item">
+            <span class="fs__check" [class.fs__check_done]="item.done" aria-hidden="true">{{ item.done ? '✓' : '' }}</span>
+            <div class="fs__body">
+              <div class="fs__row">
+                <span class="fs__label" [class.fs__label_done]="item.done">{{ item.label }}</span>
+                @if (!item.done) {
+                  <button type="button" class="fs__show" (click)="show(item.step)">Показать</button>
+                }
+              </div>
               @if (!item.done) {
-                <button type="button" class="fs__show" (click)="show(item.step)">Показать</button>
+                @for (prompt of item.prompts; track prompt) {
+                  <wl-prompt class="fs__prompt" [text]="prompt" />
+                }
               }
             </div>
-            @if (!item.done) {
-              @for (prompt of item.prompts; track prompt) {
-                <wl-prompt class="fs__prompt" [text]="prompt" />
-              }
-            }
-          </div>
-        </li>
-      }
-    </ol>
-  </section>
+          </li>
+        }
+      </ol>
+    </section>
+  }
+  <button type="button" class="fs__pill" [attr.aria-expanded]="open()" [style.--fs-progress]="progress()" (click)="toggle()">
+    <span class="fs__ring" aria-hidden="true"></span>
+    <span class="fs__pill-label">Первые шаги {{ doneCount() }}/{{ total }}</span>
+  </button>
 }

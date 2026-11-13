@@ -12,7 +12,6 @@ import { TabsStore } from '../core/tabs-store';
 import { WorklogStore } from '../core/worklog-store';
 import { DirectionCard } from './direction-card';
 import { NewDirectionForm } from './new-direction-form';
-import { FirstSteps, firstStepsShown } from '../onboarding/first-steps';
 import { inBackground } from '../core/background';
 
 interface Column {
@@ -26,7 +25,7 @@ interface Column {
 /** Projected content goes to the end of the toolbar: the pane puts its own controls there */
 @Component({
   selector: 'wl-board',
-  imports: [CdkDropListGroup, CdkDropList, CdkDrag, DirectionCard, FirstSteps, NewDirectionForm],
+  imports: [CdkDropListGroup, CdkDropList, CdkDrag, DirectionCard, NewDirectionForm],
   templateUrl: './board.html',
   styleUrl: './board.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -52,8 +51,6 @@ export class Board {
     const count = this.columns().reduce((sum, column) => sum + column.directions.length, 0);
     return `${count} ${plural(count, { one: 'активное', few: 'активных', many: 'активных' })}`;
   });
-  /** the block replaces the empty board's hint while it is shown */
-  protected readonly stepsShown = computed(() => firstStepsShown(this.store.state()));
   /** a new user: no directions anywhere yet */
   protected readonly empty = computed(() => this.columns().every(column => column.directions.length === 0) && this.parked().length === 0 && this.done().length === 0);
   protected readonly parkedTitles = computed(() => this.parked().map(direction => direction.title).join(', '));

@@ -1,18 +1,53 @@
+// in the corner of the tab area, over whatever tab is open
 :host {
-  display: block;
-  // the board's columns lie on this background
-  background: var(--wl-bg-2);
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  z-index: 20;
+}
+
+.fs__pill {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  height: 32px;
+  padding: 0 14px 0 10px;
+  border: 0;
+  border-radius: 16px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #ffffff;
+  background: var(--wl-accent);
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--wl-accent) 35%, transparent);
+}
+
+.fs__pill:hover {
+  background: color-mix(in srgb, var(--wl-accent) 88%, #000000);
+}
+
+.fs__ring {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: conic-gradient(#ffffff calc(var(--fs-progress, 0) * 1turn), rgba(255, 255, 255, 0.35) 0);
+  mask: radial-gradient(circle, transparent 4.5px, #000000 5px);
 }
 
 .fs__card {
-  max-width: 680px;
-  margin: 14px 14px 0;
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 8px);
+  width: min(680px, calc(100vw - 48px));
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
   padding: 12px 14px 14px;
   border-radius: 10px;
-  background: var(--wl-bg);
+  background: light-dark(rgba(255, 255, 255, 0.86), rgba(44, 44, 48, 0.86));
+  backdrop-filter: blur(24px) saturate(1.8);
   box-shadow:
-    0 0 0 0.5px light-dark(rgba(0, 0, 0, 0.14), rgba(255, 255, 255, 0.12)),
-    0 2px 8px rgba(0, 0, 0, 0.06);
+    0 0 0 0.5px light-dark(rgba(0, 0, 0, 0.18), rgba(255, 255, 255, 0.14)),
+    0 10px 32px rgba(0, 0, 0, 0.2);
 }
 
 .fs__head {

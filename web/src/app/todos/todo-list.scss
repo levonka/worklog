@@ -2,7 +2,8 @@
   max-width: 760px;
   display: flex;
   flex-direction: column;
-  padding: 10px 0 16px;
+  // the list scrolls in the pane's body
+  padding: 10px 0 calc(16px + var(--wl-corner-room, 0px));
 }
 
 .tl__new {

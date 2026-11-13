@@ -168,7 +168,7 @@
   flex-direction: column;
   gap: 8px;
   margin: 0 -3px;
-  padding: 2px 3px 12px;
+  padding: 2px 3px calc(12px + var(--wl-corner-room, 0px));
   overflow-y: auto;
 }
 

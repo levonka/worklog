@@ -5,10 +5,16 @@
 }
 
 .rt__main {
+  position: relative;
   flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
+}
+
+// read by the screens' scrolls: room under their last line for the first steps button
+.rt__main_corner {
+  --wl-corner-room: 56px;
 }
 
 .rt__problem {

@@ -2,7 +2,7 @@
   <wl-sidebar [attr.inert]="touring() ? '' : null" />
 }
 
-<div class="rt__main" [attr.inert]="touring() ? '' : null">
+<div class="rt__main" [class.rt__main_corner]="cornerShown()" [attr.inert]="touring() ? '' : null">
   @if (problem(); as problem) {
     <div class="rt__problem" role="alert">
       <svg class="rt__problem-icon" width="16" height="14" viewBox="0 0 16 14" aria-hidden="true">
@@ -41,6 +41,10 @@
       <wl-pane class="rt__pane" [tabId]="split" [style.flex-grow]="1 - layout.ratio" />
     }
   </div>
+
+  @if (!touring()) {
+    <wl-first-steps />
+  }
 </div>
 
 @if (agentSheet.target(); as target) {

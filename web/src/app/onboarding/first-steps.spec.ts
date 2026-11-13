@@ -24,6 +24,8 @@ function worklog(fields: Partial<WorklogState>): WorklogState {
 }
 
 const EXAMPLE = direction('ex', { title: 'Пример: капча на входе', example: true, events: [event('e0')] });
+const TODO = { id: 't', text: 'Дело', done: false, createdAt: AT };
+const ALL_DONE = worklog({ directions: [direction('own', { events: [event('e1')] })], todos: [TODO], onboarding: { tabsReadAt: AT } });
 
 describe('FirstSteps', () => {
   let fixture: ComponentFixture<FirstSteps>;
@@ -41,6 +43,7 @@ describe('FirstSteps', () => {
     await load(state);
     fixture = TestBed.createComponent(FirstSteps);
     host = fixture.nativeElement;
+    document.body.append(host);
     await fixture.whenStable();
   }
 
@@ -56,6 +59,7 @@ describe('FirstSteps', () => {
   }
 
   afterEach(() => {
+    host?.remove();
     localStorage.clear();
     try {
       http.verify();
@@ -72,58 +76,126 @@ describe('FirstSteps', () => {
     return Array.from(host.querySelectorAll<HTMLButtonElement>('.fs__show'));
   }
 
-  it('lists three steps with done ones struck through and without a prompt', async () => {
-    await setup(worklog({ directions: [EXAMPLE, direction('own', { title: 'Тёмная тема', order: 1 })] }));
+  function pill(): HTMLButtonElement {
+    const found = host.querySelector('.fs__pill');
+    if (!(found instanceof HTMLButtonElement)) throw new Error('no .fs__pill');
+    return found;
+  }
 
-    expect(texts('.fs__title')).toEqual(['Первые шаги · 1 из 3']);
-    expect(texts('.fs__label')).toEqual(['Заведите своё направление', 'Запишите, что произошло', 'Добавьте дело']);
+  async function unfold(): Promise<void> {
+    pill().click();
+    await fixture.whenStable();
+  }
+
+  /** the PATCH and the refresh after it */
+  async function answerPatch(body: unknown, state: WorklogState): Promise<void> {
+    const request = http.expectOne({ method: 'PATCH', url: '/api/onboarding' });
+    expect(request.request.body).toEqual(body);
+    request.flush(state.onboarding ?? {});
+    await new Promise(resolve => setTimeout(resolve));
+    http.expectOne({ method: 'GET', url: '/api/state' }).flush(state);
+    await new Promise(resolve => setTimeout(resolve));
+    await fixture.whenStable();
+  }
+
+  it('shows Первые шаги 1/4 in the corner and unfolds the card with four steps', async () => {
+    await setup(worklog({ directions: [EXAMPLE, direction('own', { title: 'Тёмная тема', order: 1 })] }));
+    expect(texts('.fs__pill')).toEqual(['Первые шаги 1/4']);
+    expect(pill().getAttribute('aria-expanded')).toBe('false');
+    expect(host.querySelector('.fs__card')).toBeNull();
+
+    await unfold();
+    expect(pill().getAttribute('aria-expanded')).toBe('true');
+    expect(texts('.fs__title')).toEqual(['Первые шаги · 1 из 4']);
+    expect(texts('.fs__label')).toEqual(['Заведите своё направление', 'Разложите вкладки Chrome по направлениям', 'Запишите, что произошло', 'Добавьте дело']);
     expect(texts('.fs__label_done')).toEqual(['Заведите своё направление']);
     const items = Array.from(host.querySelectorAll('.fs__item'));
-    expect(items[0].querySelector('wl-prompt')).toBeNull();
-    expect(items[1].querySelectorAll('wl-prompt')).toHaveLength(1);
-    expect(items[2].querySelectorAll('wl-prompt')).toHaveLength(2);
-    expect(texts('.pr__text')).toEqual(['запиши в worklog по направлению «Тёмная тема»: бэк поправил редирект, жду стенд', 'добавь в worklog дело: завести задачу на бэк, просил аналитик', 'добавь в worklog повторяющееся дело: дейлик каждый будний день в 11:30']);
+    expect(items.map(item => item.querySelectorAll('wl-prompt').length)).toEqual([0, 1, 1, 2]);
+    expect(texts('.pr__text')).toEqual([
+      'разбери вкладки chrome в worklog',
+      'запиши в worklog по направлению «Тёмная тема»: бэк поправил редирект, жду стенд',
+      'добавь в worklog дело: завести задачу на бэк, просил аналитик',
+      'добавь в worklog повторяющееся дело: дейлик каждый будний день в 11:30',
+    ]);
   });
 
   it('takes prompts from the profile', async () => {
     await setup(worklog({ directions: [EXAMPLE] }));
+    await unfold();
 
     expect(texts('.pr__text')[0]).toContain('APP-1234');
   });
 
-  it('is gone when every step is done or when hidden', async () => {
+  it('is gone when hidden', async () => {
     await setup(worklog({ directions: [EXAMPLE] }));
-    expect(host.querySelector('.fs__card')).not.toBeNull();
+    expect(host.querySelector('.fs__pill')).not.toBeNull();
 
     await reload(worklog({ directions: [EXAMPLE], onboarding: { stepsHidden: true } }));
+    expect(host.querySelector('.fs__pill')).toBeNull();
+  });
+
+  it('is gone once every step is done and sends stepsDone: true once', async () => {
+    await setup(worklog({ directions: [EXAMPLE] }));
+    await unfold();
+    await reload(ALL_DONE);
+    expect(host.querySelector('.fs__pill')).toBeNull();
     expect(host.querySelector('.fs__card')).toBeNull();
 
-    await reload(worklog({ directions: [direction('own', { events: [event('e1')] })], todos: [{ id: 't', text: 'Дело', done: false, createdAt: AT }] }));
-    expect(host.querySelector('.fs__card')).toBeNull();
+    await answerPatch({ stepsDone: true }, ALL_DONE);
+    await reload(worklog({ ...ALL_DONE, todos: [TODO, { ...TODO, id: 't2' }] }));
+    http.expectNone({ method: 'PATCH', url: '/api/onboarding' });
+  });
+
+  it('stays gone after stepsDoneAt even when a step is undone again', async () => {
+    await setup(worklog({ directions: [EXAMPLE], onboarding: { stepsDoneAt: AT } }));
+    expect(host.querySelector('.fs__pill')).toBeNull();
+    http.expectNone({ method: 'PATCH', url: '/api/onboarding' });
   });
 
   it('Скрыть sends stepsHidden: true', async () => {
     await setup(worklog({ directions: [EXAMPLE] }));
+    await unfold();
 
     host.querySelector<HTMLButtonElement>('.fs__hide')?.click();
 
-    const request = http.expectOne({ method: 'PATCH', url: '/api/onboarding' });
-    expect(request.request.body).toEqual({ stepsHidden: true });
-    request.flush({ stepsHidden: true });
-    await new Promise(resolve => setTimeout(resolve));
-    http.expectOne({ method: 'GET', url: '/api/state' }).flush(worklog({ directions: [EXAMPLE], onboarding: { stepsHidden: true } }));
-    await new Promise(resolve => setTimeout(resolve));
-    await fixture.whenStable();
-    expect(host.querySelector('.fs__card')).toBeNull();
+    await answerPatch({ stepsHidden: true }, worklog({ directions: [EXAMPLE], onboarding: { stepsHidden: true } }));
+    expect(host.querySelector('.fs__pill')).toBeNull();
   });
 
-  it('Показать asks the tour for the step of the item', async () => {
+  it('Показать folds the card before the tour bubble', async () => {
     await setup(worklog({ directions: [EXAMPLE] }));
     const tour = TestBed.inject(Tour);
     const show = vi.spyOn(tour, 'show').mockImplementation(() => undefined);
 
-    for (const button of showButtons()) button.click();
+    for (let i = 0; i < 4; i++) {
+      await unfold();
+      showButtons()[i].click();
+      await fixture.whenStable();
+      expect(host.querySelector('.fs__card')).toBeNull();
+    }
 
-    expect(show.mock.calls).toEqual([['add'], ['events'], ['todos']]);
+    expect(show.mock.calls).toEqual([['add'], ['chrome-tabs'], ['events'], ['todos']]);
+  });
+
+  it('folds on Escape, on a click outside and on the button again', async () => {
+    await setup(worklog({ directions: [EXAMPLE] }));
+    expect(host.querySelector('.fs__card')).toBeNull();
+
+    await unfold();
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    await fixture.whenStable();
+    expect(host.querySelector('.fs__card')).toBeNull();
+
+    await unfold();
+    host.querySelector('.fs__intro')?.dispatchEvent(new Event('pointerdown', { bubbles: true }));
+    await fixture.whenStable();
+    expect(host.querySelector('.fs__card')).not.toBeNull();
+    document.body.dispatchEvent(new Event('pointerdown', { bubbles: true }));
+    await fixture.whenStable();
+    expect(host.querySelector('.fs__card')).toBeNull();
+
+    await unfold();
+    await unfold();
+    expect(host.querySelector('.fs__card')).toBeNull();
   });
 });
