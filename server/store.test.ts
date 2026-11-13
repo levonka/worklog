@@ -921,6 +921,25 @@ test('setOnboarding writes onboarding.json and an empty one is not written', asy
   assert.equal((await store.read()).onboarding, undefined);
 });
 
+test('markTabsRead keeps the first time and survives a reload', async t => {
+  const dir = await tempDataDir(t);
+  const store = new Store(dir);
+  await store.markTabsRead(new Date('2026-11-13T09:00:00.000Z'));
+  await store.markTabsRead(new Date('2026-11-14T09:00:00.000Z'));
+  assert.equal((await store.read()).onboarding?.tabsReadAt, '2026-11-13T09:00:00.000Z');
+  assert.equal((await new Store(dir).read()).onboarding?.tabsReadAt, '2026-11-13T09:00:00.000Z');
+});
+
+test('setOnboarding stepsDone records the first time and false removes it', async t => {
+  const store = new Store(await tempDataDir(t));
+  await store.setOnboarding({ stepsDone: true }, new Date('2026-11-13T09:00:00.000Z'));
+  const again = await store.setOnboarding({ stepsDone: true }, new Date('2026-11-14T09:00:00.000Z'));
+  assert.equal(again.stepsDoneAt, '2026-11-13T09:00:00.000Z');
+  const undone = await store.setOnboarding({ stepsDone: false });
+  assert.equal('stepsDoneAt' in undone, false);
+  assert.equal((await store.read()).onboarding?.stepsDoneAt, undefined);
+});
+
 test('startRun refuses the example and a todo of the example', async t => {
   const store = new Store(await tempDataDir(t), { profile: TEST_PROFILE });
   await store.seedExample();
@@ -929,6 +948,19 @@ test('startRun refuses the example and a todo of the example', async t => {
   await assert.rejects(store.startRun({ ...request, directionId: directions[0].id }), /В примере агент не запускается/);
   await assert.rejects(store.startRun({ ...request, todoId: todos[0].id }), /В примере агент не запускается/);
   assert.deepEqual((await store.read()).runs, []);
+});
+
+test('startRun takes tabs only without a direction or a todo', async t => {
+  const store = new Store(await tempDataDir(t), { profile: TEST_PROFILE });
+  const own = await store.createDirection({ title: 'Своё' });
+  const request = { include: [], extra: '', branch: 'dev' };
+  const { run, prompt } = await store.startRun({ ...request, template: 'tabs' });
+  assert.equal(run.directionId, undefined);
+  assert.equal(run.todoId, undefined);
+  assert.match(prompt, /worklog-chrome-tabs/);
+  await assert.rejects(store.startRun({ ...request, template: 'tabs', directionId: own.id }), /Разбор вкладок не привязан к направлению/);
+  await assert.rejects(store.startRun({ ...request, template: 'execute' }), /Поручение должно быть о направлении или деле/);
+  assert.equal((await store.read()).runs.length, 1);
 });
 
 test('deleting the example deletes its todo and note; deleting an own direction only unlinks them', async t => {

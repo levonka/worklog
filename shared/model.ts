@@ -302,8 +302,15 @@ export interface Note {
   updatedAt: string;
 }
 
-export const AGENT_TEMPLATES = ['execute', 'decompose', 'docs', 'question', 'custom'] as const;
+export const AGENT_TEMPLATES = ['execute', 'decompose', 'docs', 'question', 'custom', 'tabs'] as const;
 export type AgentTemplate = (typeof AGENT_TEMPLATES)[number];
+
+/** the task window offers these; the others start from their own buttons */
+export const AGENT_SHEET_TEMPLATES = ['execute', 'decompose', 'docs', 'question', 'custom'] as const satisfies readonly AgentTemplate[];
+export type AgentSheetTemplate = (typeof AGENT_SHEET_TEMPLATES)[number];
+
+/** about neither a direction nor a todo, and never touching git */
+export const DIRECTIONLESS_TEMPLATES: readonly AgentTemplate[] = ['tabs'];
 
 export const AGENT_TEMPLATE_LABELS: Record<AgentTemplate, string> = {
   execute: 'Выполнить задачу',
@@ -311,6 +318,7 @@ export const AGENT_TEMPLATE_LABELS: Record<AgentTemplate, string> = {
   docs: 'Изучить доки → ссылки',
   question: 'Вопрос',
   custom: 'Своё',
+  tabs: 'Разобрать вкладки Chrome',
 };
 
 /** these say nothing by themselves: the task is in the extra context */
@@ -349,11 +357,16 @@ export interface Onboarding {
   tourClosedAt?: string;
   stepsHidden?: true;
   exampleCreatedAt?: string;
+  /** the first time `worklog tabs` read the Chrome tabs */
+  tabsReadAt?: string;
+  /** the first time every first step was done: the steps never come back after it */
+  stepsDoneAt?: string;
 }
 
 export interface OnboardingPatch {
   tourClosed?: boolean;
   stepsHidden?: boolean;
+  stepsDone?: boolean;
 }
 
 export interface WorklogState {
@@ -875,7 +888,7 @@ export function exampleData(profile: Profile | null, at: string, newId: () => st
   return { direction, todo, note };
 }
 
-export const FIRST_STEPS = ['direction', 'event', 'todo'] as const;
+export const FIRST_STEPS = ['direction', 'tabs', 'event', 'todo'] as const;
 export type FirstStep = (typeof FIRST_STEPS)[number];
 
 /** what the user has done of the first steps; the example does not count */
@@ -884,6 +897,7 @@ export function firstStepsDone(state: WorklogState): Record<FirstStep, boolean> 
   const examples = new Set(state.directions.filter(isExample).map(direction => direction.id));
   return {
     direction: own.length > 0,
+    tabs: state.onboarding?.tabsReadAt !== undefined,
     event: own.some(direction => direction.events.some(e => e.source === 'manual' || e.source === 'claude')),
     todo: state.todos.some(todo => todo.directionId === undefined || !examples.has(todo.directionId)),
   };
@@ -895,6 +909,7 @@ export interface OnboardingPrompts {
   link: string;
   todo: string;
   repeat: string;
+  tabs: string;
 }
 
 /** phrases to hand the agent, with the company's ticket prefixes and the user's own direction when there is one */
@@ -914,6 +929,7 @@ export function onboardingPrompts(profile: Profile | null, directions: readonly 
     link: `добавь в worklog ${to} ссылку на макет: <ссылка>`,
     todo: 'добавь в worklog дело: завести задачу на бэк, просил аналитик',
     repeat: 'добавь в worklog повторяющееся дело: дейлик каждый будний день в 11:30',
+    tabs: 'разбери вкладки chrome в worklog',
   };
 }
 
@@ -1408,7 +1424,7 @@ const AGENT_RECENT_EVENTS = 5;
 /** the one form of the CLI path, so one permission rule covers every call */
 const WORKLOG_CLI = '~/.local/bin/worklog';
 
-const BRANCHLESS_TEMPLATES: readonly AgentTemplate[] = ['question', 'docs'];
+const BRANCHLESS_TEMPLATES: readonly AgentTemplate[] = ['question', 'docs', 'tabs'];
 
 /** the first ticket of each profile project, in the profile's order, joined by its branch format; other tickets never make a branch */
 export function directionBranch(tickets: readonly Ticket[], profile: Profile | null): string | null {
@@ -1475,6 +1491,7 @@ const TEMPLATE_TASKS: Record<AgentTemplate, string> = {
   docs: 'Изучи документацию по задаче: тикеты, Confluence, макеты и то, на что они ссылаются. Код не меняй. Собери полезные ссылки с коротким описанием каждой и после моего подтверждения запиши их в Worklog.',
   question: 'Ответь на вопрос из дополнительного контекста. Код не меняй.',
   custom: 'Сделай то, что описано в дополнительном контексте.',
+  tabs: 'Разбери открытые вкладки Chrome в Worklog по скиллу worklog-chrome-tabs. Код не меняй.',
 };
 
 function indented(text: string): string {
@@ -1537,9 +1554,9 @@ export function agentPrompt(state: WorklogState, request: AgentRequest, runId: s
   if (extra !== '') parts.push(`## Дополнительный контекст\n${extra}`);
 
   const dirFlag = direction === undefined ? '' : ` (к направлению — \`--dir ${direction.id}\`)`;
+  const gitRules = DIRECTIONLESS_TEMPLATES.includes(request.template) ? [] : [branchRule(request.branch, baseBranch(profile)), 'Коммить и пушь только когда я попрошу в этой сессии.'];
   const rules = [
-    branchRule(request.branch, baseBranch(profile)),
-    'Коммить и пушь только когда я попрошу в этой сессии.',
+    ...gitRules,
     ...(direction === undefined ? [] : [`Перед работой посмотри заметки базы знаний по направлению: \`${WORKLOG_CLI} note list --dir ${direction.id}\`.`]),
     `Результаты — дела, ссылки, заметки, событие о сделанном — записывай в Worklog через \`${WORKLOG_CLI}\`${dirFlag} по скиллам worklog-update и worklog-notes. Каждый раз сначала покажи, что запишешь, и дождись моего подтверждения. Тексты — от первого лица единственного числа, без упоминаний ИИ, Claude, агента и сессии.`,
     `Когда работа закончена или я скажу, что закончили, выполни \`${WORKLOG_CLI} agent done ${runId}\`.`,

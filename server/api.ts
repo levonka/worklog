@@ -223,7 +223,15 @@ export function createApiRoutes(store: Store, history: History, clientCount: () 
       const body = await readObject(ctx);
       const tourClosed = optionalBoolean(body, 'tourClosed');
       const stepsHidden = optionalBoolean(body, 'stepsHidden');
-      return { status: OK, body: await store.setOnboarding({ ...(tourClosed === undefined ? {} : { tourClosed }), ...(stepsHidden === undefined ? {} : { stepsHidden }) }) };
+      const stepsDone = optionalBoolean(body, 'stepsDone');
+      return {
+        status: OK,
+        body: await store.setOnboarding({
+          ...(tourClosed === undefined ? {} : { tourClosed }),
+          ...(stepsHidden === undefined ? {} : { stepsHidden }),
+          ...(stepsDone === undefined ? {} : { stepsDone }),
+        }),
+      };
     }),
     // outside history as well: undo cannot close the Warp tab
     route('POST', /^\/api\/agent\/runs$/, async ctx => {

@@ -138,6 +138,13 @@ describe('AgentSheetView', () => {
     expect(button('Запустить ⌘↩').disabled).toBe(true);
   });
 
+  it('does not offer sorting Chrome tabs among the templates', async () => {
+    await open({ directionId: 'd1' });
+    const labels = Array.from(host.querySelectorAll('.as__template'), item => text(item));
+    expect(labels).toContain('Выполнить задачу');
+    expect(labels).not.toContain('Разобрать вкладки Chrome');
+  });
+
   it('without a profile the agent branch is main', async () => {
     await open({ directionId: 'd1' });
     expect(field('input[aria-label="Ветка"]', HTMLInputElement).value).toBe('main');

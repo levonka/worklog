@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import type { TestContext } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
-import { mkdir, mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { access, mkdir, mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import type { Direction, Note, RepeatRule, Todo, WorklogState } from '../shared/model.ts';
@@ -465,6 +465,20 @@ test('tabs fails with the folder it looked in when Chrome has no session', async
   assert.equal(result.code, 1);
   assert.match(result.stderr, /Не нашёл файл сессии Chrome/);
   assert.equal((await runCli(['tabs'], { dataDir })).code, 1);
+  await assert.rejects(access(path.join(dataDir, 'onboarding.json')));
+});
+
+test('tabs marks the onboarding once the tabs are read', async t => {
+  const dataDir = await tempDir(t);
+  const chromeDir = await chromeWithTabs(t, [{ id: 1, window: 1, index: 0, url: 'https://wiki.example.com/x', title: 'X' }]);
+  const readAt = async () => parsed<{ tabsReadAt?: string }>(await readFile(path.join(dataDir, 'onboarding.json'), 'utf8')).tabsReadAt;
+
+  assert.equal((await runCli(['tabs'], { dataDir, chromeDir })).code, 0);
+  const first = await readAt();
+  assert.match(first ?? '', /^\d{4}-\d{2}-\d{2}T/);
+  assert.equal((await runCli(['tabs'], { dataDir, chromeDir })).code, 0);
+  assert.equal((await runCli(['tabs', '--json'], { dataDir, chromeDir })).code, 0);
+  assert.equal(await readAt(), first);
 });
 
 test('note add, show, list, edit and rm work by id or title part', async t => {

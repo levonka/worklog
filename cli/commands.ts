@@ -667,6 +667,7 @@ async function tabsCommand(args: string[], store: Store, env: Env): Promise<stri
   positionalsOf(positionals, 'tabs');
   if (env.chromeDir === undefined) throw new Error('Не задана папка Chrome');
   const [chromeTabs, state] = await Promise.all([readChromeTabs(env.chromeDir), store.read()]);
+  await store.markTabsRead();
   const tabs = matchTabs(chromeTabs, state);
   if (values.json) return json(tabs);
 

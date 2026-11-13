@@ -470,6 +470,11 @@ test('PATCH /api/onboarding is not undone by POST /api/undo', async t => {
   assert.deepEqual(await json(await call(base, 'POST', '/api/undo')), { applied: false });
   assert.ok((await json<WorklogState>(await call(base, 'GET', '/api/state'))).onboarding?.tourClosedAt);
   assert.equal((await call(base, 'PATCH', '/api/onboarding', { tourClosed: 'да' })).status, 400);
+
+  const done = await call(base, 'PATCH', '/api/onboarding', { stepsDone: true });
+  assert.equal(done.status, 200);
+  assert.match((await json<{ stepsDoneAt?: string }>(done)).stepsDoneAt ?? '', /^\d{4}-/);
+  assert.equal((await call(base, 'PATCH', '/api/onboarding', { stepsDone: 'yes' })).status, 400);
 });
 
 test('undo and redo with nothing to apply answer applied false', async t => {
@@ -730,6 +735,11 @@ test('agent runs: launch opens Warp outside undo, finish is undoable, bad reques
   assert.equal((await call(base, 'POST', '/api/agent/runs', { template: 'nope', directionId: direction.id, branch: 'dev' })).status, 400);
   assert.equal((await call(base, 'POST', '/api/agent/runs', { template: 'execute', directionId: direction.id, include: ['secrets'], branch: 'dev' })).status, 400);
   assert.equal((await call(base, 'POST', '/api/agent/runs', { template: 'question', directionId: direction.id, branch: 'dev' })).status, 400);
+  assert.equal((await call(base, 'POST', '/api/agent/runs', { template: 'execute', branch: 'dev' })).status, 400);
+  assert.equal((await call(base, 'POST', '/api/agent/runs', { template: 'tabs', directionId: direction.id, branch: 'dev' })).status, 400);
+  const tabs = await call(base, 'POST', '/api/agent/runs', { template: 'tabs', branch: 'dev' });
+  assert.equal(tabs.status, 201);
+  assert.match(await readFile(calls, 'utf8'), new RegExp(`worklog-run-${(await json<AgentRun>(tabs)).id}`));
   assert.equal((await call(base, 'POST', '/api/agent/runs/nope/finish')).status, 404);
   assert.deepEqual(await json(await call(base, 'GET', '/api/agent/branch?name=feature/APP-9355')), { place: 'none' });
   assert.equal((await call(base, 'GET', '/api/agent/branch?name=a%20b')).status, 400);

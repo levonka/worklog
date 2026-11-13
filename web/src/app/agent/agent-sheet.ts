@@ -1,6 +1,6 @@
 import { afterNextRender, ChangeDetectionStrategy, Component, computed, DestroyRef, effect, ElementRef, inject, input, signal, viewChild } from '@angular/core';
-import type { Agent, AgentContext, AgentContextPart, AgentTemplate, BranchPlace } from '@worklog/model';
-import { AGENT_CONTEXT_PARTS, AGENT_LABELS, AGENT_TEMPLATE_LABELS, AGENTS, AGENT_TEMPLATES, AGENT_TEMPLATES_NEEDING_EXTRA, agentContext, baseBranch, isBranchName, isExample, suggestBranch, TERMINAL_OPEN_LABELS } from '@worklog/model';
+import type { Agent, AgentContext, AgentContextPart, AgentSheetTemplate, BranchPlace } from '@worklog/model';
+import { AGENT_CONTEXT_PARTS, AGENT_LABELS, AGENT_TEMPLATE_LABELS, AGENTS, AGENT_SHEET_TEMPLATES, AGENT_TEMPLATES_NEEDING_EXTRA, agentContext, baseBranch, isBranchName, isExample, suggestBranch, TERMINAL_OPEN_LABELS } from '@worklog/model';
 import { firstValueFrom } from 'rxjs';
 import type { AgentTarget } from '../core/agent-sheet';
 import { AgentSheet } from '../core/agent-sheet';
@@ -19,7 +19,7 @@ const PART_LABELS: Record<AgentContextPart, string> = {
   notes: 'Знания',
 };
 
-const EXTRA_PLACEHOLDERS: Record<AgentTemplate, string> = {
+const EXTRA_PLACEHOLDERS: Record<AgentSheetTemplate, string> = {
   execute: 'Что важно учесть: с чего начать, чего не трогать…',
   decompose: 'Как делить: по сервисам, по платформам, без кода…',
   docs: 'Что именно искать…',
@@ -85,8 +85,8 @@ export class AgentSheetView {
 
   readonly target = input.required<AgentTarget>();
 
-  protected readonly templates = AGENT_TEMPLATES.map(template => ({ template, label: AGENT_TEMPLATE_LABELS[template] }));
-  protected readonly template = signal<AgentTemplate>('execute');
+  protected readonly templates = AGENT_SHEET_TEMPLATES.map(template => ({ template, label: AGENT_TEMPLATE_LABELS[template] }));
+  protected readonly template = signal<AgentSheetTemplate>('execute');
   protected readonly off = signal<ReadonlySet<AgentContextPart>>(new Set());
   protected readonly extra = signal('');
   // null: the field follows the template and the tickets

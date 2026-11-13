@@ -38,6 +38,7 @@ import {
   AGENTS,
   AGENT_TEMPLATE_LABELS,
   AGENT_TEMPLATES_NEEDING_EXTRA,
+  DIRECTIONLESS_TEMPLATES,
   DAILY_ITEM_ORIGINS,
   EVENT_KINDS,
   EVENT_SOURCES,
@@ -464,8 +465,19 @@ export class Store {
       else if (patch.tourClosed === false) delete next.tourClosedAt;
       if (patch.stepsHidden === true) next.stepsHidden = true;
       else if (patch.stepsHidden === false) delete next.stepsHidden;
+      if (patch.stepsDone === true) next.stepsDoneAt ??= now.toISOString();
+      else if (patch.stepsDone === false) delete next.stepsDoneAt;
       s.onboarding = next;
       return next;
+    });
+  }
+
+  /** the first step about Chrome tabs; the first time stays */
+  async markTabsRead(now: Date = new Date()): Promise<void> {
+    return this.mutate(s => {
+      const onboarding = s.onboarding ?? {};
+      if (onboarding.tabsReadAt !== undefined) return;
+      s.onboarding = { ...onboarding, tabsReadAt: now.toISOString() };
     });
   }
 
@@ -831,7 +843,10 @@ export class Store {
     if (AGENT_TEMPLATES_NEEDING_EXTRA.includes(request.template) && request.extra.trim() === '') {
       throw new ValidationError(`Для «${AGENT_TEMPLATE_LABELS[request.template]}» нужен дополнительный контекст`);
     }
-    if (request.directionId === undefined && request.todoId === undefined) throw new ValidationError('Поручение должно быть о направлении или деле');
+    const aboutNothing = request.directionId === undefined && request.todoId === undefined;
+    if (DIRECTIONLESS_TEMPLATES.includes(request.template)) {
+      if (!aboutNothing) throw new ValidationError('Разбор вкладок не привязан к направлению');
+    } else if (aboutNothing) throw new ValidationError('Поручение должно быть о направлении или деле');
     return this.mutate(s => {
       if (request.todoId !== undefined) findTodo(s, request.todoId);
       else if (request.directionId !== undefined) findDirection(s, request.directionId);
@@ -1309,7 +1324,7 @@ function isWorkEvent(v: unknown): v is WorkEvent {
 }
 
 function isOnboarding(v: unknown): v is Onboarding {
-  return isRecord(v) && isOptionalString(v.tourClosedAt) && (v.stepsHidden === undefined || v.stepsHidden === true) && isOptionalString(v.exampleCreatedAt);
+  return isRecord(v) && isOptionalString(v.tourClosedAt) && (v.stepsHidden === undefined || v.stepsHidden === true) && isOptionalString(v.exampleCreatedAt) && isOptionalString(v.tabsReadAt) && isOptionalString(v.stepsDoneAt);
 }
 
 function isDirection(v: unknown): v is Direction {

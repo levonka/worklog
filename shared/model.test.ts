@@ -462,7 +462,7 @@ test('noteMatches looks for every word in the note and its directions', () => {
 // --- agent ---
 
 import type { AgentRequest, AgentRun } from './model.ts';
-import { activeRuns, agentContext, agentPrompt, agentRunTitle, directionBranch, isBranchName, suggestBranch } from './model.ts';
+import { activeRuns, agentContext, agentPrompt, agentRunTitle, baseBranch, directionBranch, isBranchName, suggestBranch } from './model.ts';
 
 test('directionBranch joins one key per project in the profile order', () => {
   const keys = (...list: string[]) => list.map(key => ticketFromKey(key, TEST_PROFILE));
@@ -606,6 +606,15 @@ test('agentPrompt holds the task, the chosen context, the extra text and the rul
   assert.match(prompt, /`~\/.local\/bin\/worklog note list --dir d1`/);
   assert.match(prompt, /`--dir d1`/);
   assert.match(prompt, /`~\/.local\/bin\/worklog agent done run1`\.\n$/);
+});
+
+test('agentPrompt for tabs sorts Chrome tabs by the skill and leaves git alone', () => {
+  const prompt = agentPrompt(agentState(), { template: 'tabs', include: [], extra: '', branch: 'dev' }, 'r1', TEST_PROFILE);
+  assert.match(prompt, /worklog-chrome-tabs/);
+  assert.match(prompt, /~\/\.local\/bin\/worklog agent done r1/);
+  assert.doesNotMatch(prompt, /git status|переключись|Коммить/);
+  assert.equal(agentRunTitle({ direction: undefined, todo: undefined }, 'tabs'), 'Worklog · разобрать вкладки chrome');
+  assert.equal(suggestBranch([], 'tabs', TEST_PROFILE), baseBranch(TEST_PROFILE));
 });
 
 test('agentPrompt leaves out unchecked and empty parts; on dev it only switches', () => {
@@ -901,14 +910,21 @@ test('firstStepsDone ignores the example', () => {
   let n = 0;
   const example = exampleData(TEST_PROFILE, AT, () => `e${n++}`);
   const withExample = onboardingState([example.direction], [example.todo]);
-  assert.deepEqual(firstStepsDone(withExample), { direction: false, event: false, todo: false });
+  assert.deepEqual(firstStepsDone(withExample), { direction: false, tabs: false, event: false, todo: false });
 
   const quiet = ownDirection('own', { events: [{ id: 's', at: AT, text: 'Статус', source: 'system', kind: 'status' }, { id: 'j', at: AT, text: 'Jira', source: 'jira', kind: 'jira-status' }] });
-  assert.deepEqual(firstStepsDone(onboardingState([example.direction, quiet], [example.todo])), { direction: true, event: false, todo: false });
+  assert.deepEqual(firstStepsDone(onboardingState([example.direction, quiet], [example.todo])), { direction: true, tabs: false, event: false, todo: false });
 
   const told = ownDirection('own', { events: [{ id: 'c', at: AT, text: 'Сказал агенту', source: 'claude', kind: 'note' }] });
   const todo = { id: 't', text: 'Дело', done: false, createdAt: AT };
-  assert.deepEqual(firstStepsDone(onboardingState([example.direction, told], [example.todo, todo])), { direction: true, event: true, todo: true });
+  assert.deepEqual(firstStepsDone(onboardingState([example.direction, told], [example.todo, todo])), { direction: true, tabs: false, event: true, todo: true });
+});
+
+test('firstStepsDone marks tabs once the tabs were read', () => {
+  const own = ownDirection('own');
+  assert.equal(firstStepsDone(onboardingState([own])).tabs, false);
+  const read = { ...onboardingState([own]), onboarding: { tabsReadAt: AT } };
+  assert.deepEqual(firstStepsDone(read), { direction: true, tabs: true, event: false, todo: false });
 });
 
 test('onboardingPrompts take the prefixes from the profile and the name of the first own direction', () => {
@@ -920,6 +936,7 @@ test('onboardingPrompts take the prefixes from the profile and the name of the f
   assert.equal(fresh.link, 'добавь в worklog к капче ссылку на макет: <ссылка>');
   assert.equal(fresh.todo, 'добавь в worklog дело: завести задачу на бэк, просил аналитик');
   assert.equal(fresh.repeat, 'добавь в worklog повторяющееся дело: дейлик каждый будний день в 11:30');
+  assert.equal(fresh.tabs, 'разбери вкладки chrome в worklog');
 
   const own = onboardingPrompts(TEST_PROFILE, [example, ownDirection('theme', { title: 'Тёмная тема' }), ownDirection('old', { title: 'Старое', status: 'done', order: -1 })]);
   assert.equal(own.event, 'запиши в worklog по направлению «Тёмная тема»: бэк поправил редирект, жду стенд');
